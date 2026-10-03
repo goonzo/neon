@@ -348,12 +348,27 @@
     }
     let stopped = false;
 
+    function tutorial() {
+      return new Promise((res) => {
+        UI.modal(h('div', { class: 'col', style: { gap: '8px', fontSize: '14px', lineHeight: '1.7' } },
+          h('div', { class: 'ttl' }, '戦い方'),
+          h('div', null, '① 上部のバーは行動順。速度の高い順に、味方と敵が交互に行動します。'),
+          h('div', null, '② 味方のターンが来たら、手札のカードをクリック。対象が必要なカードは、続けて敵や味方をクリックします。'),
+          h('div', null, '③ カードにはエナジーが必要です（毎ターン3）。使い終わったら「ターン終了」。'),
+          h('div', null, '④ 敵の頭上には「次の行動」が表示されます。', h('span', { style: { color: '#ff9e9e' } }, '攻'), '＝攻撃（→は狙われている仲間）、', h('span', { style: { color: '#9ec4ff' } }, '防'), '＝防御、', h('span', { style: { color: '#ff3d8b' } }, '害'), '＝ハッキング など。'),
+          h('div', null, '⑤ シールドはダメージを肩代わりし、自分のターン開始時に消えます。タンクの「挑発」で攻撃を引きつけましょう。'),
+          h('div', { class: 'sub' }, 'アイコンやキーワードにカーソルを合わせると説明が出ます（スマホはタップ）。キーボード：1〜0でカード、Eでターン終了。'),
+          h('div', { style: { textAlign: 'right' } }, UI.btn('はじめる', () => { UI.closeModal(); res(); }, 'pink'))), { w: 640, noClose: true });
+      });
+    }
+
     // ---------- main loop ----------
     async function loop() {
       // boss / elite intro lines
       for (const e of E.alive(C, 'E')) if (e.def.intro) C.ev.push({ k: 'say', uid: e.uid, s: e.def.intro });
       render();
       await flush();
+      if (!G.meta.flags.tut) { await tutorial(); G.meta.flags.tut = true; G.saveMeta(); }
       UI.banner(kind === 'boss' ? 'BOSS BATTLE' : kind === 'elite' ? 'ELITE' : 'BATTLE START', kind === 'boss' ? '#e8352e' : null);
       await G.sleep(700);
       while (!stopped) {

@@ -50,7 +50,13 @@
   };
 
   // ================= BASE =================
+  const RESULT_LINES = {
+    win: ['おかえりなさい！　……本当に、本当に、よく帰ってきてくれたわ。', '聖域から帰ってきたのね。みんなの顔、少しだけ誇らしそう。'],
+    lose: ['……おかえりなさい。みんなは、わたしが回収したわ。今は、ゆっくり休んで。', '失敗じゃないわ。持ち帰った資源で、次はもっと強くなれる。', '地上の記録、全部保存してある。次は、きっと。'],
+    abandon: ['撤退も立派な判断よ。生きていれば、また行ける。'],
+  };
   const motherLine = () => {
+    if (G.meta.lastResult) { const r = G.meta.lastResult; G.meta.lastResult = null; G.saveMeta(); return G.pick(RESULT_LINES[r]); }
     const pool = G.MOTHER_LINES.filter((l) => !l.c || (l.c === 'loop3' ? G.meta.wins >= 3 : G.meta.flags[l.c]));
     // prefer newest unlocked lines a bit
     const special = pool.filter((l) => l.c);

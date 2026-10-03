@@ -73,6 +73,23 @@
       tip.style.top = Math.max(2, y) + 'px';
     });
     r.addEventListener('mouseleave', () => UI.tipEl && UI.tipEl.classList.add('hidden'));
+    // touch: tap on a tooltip target shows it briefly
+    let tt = null;
+    r.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') return;
+      const t = e.target.closest && e.target.closest('[data-tip], .kw[data-st]');
+      if (!t) return;
+      const tip = UI.tipEl;
+      const html = t.dataset.tip || (t.dataset.st ? `<div class="tn">${G.ST[t.dataset.st].n}</div>${G.stDesc(t.dataset.st, 'X')}` : '');
+      if (!html || !tip) return;
+      tip.innerHTML = html;
+      tip.classList.remove('hidden');
+      const p = UI.toGame(e.clientX, e.clientY);
+      tip.style.left = Math.max(2, Math.min(UI.W - tip.offsetWidth - 4, p.x - tip.offsetWidth / 2)) + 'px';
+      tip.style.top = Math.max(2, p.y - tip.offsetHeight - 18) + 'px';
+      clearTimeout(tt);
+      tt = setTimeout(() => tip.classList.add('hidden'), 2600);
+    });
   };
   UI.hideTip = () => UI.tipEl && UI.tipEl.classList.add('hidden');
 

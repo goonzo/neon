@@ -31,7 +31,7 @@ require('fs').mkdirSync(OUT, { recursive: true });
     return false;
   };
   await page.evaluate(() => {
-    G.meta.seenIntro = true;
+    G.meta.seenIntro = true; G.meta.flags.tut = true;
     G.meta.settings.speed = 2.4; G.speedMul = 2.4;
     G.meta.res = { energy: 200, scrap: 200, food: 200, data: 200 };
     G.meta.unlocked = G.HERO_ORDER.slice();

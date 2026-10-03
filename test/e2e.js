@@ -35,7 +35,10 @@ require('fs').mkdirSync(OUT, { recursive: true });
   await page.waitForTimeout(400);
   await shot('07_map');
   await page.click('.mnode.avail');
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(1200);
+  await shot('08a_tutorial');
+  await page.click('text=はじめる');
+  await page.waitForTimeout(1800);
   await shot('08_combat');
   // auto-play the combat via exposed hooks
   for (let step = 0; step < 400; step++) {
@@ -56,6 +59,17 @@ require('fs').mkdirSync(OUT, { recursive: true });
   }
   await page.waitForTimeout(800);
   await shot('10_after_combat');
+  // reload mid-run and resume
+  const before = await page.evaluate(() => document.querySelector('.screen').className);
+  await page.reload();
+  await page.waitForTimeout(400);
+  await page.click('text=起動する');
+  await page.waitForTimeout(300);
+  await shot('11_base_resume');
+  await page.click('text=任務を再開する');
+  await page.waitForTimeout(400);
+  await shot('12_resumed');
+  console.log('before reload:', before, ' after resume:', await page.evaluate(() => document.querySelector('.screen').className));
   console.log('screen classes:', await page.evaluate(() => document.querySelector('.screen') && document.querySelector('.screen').className));
   console.log(errors.length ? errors.join('\n') : 'NO ERRORS');
   await browser.close();

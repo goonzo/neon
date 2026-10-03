@@ -429,6 +429,7 @@
           } }))),
           h('div', { class: 'row' },
             UI.btn('スキップ', () => { rw.picked[cr.hero] = null; idx = rw.cards.findIndex((c) => rw.picked[c.hero] === undefined); save(); draw(); }, 'sm'),
+            UI.btn('残りをすべてスキップ', () => { rw.cards.forEach((c) => { if (rw.picked[c.hero] === undefined) rw.picked[c.hero] = null; }); idx = -1; save(); draw(); }, 'sm'),
             UI.btn('デッキを見る', () => UI.deckView(run.heroes, run.heroes.findIndex((x) => x.id === cr.hero)), 'sm')))));
     };
     save();
@@ -494,6 +495,7 @@
     UI.closeModal();
     const before = G.HERO_ORDER.filter((id) => !G.meta.unlocked.includes(id) && G.recruitInfo(id).cond);
     const loreBefore = G.meta.lore.length;
+    G.meta.lastResult = result === 'win' ? 'win' : abandoned ? 'abandon' : 'lose';
     const r = G.endRun(run, result);
     const after = G.HERO_ORDER.filter((id) => !G.meta.unlocked.includes(id) && G.recruitInfo(id).cond);
     const newRecruits = after.filter((id) => !before.includes(id));
