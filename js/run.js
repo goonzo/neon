@@ -316,7 +316,12 @@
       rw.credits = 80 + G.rint(0, 20);
       G.RES_KEYS.forEach((k) => addRes(k, G.rint(4, 6) + run.act * 2));
       rw.relicChoices = [];
-      for (let i = 0; i < 3; i++) {
+      if (run.act >= 3) {
+        // final boss: nothing left to spend a relic or card on — bring back SI core data instead
+        rw.final = true;
+        addRes('data', 15); addRes('energy', 10);
+      }
+      for (let i = 0; i < (run.act >= 3 ? 0 : 3); i++) {
         const id = G.randomRelic({ relics: run.relics.concat(rw.relicChoices) }, 2);
         if (id) rw.relicChoices.push(id);
       }
@@ -340,7 +345,7 @@
     }
     if (bonus) for (const k in bonus) addRes(k, bonus[k]);
     run.credits += rw.credits;
-    run.heroes.forEach((h) => {
+    if (!rw.final) run.heroes.forEach((h) => {
       if (h.hp > 0) rw.cards.push({ hero: h.id, choices: G.rollCardChoices(run, h.id, kind) });
     });
     return rw;
@@ -399,8 +404,17 @@
     const m = G.meta;
     const keep = result === 'win' ? 1 : 0.7;
     const brought = {};
+    // leftover credits and parts are exchanged for base resources (same keep ratio)
+    const conv = { energy: 0, scrap: 0, food: 0, data: 0 };
+    const credUnits = Math.floor(run.credits / 10);
+    for (let i = 0; i < credUnits; i++) conv[G.RES_KEYS[i % 4]]++;
+    conv.scrap += run.relics.length * 3;
+    const exchange = { credits: run.credits, relics: run.relics.length, res: {} };
     G.RES_KEYS.forEach((k) => {
-      brought[k] = Math.floor(run.res[k] * keep);
+      const got = Math.floor(run.res[k] * keep);
+      const ex = Math.floor(conv[k] * keep);
+      exchange.res[k] = ex;
+      brought[k] = got + ex;
       m.res[k] += brought[k];
     });
     m.bestAct = Math.max(m.bestAct, run.act);
@@ -413,7 +427,7 @@
     G.checkLore();
     G.saveMeta();
     G.clearRun();
-    return { brought, keep, unlockedDiff };
+    return { brought, keep, unlockedDiff, exchange };
   };
 
   // ---------------- event API ----------------

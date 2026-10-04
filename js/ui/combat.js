@@ -96,6 +96,7 @@
       const pos = assignSlot(u);
       root.style.left = pos.x + 'px';
       root.style.top = pos.y - sz.h * sc + 'px';
+      root.dataset.uid = String(u.uid);
       root.addEventListener('click', (e) => { e.stopPropagation(); onUnitClick(u); });
       root.addEventListener('mouseenter', () => { hoverUid = u.uid; markTargets(); });
       root.addEventListener('mouseleave', () => { if (hoverUid === u.uid) hoverUid = null; markTargets(); });
@@ -194,7 +195,8 @@
         const can = E.canPlay(C, u, c);
         if (can && c.id !== 'noise') anyPlayable = true;
         const el = UI.card(c, { u, C, cls: (can ? '' : 'unplayable') + (i === sel ? ' selected' : '') });
-        el.addEventListener('click', (e) => { e.stopPropagation(); selectCard(i); });
+        el.addEventListener('click', (e) => { e.stopPropagation(); if (justDragged) return; selectCard(i); });
+        el.addEventListener('pointerdown', (e) => startDrag(e, i, el));
         el.dataset.k = String((i + 1) % 10);
         handEl.appendChild(el);
       });
@@ -206,8 +208,8 @@
       if (inputHero && sel >= 0) {
         const c = inputHero.hand[sel];
         const d = c && E.cardDef(c);
-        hint.textContent = d ? (d.tg === 'A' ? '対象の味方を選択（右クリックでキャンセル）' : d.tg === 'D' ? '蘇生する仲間を選択' : '対象の敵を選択（右クリックでキャンセル）') : '';
-      } else if (inputHero) hint.textContent = `${inputHero.n}のターン — カードを選んでください`;
+        hint.textContent = d ? (d.tg === 'A' ? '対象の味方をクリック（またはドラッグ＆ドロップ）' : d.tg === 'D' ? '蘇生する仲間を選択' : '対象の敵をクリック（またはドラッグ＆ドロップ）') : '';
+      } else if (inputHero) hint.textContent = `${inputHero.n}のターン — カードをクリック、またはドラッグして使用`;
       else hint.textContent = '';
     }
 
@@ -233,16 +235,17 @@
       el.root.classList.add(cls);
       setTimeout(() => el.root.classList.remove(cls), ms || 300);
     }
+    let sayEl = null, sayTm = null;
     function sayBubble(uid, text) {
-      const el = els[uid];
-      if (!el) return;
-      const p = UI.elTop(el.spr);
-      const b = h('div', { class: 'say' }, text);
-      document.getElementById('fx').appendChild(b);
-      const w = Math.min(380, b.offsetWidth);
-      b.style.left = Math.max(10, Math.min(UI.W - w - 10, p.x - w / 2)) + 'px';
-      b.style.top = Math.max(40, p.y - b.offsetHeight - 10) + 'px';
-      setTimeout(() => b.remove(), 2800 / (G.speedMul || 1));
+      const u = E.unit(C, uid);
+      if (!u) return;
+      if (sayEl) sayEl.remove();
+      clearTimeout(sayTm);
+      sayEl = h('div', { class: 'say' }, h('div', { class: 'sayn' }, u.n), text);
+      document.getElementById('fx').appendChild(sayEl);
+      flashClass(uid, 'speaking', 3200);
+      const b = sayEl;
+      sayTm = setTimeout(() => { b.remove(); if (sayEl === b) sayEl = null; }, 3400 / (G.speedMul || 1));
     }
 
     async function flush() {
@@ -308,6 +311,74 @@
       if (C.over || (inputHero && inputHero.dead)) { endHeroTurn(); return; }
       render();
     }
+    // ---- drag & drop: drag a card onto a target (or onto the field for untargeted cards) ----
+    let drag = null, justDragged = false;
+    function unitAt(cx, cy) {
+      const el = document.elementFromPoint(cx, cy);
+      const r = el && el.closest && el.closest('.unit');
+      return r ? E.unit(C, +r.dataset.uid) : null;
+    }
+    function startDrag(e, i, el) {
+      if (busy || !inputHero || e.button > 0) return;
+      const c = inputHero.hand[i];
+      if (!c) return;
+      drag = { i, el, x0: e.clientX, y0: e.clientY, on: false, ghost: null, over: null };
+      document.addEventListener('pointermove', onDragMove);
+      document.addEventListener('pointerup', onDragEnd);
+      document.addEventListener('pointercancel', cancelDrag);
+    }
+    function onDragMove(e) {
+      if (!drag) return;
+      if (!drag.on) {
+        if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8) return;
+        const c = inputHero && inputHero.hand[drag.i];
+        if (!c || busy || !E.canPlay(C, inputHero, c)) { if (c) selectCard(drag.i); cancelDrag(); return; }
+        drag.on = true;
+        drag.needs = E.needsTarget(c);
+        sel = drag.i;
+        render();
+        drag.ghost = UI.card(c, { u: inputHero, C, cls: 'ghost' });
+        document.getElementById('fx').appendChild(drag.ghost);
+      }
+      const p = UI.toGame(e.clientX, e.clientY);
+      drag.ghost.style.left = p.x + 'px';
+      drag.ghost.style.top = p.y + 'px';
+      const u = drag.needs ? unitAt(e.clientX, e.clientY) : null;
+      const ok = u && E.validTargets(C, inputHero, inputHero.hand[drag.i]).includes(u.uid);
+      const over = ok ? u.uid : null;
+      if (over !== drag.over) {
+        if (drag.over && els[drag.over]) els[drag.over].root.classList.remove('droptarget');
+        if (over && els[over]) els[over].root.classList.add('droptarget');
+        drag.over = over;
+      }
+      const inField = p.y < 360;
+      drag.ghost.classList.toggle('armed', drag.needs ? !!over : inField);
+    }
+    function onDragEnd(e) {
+      if (!drag) return;
+      const d = drag;
+      cleanupDrag();
+      if (!d.on) return;
+      justDragged = true;
+      setTimeout(() => { justDragged = false; }, 0);
+      const p = UI.toGame(e.clientX, e.clientY);
+      if (d.needs) {
+        if (d.over) play(d.i, d.over);
+        else { sel = -1; render(); }
+      } else if (p.y < 360) play(d.i, null);
+      else { sel = -1; render(); }
+    }
+    function cleanupDrag() {
+      if (!drag) return;
+      if (drag.ghost) drag.ghost.remove();
+      if (drag.over && els[drag.over]) els[drag.over].root.classList.remove('droptarget');
+      drag = null;
+      document.removeEventListener('pointermove', onDragMove);
+      document.removeEventListener('pointerup', onDragEnd);
+      document.removeEventListener('pointercancel', cancelDrag);
+    }
+    function cancelDrag() { cleanupDrag(); }
+
     function onUnitClick(u) {
       if (busy || !inputHero || sel < 0) return;
       const c = inputHero.hand[sel];
@@ -330,7 +401,7 @@
       if (/^[0-9]$/.test(e.key) && inputHero) { const i = e.key === '0' ? 9 : +e.key - 1; selectCard(i); }
     };
     document.addEventListener('keydown', onKey);
-    UI.cleanup = () => document.removeEventListener('keydown', onKey);
+    UI.cleanup = () => { document.removeEventListener('keydown', onKey); cleanupDrag(); };
 
     function pileModal(title, cards, sorted) {
       const list = sorted ? cards.slice().sort((a, b) => a.id.localeCompare(b.id)) : cards.slice().reverse();
@@ -353,7 +424,7 @@
         UI.modal(h('div', { class: 'col', style: { gap: '8px', fontSize: '14px', lineHeight: '1.7' } },
           h('div', { class: 'ttl' }, '戦い方'),
           h('div', null, '① 上部のバーは行動順。速度の高い順に、味方と敵が交互に行動します。'),
-          h('div', null, '② 味方のターンが来たら、手札のカードをクリック。対象が必要なカードは、続けて敵や味方をクリックします。'),
+          h('div', null, '② 味方のターンが来たら、手札のカードを使います。カードを対象（敵・味方）へドラッグ＆ドロップするか、カード→対象の順にクリック。対象のないカードは場へドラッグするかクリックで発動。'),
           h('div', null, '③ カードにはエナジーが必要です（毎ターン3）。使い終わったら「ターン終了」。'),
           h('div', null, '④ 敵の頭上には「次の行動」が表示されます。', h('span', { style: { color: '#ff9e9e' } }, '攻'), '＝攻撃（→は狙われている仲間）、', h('span', { style: { color: '#9ec4ff' } }, '防'), '＝防御、', h('span', { style: { color: '#ff3d8b' } }, '害'), '＝ハッキング など。'),
           h('div', null, '⑤ シールドはダメージを肩代わりし、自分のターン開始時に消えます。タンクの「挑発」で攻撃を引きつけましょう。'),

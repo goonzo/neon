@@ -408,7 +408,9 @@
       }
       if (idx < 0 || idx >= rw.cards.length) {
         body.appendChild(h('div', { class: 'col', style: { alignItems: 'center', gap: '12px', marginTop: '40px' } },
-          h('div', { class: 'ttl' }, '報酬の受け取り完了'), partyPanel(), UI.btn('進む', done, 'big pink')));
+          h('div', { class: 'ttl' }, rw.final ? 'SIの中枢データを回収した' : '報酬の受け取り完了'),
+          rw.final ? h('div', { class: 'sub', style: { textAlign: 'center' } }, '残ったクレジットとパーツは、帰還時に拠点の資源へ換金されます。') : null,
+          partyPanel(), UI.btn(rw.final ? '帰還する' : '進む', done, 'big pink')));
         return;
       }
       const cr = rw.cards[idx];
@@ -509,6 +511,7 @@
       h('div', { class: 'row', style: { gap: '6px' } }, run.heroes.map((hh) => G.sprImg(hh.id, 3))),
       h('div', { style: { fontSize: '14px' } }, `到達：第${run.act}区画　戦闘${run.stats.fights}回　エリート${run.stats.elites}体　ボス${run.stats.bosses}体　獲得カード${run.stats.cards}枚`),
       h('div', { style: { fontSize: '14px' } }, `持ち帰った資源（${Math.round(r.keep * 100)}%）`),
+      h('div', { class: 'sub' }, `うち、残りクレジット${r.exchange.credits}cr・パーツ${r.exchange.relics}個を拠点用の資源に換金（10cr→資源1、パーツ1個→スクラップ3）`),
       UI.resRow(r.brought, { plus: true }),
       r.unlockedDiff != null ? h('div', { style: { color: G.DIFF[r.unlockedDiff].c, fontSize: '16px' } }, `難易度「${G.DIFF[r.unlockedDiff].n}」が解放された！`) : null,
       G.meta.lore.length > loreBefore ? h('div', { style: { color: '#ff5ad1' } }, `新しい記録が${G.meta.lore.length - loreBefore}件解放された（拠点の「記録」で閲覧できます）`) : null,
