@@ -89,6 +89,7 @@
       if (u.id === 'pixe') E.addSt(C, u, 'charge', 3, u);
       if (u.id === 'nezu') E.addSt(C, u, 'drone', 2, u);
       if (u.id === 'mike') E.addSt(C, u, 'stealth', 1, u);
+      if (u.id === 'crow') E.addSt(C, u, 'shiny', 2, u);
       if (opts.startBlock) E.gainBlock(C, u, opts.startBlock);
     }
     for (const rid of C.run.relics) {
@@ -155,10 +156,12 @@
     if (s.dynamo) E.addSt(C, u, 'charge', s.dynamo, u);
     if (s.backdoor) E.foes(C, u).forEach((f) => E.addSt(C, f, 'virus', s.backdoor, u));
     if (s.nest) E.addSt(C, u, 'drone', s.nest, u);
+    if (s.hoard) E.addSt(C, u, 'shiny', s.hoard, u);
     if (s.rage) { E.loseHp(C, u, 2); E.addSt(C, u, 'str', s.rage, u); }
     if (s.possess) { E.loseHp(C, u, 2); E.allies(C, u).forEach((a) => E.heal(C, u, a, s.possess)); }
     if (s.dividend) { gainCred(C, 3); E.allies(C, u).forEach((a) => E.gainBlock(C, a, s.dividend)); }
     // traits
+    if (u.id === 'crow' && u.st.shiny > 0) { const a = E.lowestAlly(C, 'H'); if (a && a.hp < a.maxHp) E.heal(C, u, a, Math.min(6, u.st.shiny)); }
     if (u.id === 'mina') { const a = E.lowestAlly(C, 'H'); if (a && a.hp < a.maxHp) E.heal(C, u, a, 2); }
     if (u.id === 'echo') { const nx = E.upcoming(C).find((x) => x.side === 'H' && x !== u) || E.alive(C, 'H').find((x) => x !== u); if (nx) E.addSt(C, nx, 'inspire', 1, u); }
     if (u.id === 'gen') { const f = E.foes(C, u).sort((a, b) => b.hp - a.hp)[0]; if (f) E.addSt(C, f, 'aim', 3, u); }
@@ -397,6 +400,7 @@
       if (t.id === 'pixe') E.addSt(C, t, 'charge', 1, t);
     }
     if (src && src.id === 'doll' && !src.dead) E.heal(C, src, src, 1, { noBonus: true });
+    if (src && src.id === 'crow' && !src.dead && !nullified) E.addSt(C, src, 'shiny', 1, src);
     if (t.st.thorns > 0 && src && !src.dead) {
       push(C, { k: 'txt', uid: src.uid, s: '反射', c: '#c9a85a', small: 1 });
       E.dealDamage(C, src, t.st.thorns, { thorns: true });
@@ -408,6 +412,7 @@
     switch (what) {
       case 'blk': return u.blk;
       case 'charge': return u.st.charge || 0;
+      case 'shiny': return u.st.shiny || 0;
       case 'drone': return u.st.drone || 0;
       case 'lost': return u.maxHp - u.hp;
       case 'cred': return Math.min(400, C.run.credits);
@@ -561,6 +566,25 @@
         push(C, { k: 'die', uid: t.uid, fled: 1 });
       });
       checkEnd(C);
+    },
+    // spend all of a stack on the user to heal every target by stack × k
+    spendHeal(C, u, T, [key, k]) {
+      const v = Math.floor((u.st[key] || 0) * k);
+      delete u.st[key];
+      if (v > 0) T.forEach((t) => E.heal(C, u, t, v));
+    },
+    // snatch one random (non-permanent) buff from each target; the thief pockets shiny for it
+    pilfer(C, u, T) {
+      T.forEach((t) => {
+        if (t.dead) return;
+        const ks = Object.keys(t.st).filter((k) => G.ST[k] && G.ST[k].k === 'buff' && !G.ST[k].pw);
+        if (ks.length) {
+          const k = G.pick(ks);
+          delete t.st[k];
+          push(C, { k: 'txt', uid: t.uid, s: `${G.ST[k].n}を盗んだ`, c: '#ffd93d', small: 1 });
+          E.addSt(C, u, 'shiny', 2, u);
+        } else E.addSt(C, u, 'shiny', 1, u);
+      });
     },
     chargeHeal(C, u, T, [k]) { const v = (u.st.charge || 0) * k; delete u.st.charge; E.heal(C, u, u, v); },
     nop() {},
@@ -717,7 +741,7 @@
   };
 
   // ---------- card text ----------
-  const W = { blk: 'シールド値', charge: '充電', drone: 'ドローン数', lost: '失ったHP', cred: '所持クレジット', tvirus: '対象のウイルス' };
+  const W = { blk: 'シールド値', shiny: '光りもの', charge: '充電', drone: 'ドローン数', lost: '失ったHP', cred: '所持クレジット', tvirus: '対象のウイルス' };
   const PRE = { AE: '敵全体に', AA: '味方全体に', RE: 'ランダムな敵に', S: '', E: '', A: '', D: '', N: '', LA: 'HP最低の味方に' };
   const PRE_O = { S: '自分に', AA: '味方全体に', AE: '敵全体に', RE: 'ランダムな敵に', LA: 'HP最低の味方に' };
 
@@ -779,6 +803,8 @@
         case 'execute': parts.push(`HP${a}%以下の通常敵を即死させる。それ以外には${num(dmgVal(b))}ダメージ`); break;
         case 'steal': parts.push(`対象の${stn(a)}をすべて奪う`); break;
         case 'dismiss': parts.push('通常敵1体を戦闘から離脱させる（エリート・ボス不可）'); break;
+        case 'spendHeal': parts.push(`${pre}${stn(a)}×${b}のHPを回復し、${stn(a)}をすべて消費${u && u.st && u.st[a] ? `（現在${Math.floor(u.st[a] * b)}）` : ''}`); break;
+        case 'pilfer': parts.push(`対象のバフを1つ盗む（盗めたら${stn('shiny')}+2、なければ+1）`); break;
         case 'chargeHeal': parts.push(`${stn('charge')}×${a}のHPを回復し、充電を消費`); break;
         default: break;
       }

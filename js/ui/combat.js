@@ -63,6 +63,7 @@
     const els = {};
     const slotOf = {};
     let inputHero = null, sel = -1, busy = true, waitResolve = null, hoverUid = null;
+    let kcur = null, lastFoe = null; // keyboard target cursor (uid) / last enemy targeted
 
     function assignSlot(u) {
       if (u.side === 'H') return HERO_SLOTS[u.idx];
@@ -100,7 +101,7 @@
       root.style.top = pos.y - sz.h * sc + 'px';
       root.dataset.uid = String(u.uid);
       root.addEventListener('click', (e) => { e.stopPropagation(); onUnitClick(u); });
-      root.addEventListener('mouseenter', () => { hoverUid = u.uid; markTargets(); });
+      root.addEventListener('mouseenter', () => { hoverUid = u.uid; if (selTargets().includes(u.uid)) kcur = u.uid; markTargets(); });
       root.addEventListener('mouseleave', () => { if (hoverUid === u.uid) hoverUid = null; markTargets(); });
       field.appendChild(root);
       els[u.uid] = { root, spr, img, blk, fill, hpt, sts, intent, nm };
@@ -165,6 +166,7 @@
         const el = els[u.uid];
         if (!el) continue;
         el.root.classList.toggle('targetable', vt.includes(u.uid));
+        el.root.classList.toggle('kbsel', vt.includes(u.uid) && kcur === u.uid);
         let targeted = false;
         if (hoverUid && u.side === 'H') {
           const hov = E.unit(C, hoverUid);
@@ -229,7 +231,7 @@
       if (inputHero && sel >= 0) {
         const c = inputHero.hand[sel];
         const d = c && E.cardDef(c);
-        hint.textContent = d ? (d.tg === 'A' ? '対象の味方をクリック（またはドラッグ＆ドロップ）' : d.tg === 'D' ? '蘇生する仲間を選択' : '対象の敵をクリック（またはドラッグ＆ドロップ）') : '';
+        hint.textContent = d ? (d.tg === 'A' ? '対象の味方をクリック' : d.tg === 'D' ? '蘇生する仲間をクリック' : '対象の敵をクリック') + '（キーボード：←→で選択、Enter／同じ数字で決定）' : '';
       } else if (inputHero) hint.textContent = `${inputHero.n}のターン — カードをクリック、またはドラッグして使用`;
       else hint.textContent = '';
     }
@@ -334,7 +336,7 @@
     }
 
     // ---------- input ----------
-    function selectCard(i) {
+    function selectCard(i, fromKey) {
       if (busy || !inputHero) return;
       const c = inputHero.hand[i];
       if (!c) return;
@@ -345,17 +347,42 @@
         return;
       }
       if (E.needsTarget(c)) {
+        // pressing the same number key again plays the card on the cursor target
+        if (fromKey && sel === i && selTargets().includes(kcur)) { play(i, kcur); return; }
         A.sfx('click');
         sel = sel === i ? -1 : i;
+        if (sel >= 0) kcur = defaultTarget(c);
         render();
-        const vt = E.validTargets(C, inputHero, c);
-        // single valid ally target (self) → still require click
-        if (sel >= 0 && vt.length === 1 && E.cardDef(c).tg === 'E') { /* keep manual */ }
       } else play(i, null);
+    }
+    // valid targets of the selected card, ordered left → right on screen
+    function selTargets() {
+      const c = inputHero && sel >= 0 ? inputHero.hand[sel] : null;
+      if (!c) return [];
+      const x = (uid) => (els[uid] ? parseFloat(els[uid].root.style.left) : 0);
+      return E.validTargets(C, inputHero, c).slice().sort((a, b) => x(a) - x(b));
+    }
+    function defaultTarget(c) {
+      const vt = selTargets();
+      if (!vt.length) return null;
+      const d = E.cardDef(c);
+      if (d.tg === 'E') return vt.includes(lastFoe) ? lastFoe : vt[0];
+      if (d.tg === 'A') return vt.map((id) => E.unit(C, id)).reduce((a, b) => (b.hp / b.maxHp < a.hp / a.maxHp ? b : a)).uid;
+      return vt[0];
+    }
+    function moveCursor(step) {
+      const vt = selTargets();
+      if (!vt.length) return;
+      const i = vt.indexOf(kcur);
+      kcur = vt[(i < 0 ? 0 : i + step + vt.length) % vt.length];
+      A.sfx('click');
+      markTargets();
     }
     async function play(i, tuid) {
       busy = true;
       sel = -1;
+      const tu = tuid != null && E.unit(C, tuid);
+      if (tu && tu.side === 'E') lastFoe = tuid;
       const ok = E.playCard(C, inputHero, i, tuid);
       if (ok) A.sfx('card');
       await flush();
@@ -449,8 +476,15 @@
     const onKey = (e) => {
       if (document.getElementById('modal')) return;
       if (e.key === 'Escape') { if (sel >= 0) { sel = -1; render(); } return; }
+      // a targeted card is selected: ←→ / A D / Tab move the cursor, Enter / Space play it
+      if (sel >= 0 && inputHero && !busy) {
+        const k = e.key;
+        if (k === 'ArrowLeft' || k === 'ArrowUp' || k === 'a' || k === 'A' || (k === 'Tab' && e.shiftKey)) { e.preventDefault(); moveCursor(-1); return; }
+        if (k === 'ArrowRight' || k === 'ArrowDown' || k === 'd' || k === 'D' || k === 'Tab') { e.preventDefault(); moveCursor(1); return; }
+        if (k === 'Enter' || k === ' ') { e.preventDefault(); if (selTargets().includes(kcur)) play(sel, kcur); return; }
+      }
       if ((e.key === 'e' || e.key === 'E' || e.key === ' ') && inputHero && !busy) { e.preventDefault(); endHeroTurn(); return; }
-      if (/^[0-9]$/.test(e.key) && inputHero) { const i = e.key === '0' ? 9 : +e.key - 1; selectCard(i); }
+      if (/^[0-9]$/.test(e.key) && inputHero) { const i = e.key === '0' ? 9 : +e.key - 1; selectCard(i, true); }
     };
     document.addEventListener('keydown', onKey);
     UI.cleanup = () => { document.removeEventListener('keydown', onKey); cleanupDrag(); };
@@ -480,7 +514,7 @@
           h('div', null, '③ カードにはエナジーが必要です（毎ターン3）。使い終わったら「ターン終了」。'),
           h('div', null, '④ 敵の頭上には「次の行動」が表示されます。', h('span', { style: { color: '#ff9e9e' } }, '攻'), '＝攻撃（→は狙われている仲間）、', h('span', { style: { color: '#9ec4ff' } }, '防'), '＝防御、', h('span', { style: { color: '#ff3d8b' } }, '害'), '＝ハッキング など。'),
           h('div', null, '⑤ シールドはダメージを肩代わりし、自分のターン開始時に消えます。タンクの「挑発」で攻撃を引きつけましょう。'),
-          h('div', { class: 'sub' }, 'アイコンやキーワードにカーソルを合わせると説明が出ます（スマホはタップ）。キーボード：1〜0でカード、Eでターン終了。'),
+          h('div', { class: 'sub' }, 'アイコンやキーワードにカーソルを合わせると説明が出ます（スマホはタップ）。キーボード：1〜0でカード → ←→で対象 → Enter（同じ数字でも可）、Eでターン終了。'),
           h('div', { style: { textAlign: 'right' } }, UI.btn('はじめる', () => { UI.closeModal(); res(); }, 'pink'))), { w: 640, noClose: true });
       });
     }

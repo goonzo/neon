@@ -25,7 +25,7 @@ function scoreCard(C, u, card) {
   const incoming = E.alive(C, 'E').reduce((s, e) => { const i = E.intentInfo(C, e); return s + (i && i.dmg ? i.dmg * (i.hits || 1) * (i.aoe ? hs.length : 1) : 0); }, 0);
   let s = 1;
   for (const fx of d.fx) {
-    if (fx[0] === 'heal' && low.hp / low.maxHp < 0.7) s += 5;
+    if ((fx[0] === 'heal' || (fx[0] === 'spendHeal' && (u.st[fx[1]] || 0) >= 3)) && low.hp / low.maxHp < 0.7) s += 5;
     if (fx[0] === 'blk' && incoming > 6) s += 3;
     if (fx[0] === 'dmg' || fx[0] === 'dmgX' || fx[0] === 'drain') s += 4;
     if (fx[0] === 'st' && G.ST[fx[1]] && G.ST[fx[1]].pw) s += 6;
@@ -80,7 +80,7 @@ let stats = { runs: 0, reachAct: [0, 0, 0, 0], wins: 0, errors: 0 };
 for (let r = 0; r < N; r++) {
   // pick a party with one of each role-ish
   const byRole = (role) => ids.filter((id) => G.HEROES[id].role === role);
-  const party = [G.pick(byRole('tank')), G.pick(byRole('healer')), G.pick(byRole('attacker')), G.pick(byRole('special'))];
+  const party = process.env.PARTY ? process.env.PARTY.split(',') : [G.pick(byRole('tank')), G.pick(byRole('healer')), G.pick(byRole('attacker')), G.pick(byRole('special'))];
   const run = G.newRun(diff, party);
   if (process.env.FAC >= 2) G.addRelic(run, G.randomRelic(run, 2));
   run.credits = 0;

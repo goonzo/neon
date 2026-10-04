@@ -182,6 +182,34 @@
     { id: 'yom_onryo', n: '怨霊', c: 2, t: 'A', tg: 'E', r: 3, fx: [['dmgX', 'lost', 0.5, 4]], u: [['dmgX', 'lost', 0.7, 4]] },
   ]);
 
+  hero({
+    id: 'crow', n: 'クロウ', role: 'healer', hp: 36, spd: 7, col: '#a99fc9',
+    title: '闇市場の運び屋ガラス',
+    trait: { n: '光りもの好き', d: '戦闘開始時に光りもの2。攻撃をヒットさせるたび光りもの+1。ターン開始時、HP割合が最も低い味方を光りもの1個につき1回復（最大6）。' },
+    desc: '闇市場に出入りする改造カラス。片目は拾った義眼。光るものを見ると盗まずにいられないが、盗んだものはたいてい仲間へのおみやげになる。',
+    quote: '「カァ！（訳：これ、おまえにやる）」',
+    deck: [['crw_peck', 2], ['crw_gift', 2], ['crw_wing', 2], ['crw_snatch', 1], ['crw_trove', 1], ['crw_caw', 1]],
+  }, [
+    { id: 'crw_peck', n: 'つつく', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 5]], u: [['dmg', 8]] },
+    { id: 'crw_gift', n: 'おみやげ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 6]], u: [['heal', 9]] },
+    { id: 'crw_wing', n: 'つばさで包む', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'crw_snatch', n: 'ひったくり', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 3], ['pilfer']], u: [['dmg', 6], ['pilfer']] },
+    { id: 'crw_trove', n: '宝物のおすそわけ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['spendHeal', 'shiny', 2]], u: [['spendHeal', 'shiny', 3]] },
+    { id: 'crw_caw', n: 'カァ！', c: 0, t: 'S', tg: 'E', r: 0, fx: [['st', 'weak', 1]], u: [['st', 'weak', 2]] },
+    { id: 'crw_dive', n: '急降下', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 4, 2]], u: [['dmg', 5, 2]] },
+    { id: 'crw_share', n: '山分け', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['heal', 3]], u: [['heal', 5]] },
+    { id: 'crw_glint', n: 'キラッ', c: 1, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['st', 'shiny', 1, '@S']] },
+    { id: 'crw_down', n: '羽毛のふとん', c: 1, t: 'S', tg: 'A', r: 1, fx: [['st', 'regen', 3], ['blk', 3]], u: [['st', 'regen', 4], ['blk', 5]] },
+    { id: 'crw_coin', n: '小銭拾い', c: 0, t: 'S', tg: 'S', r: 1, fx: [['cred', 4], ['st', 'shiny', 1]], u: [['cred', 6], ['st', 'shiny', 2]] },
+    { id: 'crw_nest', n: '光の巣', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'hoard', 1]], u: [['st', 'hoard', 2]] },
+    { id: 'crw_spoils', n: '戦利品の分配', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['spendHeal', 'shiny', 1]], u: [['spendHeal', 'shiny', 1], ['blk', 3]] },
+    { id: 'crw_rob', n: '根こそぎ', c: 1, t: 'S', tg: 'E', r: 2, fx: [['pilfer'], ['pilfer']], uc: 0 },
+    { id: 'crw_omen', n: '凶兆', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'vuln', 2], ['st', 'weak', 1]], u: [['st', 'vuln', 3], ['st', 'weak', 1]] },
+    { id: 'crw_return', n: 'カラスの恩返し', c: 1, t: 'S', tg: 'A', r: 3, fx: [['heal', 8], ['cleanse', 99]], u: [['heal', 12], ['cleanse', 99]] },
+    { id: 'crw_flock', n: 'カラスの大群', c: 2, t: 'A', tg: 'RE', r: 3, fx: [['dmg', 3, 6]], u: [['dmg', 4, 6]] },
+    { id: 'crw_hoard', n: '秘蔵の宝', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['spendHeal', 'shiny', 2]], uc: 1 },
+  ]);
+
   // ======================= ATTACKERS =======================
   hero({
     id: 'rei', n: 'レイ', role: 'attacker', hp: 33, spd: 8, col: '#2ee6ff',
@@ -418,6 +446,7 @@
     gen: { q: 2, cost: { food: 40, scrap: 30 }, cond: 'a1boss', hint: '旧市街の時計塔に、凄腕の狙撃手が住んでいるという。' },
     madame: { q: 2, cost: { scrap: 40, data: 30, energy: 20 }, cond: 'a2reach', hint: '管理都市の闇市場に、話の通じる女主人がいる。' },
     doll: { q: 2, cost: { data: 40, energy: 40 }, cond: 'a2boss', hint: '眠りの管理者の傍らに、白い義体の少女がいた。' },
+    crow: { q: 1, cost: { scrap: 20, food: 20, data: 10 }, cond: null, hint: '拠点の換気口に、光るものを山ほど抱えたカラスが居座っている。' },
     mike: { q: 0, cost: { scrap: 20, data: 15 }, cond: null, hint: '拠点のダクトの奥で、なにかがゴロゴロ鳴っている。' },
     echo: { q: 3, cost: { data: 60, energy: 50 }, cond: 'a3reach', hint: '白の聖域の手前で、ノイズ混じりの声が誰かを呼んでいる。' },
   };
@@ -425,7 +454,7 @@
   G.HEROES = H;
   G.CARDS = CARDS;
   G.UNLOCK = UNLOCK;
-  G.HERO_ORDER = ['gallon', 'pixe', 'doll', 'mina', 'nono', 'yomi', 'rei', 'gen', 'kagura', 'mike', 'chip', 'nezu', 'madame', 'echo'];
+  G.HERO_ORDER = ['gallon', 'pixe', 'doll', 'mina', 'nono', 'yomi', 'crow', 'rei', 'gen', 'kagura', 'mike', 'chip', 'nezu', 'madame', 'echo'];
   G.START_HEROES = ['gallon', 'mina', 'rei', 'chip'];
   G.COND_TEXT = {
     a1boss: '第一区画のボスを撃破',
