@@ -967,6 +967,28 @@
     return (cache[key] = cv.toDataURL());
   };
 
+  // 1x offscreen canvas of a sprite (for drawing onto other canvases)
+  const cvCache = {};
+  G.sprCanvas = (name, flip) => {
+    const key = name + (flip ? '|f' : '');
+    if (cvCache[key]) return cvCache[key];
+    const d = S[name];
+    if (!d || typeof document === 'undefined') return null;
+    const rows = expand(d);
+    const cv = document.createElement('canvas');
+    cv.width = rows[0].length; cv.height = rows.length;
+    const ctx = cv.getContext('2d');
+    for (let y = 0; y < rows.length; y++) {
+      for (let x = 0; x < cv.width; x++) {
+        const ch = rows[y][flip ? cv.width - 1 - x : x];
+        if (ch === '.' || ch === ' ') continue;
+        ctx.fillStyle = PAL[ch] || '#f0f';
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+    return (cvCache[key] = cv);
+  };
+
   // <img> element of sprite scaled
   G.sprImg = (name, scale, opts) => {
     const sz = G.sprSize(name);

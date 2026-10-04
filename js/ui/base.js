@@ -99,13 +99,15 @@
   };
 
   function tabSortie(main) {
+    main.appendChild(UI.town());
     const saved = G.loadRun();
     if (saved) {
-      const p = h('div', { class: 'panel resume col', style: { gap: '10px' } },
-        h('div', { class: 'ttl' }, '進行中の任務'),
-        h('div', null, `${G.ACTS[saved.act].n}（第${saved.act}区画）　難易度：`, h('span', { style: { color: G.DIFF[saved.diff].c } }, G.DIFF[saved.diff].n)),
-        h('div', { class: 'row' }, saved.heroes.map((hh) => h('div', { class: 'col', style: { alignItems: 'center', gap: '2px' } }, G.sprImg(hh.id, 3), h('span', { class: 'sub' }, `${hh.hp}/${hh.maxHp}`)))),
-        h('div', { class: 'row' },
+      const p = h('div', { class: 'panel resume row', style: { gap: '14px', marginTop: '8px', alignItems: 'center' } },
+        h('div', { class: 'col grow', style: { gap: '6px' } },
+          h('div', { class: 'ttl' }, '進行中の任務'),
+          h('div', null, `${G.ACTS[saved.act].n}（第${saved.act}区画）　難易度：`, h('span', { style: { color: G.DIFF[saved.diff].c } }, G.DIFF[saved.diff].n)),
+          h('div', { class: 'row' }, saved.heroes.map((hh) => h('div', { class: 'col', style: { alignItems: 'center', gap: '2px' } }, G.sprImg(hh.id, 3), h('span', { class: 'sub' }, `${hh.hp}/${hh.maxHp}`))))),
+        h('div', { class: 'col', style: { gap: '8px', alignItems: 'stretch' } },
           UI.btn('任務を再開する', () => { G.run = saved; UI.resume(); }, 'big pink'),
           UI.btn('任務を放棄する', () => UI.confirm('任務を放棄しますか？\n集めた資源の70%を持ち帰ります。', () => {
             G.run = saved;
@@ -117,16 +119,15 @@
       return;
     }
     const m = G.meta;
-    main.appendChild(h('div', { class: 'panel col', style: { gap: '10px' } },
-      h('div', { class: 'ttl' }, '地上作戦'),
-      h('div', { style: { fontSize: '14px', lineHeight: '1.7' } },
-        '仲間を4人選び、SIの支配地域へ送り出します。', h('br'),
-        '区画を進み、資源を集め、ボスを倒しましょう。', h('br'),
-        '集めた資源は拠点に持ち帰り、施設の強化や仲間の勧誘に使えます。', h('br'),
-        h('span', { class: 'sub' }, '※ 全滅しても、集めた資源の70%は持ち帰れます。')),
-      h('div', null, UI.btn('出撃準備へ', () => UI.sortie(), 'big pink'))));
+    main.appendChild(h('div', { class: 'panel row', style: { gap: '14px', marginTop: '8px', alignItems: 'center' } },
+      h('div', { class: 'col grow', style: { gap: '4px' } },
+        h('div', { class: 'ttl' }, '地上作戦'),
+        h('div', { style: { fontSize: '13px', lineHeight: '1.6' } },
+          '仲間を4人選んで地上へ。集めた資源で施設を強化すると、街も育っていきます。', h('br'),
+          h('span', { class: 'sub' }, '※ 全滅しても、集めた資源の70%は持ち帰れます。'))),
+      UI.btn('出撃準備へ', () => UI.sortie(), 'big pink')));
     const best = m.bestAct ? `${m.bestAct}（${G.ACTS[m.bestAct].n}）` : '—';
-    main.appendChild(h('div', { class: 'panel', style: { marginTop: '10px', fontSize: '13px' } },
+    main.appendChild(h('div', { class: 'panel', style: { marginTop: '8px', fontSize: '13px' } },
       h('div', { class: 'row', style: { gap: '20px', flexWrap: 'wrap' } },
         h('span', null, `最高到達：第${best}区画`),
         h('span', null, '難易度別制圧：', G.DIFF.map((d, i) => h('span', { style: { color: d.c, marginRight: '8px' } }, `${d.n}${m.clears[i] || 0}`))),
@@ -140,7 +141,7 @@
       'ヒント：速度が高いキャラクターほど早く行動します。上部の行動順を確認しましょう。',
       'ヒント：倒れた仲間は戦闘後にHP25%で復帰します。全滅すると任務失敗です。',
     ];
-    main.appendChild(h('div', { class: 'sub', style: { marginTop: '10px' } }, G.pick(tips)));
+    main.appendChild(h('div', { class: 'sub', style: { marginTop: '8px' } }, G.pick(tips)));
   }
 
   function heroDetailModal(id) {

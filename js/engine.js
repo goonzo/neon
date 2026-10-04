@@ -142,7 +142,6 @@
     // damage over time
     if (u.st.burn > 0) { const v = u.st.burn; E.dealDamage(C, u, v, { pierce: true, dot: 'burn' }); u.st.burn = Math.floor(v / 2); }
     if (!u.dead && u.st.virus > 0) { const v = u.st.virus; E.dealDamage(C, u, v, { pierce: true, dot: 'virus' }); if (!noDecayActive(C, u)) u.st.virus = v - 1; }
-    if (!u.dead && u.st.bleed > 0) { const v = u.st.bleed; E.dealDamage(C, u, v, { pierce: true, dot: 'bleed' }); u.st.bleed = v - 1; }
     if (!u.dead && u.st.regen > 0) { E.heal(C, null, u, u.st.regen); u.st.regen--; }
     cleanZero(u);
     if (u.dead) return false;
@@ -195,7 +194,9 @@
         const f = G.pick(E.foes(C, u));
         if (!f) break;
         push(C, { k: 'txt', uid: u.uid, s: 'チュウ!', c: '#9a9cb2', small: 1 });
+        const nullified = f.st.barrier > 0;
         E.dealDamage(C, f, 3 + (u.st.droneUp || 0), { src: u });
+        if (!nullified) openWound(C, f, u);
         if (u.st.ratKing) { const a = E.lowestAlly(C, 'H'); if (a) E.gainBlock(C, a, u.st.ratKing); }
       }
       while (u.hand.length) u.disc.push(u.hand.pop());
@@ -367,17 +368,28 @@
     return m;
   };
 
+  // 裂傷 (bleed): every landed hit opens the wound for extra pierce damage, then it shrinks by 1
+  // (Rei's hits keep it open)
+  function openWound(C, t, src) {
+    if (!t || t.dead || !(t.st.bleed > 0)) return;
+    const v = t.st.bleed;
+    E.dealDamage(C, t, v, { pierce: true, dot: 'bleed' });
+    if (t.dead || (src && src.id === 'rei')) return;
+    t.st.bleed = v - 1;
+    if (!t.st.bleed) delete t.st.bleed;
+  }
+
   function attack(C, src, t, base, o) {
     o = o || {};
     if (!t || t.dead) return 0;
     const d = calcAttack(C, src, t, base, o);
     if (t.st.aim > 0) delete t.st.aim;
     if (src) push(C, { k: 'atk', uid: src.uid, tuid: t.uid });
-    const wasBleeding = t.st.bleed > 0;
+    const nullified = t.st.barrier > 0;
     const hp = E.dealDamage(C, t, d, { src });
     if (src && o.drain && hp > 0 && !src.dead) E.heal(C, src, src, hp, { noBonus: true });
+    if (!nullified) openWound(C, t, src);
     if (!t.dead) {
-      if (src && src.id === 'rei' && wasBleeding && t.st.bleed > 0) t.st.bleed++;
       if (src && src.st.ignite) E.addSt(C, t, 'burn', src.st.ignite, src);
       if (src && src.st.bloodlust) E.addSt(C, t, 'bleed', src.st.bloodlust, src);
       if (src && src.st.marking) E.addSt(C, t, 'aim', src.st.marking, src);

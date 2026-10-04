@@ -28,6 +28,7 @@
       lastParty: G.START_HEROES.slice(),
       lastDiff: 0,
       settings: { sfx: true, bgm: true, speed: 1 },
+      townSeen: null, // facility levels last shown in the town view (for the level-up sparkle)
     };
   }
   G.loadMeta = () => {
