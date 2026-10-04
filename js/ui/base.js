@@ -270,9 +270,9 @@
   }
 
   UI.glossary = () => {
-    const keys = Object.keys(G.ST).filter((k) => !G.ST[k].pw);
-    const pws = Object.keys(G.ST).filter((k) => G.ST[k].pw);
-    const item = (k) => h('div', { style: { fontSize: '12.5px', marginBottom: '3px' } }, h('span', { class: 'st', style: { background: G.ST[k].c, display: 'inline-flex', marginRight: '6px' } }, G.ST[k].g), h('span', { style: { color: '#ffd93d' } }, G.ST[k].n), '：', G.stDesc(k, 'X'));
+    const of = (kind) => Object.keys(G.ST).filter((k) => G.stKind(k) === kind);
+    const item = (k) => h('div', { style: { fontSize: '12.5px', marginBottom: '3px' } }, h('span', { class: 'st ' + G.stKind(k), style: { '--c': G.ST[k].c, display: 'inline-flex', marginRight: '6px' } }, G.ST[k].g), h('span', { style: { color: '#ffd93d' } }, G.ST[k].n), '：', G.stDesc(k, 'X'));
+    const head = (kind, note) => h('div', { class: 'sub', style: { margin: '6px 0' } }, h('span', { class: 'tk ' + kind }, G.ST_KIND_N[kind]), note);
     UI.modal(h('div', null,
       h('div', { class: 'row' }, h('span', { class: 'ttl' }, '用語集'), h('span', { class: 'grow' }), UI.btn('閉じる', UI.closeModal, 'sm')),
       h('div', { class: 'scroll', style: { maxHeight: '420px', marginTop: '8px', columns: '2', columnGap: '18px' } },
@@ -280,7 +280,10 @@
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【エナジー】カードを使うためのコスト。毎ターン3回復する。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【廃棄】使用後、この戦闘中はデッキから除外される。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【速度】ラウンドごとに、速度の高い順に行動する。'),
-        keys.map(item), h('div', { class: 'sub', style: { margin: '6px 0' } }, '— パワー効果 —'), pws.map(item))), { w: 820 });
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【状態の見かた】明るく塗られたアイコン＝バフ（有利）、黒地に色枠のアイコン＝デバフ（不利）。右下の数字はスタック数または残りターン。'),
+        head('buff', '　有利な効果'), of('buff').map(item),
+        head('debuff', '　不利な効果'), of('debuff').map(item),
+        head('power', '　戦闘中ずっと続く'), of('power').map(item))), { w: 820 });
   };
 
   // ================= SORTIE =================

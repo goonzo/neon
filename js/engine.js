@@ -38,7 +38,9 @@
     return a.reduce((m, u) => (u.hp / u.maxHp < m.hp / m.maxHp ? u : m));
   };
   E.hasRelic = (C, id) => C.run.relics.includes(id);
-  const push = (C, ev) => C.ev.push(ev);
+  // C.viz: attach a per-event snapshot so the UI can update bars in sync with each animation
+  const push = (C, ev) => { if (C.viz) ev.snap = E.snap(C); C.ev.push(ev); };
+  E.snap = (C) => C.units.map((u) => ({ uid: u.uid, hp: u.hp, maxHp: u.maxHp, blk: u.blk, st: Object.assign({}, u.st), dead: !!u.dead, fled: !!u.fled }));
 
   // ---------- creation ----------
   function mkHero(C, h, i) {
@@ -86,6 +88,7 @@
       if (u.id === 'chip') E.alive(C, 'E').forEach((e) => E.addSt(C, e, 'virus', 3, u));
       if (u.id === 'pixe') E.addSt(C, u, 'charge', 3, u);
       if (u.id === 'nezu') E.addSt(C, u, 'drone', 2, u);
+      if (u.id === 'mike') E.addSt(C, u, 'stealth', 1, u);
       if (opts.startBlock) E.gainBlock(C, u, opts.startBlock);
     }
     for (const rid of C.run.relics) {
@@ -134,8 +137,8 @@
   }
 
   function startTurn(C, u) {
-    push(C, { k: 'turn', uid: u.uid });
     if (!(u.st.fortify > 0)) u.blk = 0;
+    push(C, { k: 'turn', uid: u.uid });
     // damage over time
     if (u.st.burn > 0) { const v = u.st.burn; E.dealDamage(C, u, v, { pierce: true, dot: 'burn' }); u.st.burn = Math.floor(v / 2); }
     if (!u.dead && u.st.virus > 0) { const v = u.st.virus; E.dealDamage(C, u, v, { pierce: true, dot: 'virus' }); if (!noDecayActive(C, u)) u.st.virus = v - 1; }
@@ -343,6 +346,8 @@
   function calcAttack(C, src, t, base, o, preview) {
     let d = base + (src ? src.st.str || 0 : 0);
     if (src && src.id === 'kagura' && t.st.burn > 0) d += 3;
+    if (src && src.id === 'mike' && src.st.stealth > 0) d += 2;
+    if (o.hid && src && src.st.stealth > 0) d *= o.hid;
     if (o.aim && t.st.aim > 0) d += o.aim;
     if (o.elite && (t.elite || t.boss)) d *= o.elite;
     if (src && src.st.weak > 0) d = Math.floor(d * 0.75);
@@ -352,6 +357,15 @@
     return Math.max(0, d);
   }
   E.previewAttack = (C, src, t, base, o) => calcAttack(C, src, t, base, o || {}, true);
+  // human-readable list of statuses currently changing an attack's damage (for tooltips)
+  E.attackMods = (C, src, t) => {
+    const m = [];
+    if (src && src.st.str) m.push({ up: 1, s: `${G.ST.str.n}：+${src.st.str}` });
+    if (src && src.st.weak > 0) m.push({ up: 0, s: `${G.ST.weak.n}：-25%` });
+    if (t && t.st.vuln > 0) m.push({ up: 1, s: `${t.n}が${G.ST.vuln.n}：×1.5` });
+    if (t && t.st.aim > 0) m.push({ up: 1, s: `${t.n}に${G.ST.aim.n}：+${t.st.aim * (3 + (src ? src.st.marksman || 0 : 0))}` });
+    return m;
+  };
 
   function attack(C, src, t, base, o) {
     o = o || {};
@@ -366,6 +380,7 @@
       if (src && src.id === 'rei' && wasBleeding && t.st.bleed > 0) t.st.bleed++;
       if (src && src.st.ignite) E.addSt(C, t, 'burn', src.st.ignite, src);
       if (src && src.st.bloodlust) E.addSt(C, t, 'bleed', src.st.bloodlust, src);
+      if (src && src.st.marking) E.addSt(C, t, 'aim', src.st.marking, src);
       if (t.st.spikeshell) E.gainBlock(C, t, t.st.spikeshell);
       if (t.id === 'pixe') E.addSt(C, t, 'charge', 1, t);
     }
@@ -653,16 +668,17 @@
     if (!u.intent) return null;
     const m = u.intent.m;
     const t = E.effectiveTarget(C, u);
-    let dmg = null, hits = 0;
+    let dmg = null, hits = 0, base = null, mods = [];
     for (const fx of m.fx) {
       if (fx[0] === 'dmg' || fx[0] === 'drain') {
         const ref = t || E.alive(C, 'H')[0];
-        if (ref) dmg = E.previewAttack(C, u, ref, fx[1], {});
+        if (ref) { dmg = E.previewAttack(C, u, ref, fx[1], {}); mods = E.attackMods(C, u, ref); }
+        base = Math.round(fx[1] * C.diff.dmg * EK.dmg * EK.dmgAct[C.run.act || 1]);
         hits = fx[2] || 1;
         break;
       }
     }
-    return { m, t, dmg, hits, aoe: m.tg === 'AE' };
+    return { m, t, dmg, base, mods, hits, aoe: m.tg === 'AE' };
   };
 
   E.enemyAct = (C, u) => {
@@ -698,9 +714,11 @@
     if (d.desc) return d.desc;
     const parts = [];
     const mul = u && d.t === 'A' && u.st && u.st.focus ? 2 : 1;
+    let hid = 0;
     const dmgVal = (v) => {
       if (!u || !u.st) return { v, mod: 0 };
       let x = v * mul + (u.st.str || 0);
+      if (u.st.stealth > 0) { if (u.id === 'mike') x += 2; if (hid) x *= hid; }
       if (u.st.weak > 0) x = Math.floor(x * 0.75);
       return { v: x, mod: x > v ? 1 : x < v ? -1 : 0 };
     };
@@ -714,9 +732,12 @@
       const stn = (k) => `<i class="kw" data-st="${k}">${G.ST[k] ? G.ST[k].n : k}</i>`;
       switch (fx[0]) {
         case 'dmg': {
+          hid = c && c.hid ? c.hid : 0;
           let s = `${pre}${num(dmgVal(a))}ダメージ${b > 1 ? '×' + b : ''}`;
           if (c && c.aim) s += `（照準中なら+${c.aim}）`;
           if (c && c.elite) s += `（エリート・ボスに${c.elite}倍）`;
+          if (c && c.hid) s += `（${stn('stealth')}中なら${c.hid}倍）`;
+          hid = 0;
           parts.push(s); break;
         }
         case 'drain': parts.push(`${pre}${num(dmgVal(a))}ダメージ${b > 1 ? '×' + b : ''}。与えたダメージ分HP回復`); break;

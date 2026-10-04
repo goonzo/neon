@@ -262,6 +262,35 @@
     { id: 'kag_camp', n: 'キャンプファイア', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 4], ['st', 'regen', 2]], u: [['heal', 6], ['st', 'regen', 3]] },
   ]);
 
+  hero({
+    id: 'mike', n: 'ミケ', role: 'attacker', hp: 34, spd: 7, col: '#ffb36b', ai: true,
+    title: '旧時代のネコ型ペットロボ',
+    trait: { n: '気まぐれな爪', d: '戦闘開始時、隠密1を得る。隠密状態のミケの攻撃ダメージ+2。' },
+    desc: '無人の高級マンションで、百年間ひとりで昼寝をしていた三毛柄の猫型ロボット。気が向いたときしか戦わない。ピクセとは仲が悪い……ふりをしている。',
+    quote: '「ニャ。（訳：べつに、あんたたちのためじゃないし）」',
+    deck: [['mik_punch', 2], ['mik_curl', 2], ['mik_claw', 1], ['mik_hide', 1], ['mik_pounce', 1], ['mik_purr', 1], ['mik_stretch', 1]],
+  }, [
+    { id: 'mik_punch', n: 'ねこパンチ', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'mik_curl', n: 'まるくなる', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'mik_claw', n: 'ひっかき', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 3], ['st', 'bleed', 2]], u: [['dmg', 4], ['st', 'bleed', 3]] },
+    { id: 'mik_hide', n: 'ものかげ', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'stealth', 1], ['blk', 3]], u: [['st', 'stealth', 1], ['blk', 6]] },
+    { id: 'mik_pounce', n: 'とびかかり', c: 2, t: 'A', tg: 'E', r: 0, fx: [['dmg', 8, 1, { hid: 2 }]], u: [['dmg', 11, 1, { hid: 2 }]] },
+    { id: 'mik_purr', n: 'ゴロゴロ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 4]], u: [['heal', 6]] },
+    { id: 'mik_stretch', n: 'のび', c: 0, t: 'S', tg: 'S', r: 0, fx: [['st', 'haste', 1], ['draw', 1]], u: [['st', 'haste', 2], ['draw', 2]] },
+    { id: 'mik_fury', n: 'ねこ連打', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 2, 4]], u: [['dmg', 3, 4]] },
+    { id: 'mik_hiss', n: 'シャーッ！', c: 1, t: 'S', tg: 'E', r: 1, fx: [['st', 'weak', 2], ['st', 'vuln', 1]], u: [['st', 'weak', 2], ['st', 'vuln', 2]] },
+    { id: 'mik_box', n: '段ボール箱', c: 0, t: 'S', tg: 'S', r: 1, fx: [['st', 'stealth', 1], ['draw', 1]], u: [['st', 'stealth', 1], ['draw', 2]] },
+    { id: 'mik_tease', n: 'ねこじゃらし', c: 0, t: 'S', tg: 'E', r: 1, fx: [['st', 'slow', 1], ['st', 'weak', 1]], u: [['st', 'slow', 2], ['st', 'weak', 1]] },
+    { id: 'mik_groom', n: '毛づくろい', c: 0, t: 'S', tg: 'S', r: 1, fx: [['cleanse', 1], ['blk', 3]], u: [['cleanse', 1], ['blk', 6]] },
+    { id: 'mik_ambush', n: '待ち伏せ', c: 1, t: 'A', tg: 'E', r: 2, fx: [['dmg', 6, 1, { hid: 2 }]], u: [['dmg', 9, 1, { hid: 2 }]] },
+    { id: 'mik_mark', n: 'マーキング', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'marking', 1]], uc: 0 },
+    { id: 'mik_night', n: '夜の運動会', c: 1, t: 'A', tg: 'RE', r: 2, fx: [['dmg', 3, 4], ['st', 'haste', 1, '@S']], u: [['dmg', 4, 4], ['st', 'haste', 1, '@S']] },
+    { id: 'mik_sun', n: 'ひなたぼっこ', c: 1, t: 'S', tg: 'S', r: 2, fx: [['heal', 5], ['st', 'regen', 2]], u: [['heal', 7], ['st', 'regen', 3]] },
+    { id: 'mik_tiger', n: '虎の血', c: 2, t: 'A', tg: 'E', r: 3, fx: [['dmg', 16, 1, { hid: 2 }]], u: [['dmg', 21, 1, { hid: 2 }]] },
+    { id: 'mik_meet', n: '猫の集会', c: 1, t: 'S', tg: 'AA', r: 3, fx: [['st', 'haste', 2], ['blk', 4]], u: [['st', 'haste', 2], ['blk', 7]] },
+    { id: 'mik_nine', n: '九つの命', c: 3, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'undying', 1]], uc: 2 },
+  ]);
+
   // ======================= SPECIALS =======================
   hero({
     id: 'chip', n: 'チップ', role: 'special', hp: 34, spd: 7, col: '#b8ff3d',
@@ -387,13 +416,14 @@
     gen: { q: 2, cost: { food: 40, scrap: 30 }, cond: 'a1boss', hint: '旧市街の時計塔に、凄腕の狙撃手が住んでいるという。' },
     madame: { q: 2, cost: { scrap: 40, data: 30, energy: 20 }, cond: 'a2reach', hint: '管理都市の闇市場に、話の通じる女主人がいる。' },
     doll: { q: 2, cost: { data: 40, energy: 40 }, cond: 'a2boss', hint: '眠りの管理者の傍らに、白い義体の少女がいた。' },
+    mike: { q: 0, cost: { scrap: 20, data: 15 }, cond: null, hint: '拠点のダクトの奥で、なにかがゴロゴロ鳴っている。' },
     echo: { q: 3, cost: { data: 60, energy: 50 }, cond: 'a3reach', hint: '白の聖域の手前で、ノイズ混じりの声が誰かを呼んでいる。' },
   };
 
   G.HEROES = H;
   G.CARDS = CARDS;
   G.UNLOCK = UNLOCK;
-  G.HERO_ORDER = ['gallon', 'pixe', 'doll', 'mina', 'nono', 'yomi', 'rei', 'gen', 'kagura', 'chip', 'nezu', 'madame', 'echo'];
+  G.HERO_ORDER = ['gallon', 'pixe', 'doll', 'mina', 'nono', 'yomi', 'rei', 'gen', 'kagura', 'mike', 'chip', 'nezu', 'madame', 'echo'];
   G.START_HEROES = ['gallon', 'mina', 'rei', 'chip'];
   G.COND_TEXT = {
     a1boss: '第一区画のボスを撃破',

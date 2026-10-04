@@ -60,7 +60,7 @@
       if (!t) { tip.classList.add('hidden'); return; }
       let html = '';
       if (t.dataset.tip) html = t.dataset.tip;
-      else if (t.dataset.st) { const k = t.dataset.st; const s = G.ST[k]; html = `<div class="tn">${s.n}</div>${G.stDesc(k, 'X').replace(/X×3/, 'X×3')}`; }
+      else if (t.dataset.st) html = G.stTip(t.dataset.st);
       if (!html) { tip.classList.add('hidden'); return; }
       tip.innerHTML = html;
       tip.classList.remove('hidden');
@@ -80,7 +80,7 @@
       const t = e.target.closest && e.target.closest('[data-tip], .kw[data-st]');
       if (!t) return;
       const tip = UI.tipEl;
-      const html = t.dataset.tip || (t.dataset.st ? `<div class="tn">${G.ST[t.dataset.st].n}</div>${G.stDesc(t.dataset.st, 'X')}` : '');
+      const html = t.dataset.tip || (t.dataset.st ? G.stTip(t.dataset.st) : '');
       if (!html || !tip) return;
       tip.innerHTML = html;
       tip.classList.remove('hidden');

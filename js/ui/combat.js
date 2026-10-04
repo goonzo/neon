@@ -41,6 +41,8 @@
   UI.combat = (group, kind, bonus) => {
     const run = G.run;
     const C = E.create(run, group, { kind });
+    C.viz = true;
+    const snap0 = E.snap(C);
     E.begin(C, { startBlock: G.meta.fac.core >= 2 ? 3 : 0 });
     G.speedMul = G.meta.settings.speed || 1;
     const s = UI.screen('combat');
@@ -105,34 +107,53 @@
       return els[u.uid];
     }
 
-    function updUnit(u) {
+    const KIND_ORDER = { buff: 0, power: 1, debuff: 2 };
+    // v: optional snapshot (hp/blk/st/dead) from an engine event; without it, the live state is drawn
+    function updUnit(u, v) {
       const el = els[u.uid] || mkUnit(u);
-      el.root.classList.toggle('dead', !!u.dead);
-      if (u.fled) el.root.classList.add('fled');
-      el.root.classList.toggle('cur', C.cur === u);
-      const r = u.hp / u.maxHp;
+      const s = v || u;
+      el.root.classList.toggle('dead', !!s.dead);
+      if (s.fled) el.root.classList.add('fled');
+      if (!v) el.root.classList.toggle('cur', C.cur === u);
+      const r = s.hp / s.maxHp;
       el.fill.style.width = Math.max(0, r * 100) + '%';
       el.fill.className = 'fill ' + (u.side === 'E' ? '' : r > 0.6 ? 'hi' : r > 0.3 ? 'mid' : '');
-      el.hpt.textContent = u.dead ? (u.side === 'H' ? '戦闘不能' : '撃破') : `${u.hp}/${u.maxHp}`;
-      if (u.blk > 0 && !u.dead) { el.blk.classList.remove('hidden'); el.blk.textContent = u.blk; } else el.blk.classList.add('hidden');
-      el.sts.innerHTML = '';
-      if (!u.dead) for (const k in u.st) {
-        const d = G.ST[k];
-        if (!d) continue;
-        el.sts.appendChild(h('span', { class: 'st', style: { background: d.c }, 'data-tip': `<div class="tn">${d.n} ${u.st[k]}</div>${G.stDesc(k, u.st[k])}` }, d.g, h('sub', null, String(u.st[k]))));
+      el.hpt.textContent = s.dead ? (u.side === 'H' ? '戦闘不能' : '撃破') : `${s.hp}/${s.maxHp}`;
+      if (s.blk > 0 && !s.dead) { el.blk.classList.remove('hidden'); el.blk.textContent = s.blk; } else el.blk.classList.add('hidden');
+      // status chips: buffs → powers → debuffs; a chip pops when it is new or grows
+      const prev = el.prevSt || {};
+      const st = s.dead ? {} : s.st;
+      const keys = Object.keys(st).filter((k) => G.ST[k]).sort((a, b) => KIND_ORDER[G.stKind(a)] - KIND_ORDER[G.stKind(b)]);
+      const sig = keys.map((k) => k + st[k]).join(',');
+      if (sig !== el.stSig) {
+        el.stSig = sig;
+        el.sts.innerHTML = '';
+        let lastKind = null;
+        for (const k of keys) {
+          const d = G.ST[k];
+          const kind = G.stKind(k);
+          if (lastKind && kind === 'debuff' && lastKind !== 'debuff') el.sts.appendChild(h('span', { class: 'stsep' }));
+          lastKind = kind;
+          const grew = !(k in prev) || st[k] > prev[k];
+          el.sts.appendChild(h('span', { class: `st ${kind}${grew && el.prevSt ? ' pop' : ''}`, style: { '--c': d.c }, 'data-tip': G.stTip(k, st[k]) }, d.g, h('sub', null, String(st[k]))));
+        }
       }
-      if (u.side === 'E') {
+      el.prevSt = Object.assign({}, st);
+      if (u.side === 'E' && !v) {
         const info = !u.dead && E.intentInfo(C, u);
         if (info) {
           const m = info.m;
-          let label = ICON[m.i] || '？';
-          if (info.dmg != null) label += ` ${info.dmg}${info.hits > 1 ? '×' + info.hits : ''}`;
           el.intent.className = 'intent ' + m.i;
           el.intent.innerHTML = '';
-          el.intent.appendChild(h('span', null, label));
+          el.intent.appendChild(h('span', null, ICON[m.i] || '？'));
+          if (info.dmg != null) {
+            const cls = info.dmg > info.base ? 'up' : info.dmg < info.base ? 'dn' : '';
+            el.intent.appendChild(h('span', { class: 'idmg ' + cls }, `${info.dmg}${info.hits > 1 ? '×' + info.hits : ''}`));
+          }
           if (info.aoe) el.intent.appendChild(h('span', { class: 'tgt' }, '全体'));
           else if (info.t) el.intent.appendChild(h('span', { class: 'tgt' }, '→' + info.t.n));
-          el.intent.dataset.tip = `<div class="tn">${m.n}</div>${moveText(C, u, m)}`;
+          const mods = info.mods && info.mods.length ? `<div class="tf">${info.mods.map((x) => `<span class="${x.up ? 'mup' : 'mdn'}">${x.s}</span>`).join('<br>')}</div>` : '';
+          el.intent.dataset.tip = `<div class="tn">${m.n}</div>${moveText(C, u, m)}${mods}`;
         } else el.intent.className = 'intent hidden';
       }
     }
@@ -214,11 +235,19 @@
     }
 
     function render() {
-      C.units.forEach(updUnit);
+      C.units.forEach((u) => updUnit(u));
+      renderChrome();
+    }
+    // everything except unit bars/statuses (those follow the event snapshots during flush)
+    function renderChrome() {
+      for (const u of C.units) if (els[u.uid]) els[u.uid].root.classList.toggle('cur', C.cur === u);
       renderTurnbar();
       renderHud();
       renderHint();
       markTargets();
+    }
+    function applySnap(snap) {
+      for (const sv of snap) { const u = E.unit(C, sv.uid); if (u) updUnit(u, sv); }
     }
 
     function floatAt(uid, text, color, cls, dy) {
@@ -248,37 +277,60 @@
       sayTm = setTimeout(() => { b.remove(); if (sayEl === b) sayEl = null; }, 3400 / (G.speedMul || 1));
     }
 
+    // Plays queued engine events in order. Each event carries a snapshot of the battle state right after
+    // it happened, so HP bars / shields / statuses change exactly when the matching animation plays.
     async function flush() {
       const evs = C.ev.splice(0);
-      render();
-      let t = 0;
-      const at = (ms, fn) => { setTimeout(fn, t / (G.speedMul || 1)); t += ms; };
+      renderChrome();
+      const steps = [];
+      const at = (ms, fn, ev) => steps.push({ ms, fn, snap: ev.snap, say: ev.k === 'say' });
       for (const ev of evs) {
         switch (ev.k) {
-          case 'atk': at(120, () => { const u = E.unit(C, ev.uid); flashClass(ev.uid, u && u.side === 'H' ? 'lunge-r' : 'lunge-l', 300); }); break;
-          case 'dmg': at(100, () => {
+          case 'atk': at(120, () => { const u = E.unit(C, ev.uid); flashClass(ev.uid, u && u.side === 'H' ? 'lunge-r' : 'lunge-l', 300); }, ev); break;
+          case 'dmg': at(ev.v > 0 || ev.blocked ? 160 : 0, () => {
+            if (ev.blocked) { flashBlk(ev.uid); floatAt(ev.uid, `盾-${ev.blocked}`, '#9ec4ff', 'small', ev.v > 0 ? 30 : 10); }
             if (ev.v > 0) { flashClass(ev.uid, 'hit', 320); floatAt(ev.uid, `-${ev.v}`, ev.dot ? G.ST[ev.dot].c : '#ff5d6c', ev.v >= 15 ? 'big' : ''); A.sfx(ev.v >= 15 ? 'bighit' : 'hit'); }
-            else if (ev.blocked) { floatAt(ev.uid, '防御', '#9ec4ff', 'small'); A.sfx('block'); }
-          }); break;
-          case 'heal': at(80, () => { floatAt(ev.uid, `+${ev.v}`, '#7dffb0'); A.sfx('heal'); }); break;
-          case 'blk': at(60, () => { floatAt(ev.uid, `盾+${ev.v}`, '#9ec4ff', 'small', 26); A.sfx('block'); }); break;
-          case 'st': at(55, () => {
+            else if (ev.blocked) A.sfx('block');
+          }, ev); break;
+          case 'heal': at(80, () => { floatAt(ev.uid, `+${ev.v}`, '#7dffb0'); A.sfx('heal'); }, ev); break;
+          case 'blk': at(60, () => { floatAt(ev.uid, `盾+${ev.v}`, '#9ec4ff', 'small', 26); A.sfx('block'); }, ev); break;
+          case 'st': at(70, () => {
             const d = G.ST[ev.key];
             if (!d) return;
-            floatAt(ev.uid, `${d.n}${ev.v > 0 ? '+' : ''}${ev.v}`, d.c, 'small', 36);
-            A.sfx(d.k === 'debuff' ? 'debuff' : 'buff');
-          }); break;
-          case 'txt': at(80, () => floatAt(ev.uid, ev.s, ev.c, ev.small ? 'small' : '', 0)); break;
-          case 'die': at(220, () => { A.sfx('die'); }); break;
-          case 'say': at(1600, () => sayBubble(ev.uid, ev.s)); break;
-          case 'act': at(260, () => { floatAt(ev.uid, ev.name, '#ffffff', '', -18); if (ev.i === 'hack') A.sfx('hack'); }); break;
-          case 'play': at(40, () => floatAt(ev.uid, ev.name, '#ffd93d', 'small', -16)); break;
-          case 'round': if (ev.v > 1) at(500, () => UI.banner(`ROUND ${ev.v}`)); break;
-          case 'summon': at(160, () => A.sfx('buff')); break;
-          default: break;
+            const neg = d.k === 'debuff';
+            // ▲ = good for the unit, ▼ = bad (a buff going down counts as bad)
+            const good = neg ? ev.v < 0 : ev.v > 0;
+            floatAt(ev.uid, `${good ? '▲' : '▼'}${d.n}${ev.v > 0 ? '+' : ''}${ev.v}`, d.c, 'small st-' + (good ? 'good' : 'bad'), 36);
+            A.sfx(neg ? 'debuff' : 'buff');
+          }, ev); break;
+          case 'txt': at(80, () => floatAt(ev.uid, ev.s, ev.c, ev.small ? 'small' : '', 0), ev); break;
+          case 'die': at(220, () => { A.sfx('die'); }, ev); break;
+          case 'say': at(1600, () => sayBubble(ev.uid, ev.s), ev); break;
+          case 'act': at(260, () => { floatAt(ev.uid, ev.name, '#ffffff', '', -18); if (ev.i === 'hack') A.sfx('hack'); }, ev); break;
+          case 'play': at(40, () => floatAt(ev.uid, ev.name, '#ffd93d', 'small', -16), ev); break;
+          case 'round': at(ev.v > 1 ? 500 : 0, ev.v > 1 ? () => UI.banner(`ROUND ${ev.v}`) : null, ev); break;
+          case 'summon': at(160, () => A.sfx('buff'), ev); break;
+          default: at(0, null, ev); break;
         }
       }
-      await G.sleep(Math.min(t + 120, 2600));
+      // long chains are compressed (dialogue keeps its reading time) so a turn never drags
+      const busyMs = steps.reduce((s, x) => s + (x.say ? 0 : x.ms), 0);
+      const k = busyMs > 2600 ? 2600 / busyMs : 1;
+      const mul = G.speedMul || 1;
+      let t = 0;
+      for (const st of steps) {
+        setTimeout(() => { if (st.snap) applySnap(st.snap); if (st.fn) st.fn(); }, t / mul);
+        t += st.say ? st.ms : st.ms * k;
+      }
+      await G.sleep(t + 120);
+      render();
+    }
+    function flashBlk(uid) {
+      const el = els[uid];
+      if (!el) return;
+      el.blk.classList.remove('bhit');
+      void el.blk.offsetWidth;
+      el.blk.classList.add('bhit');
     }
 
     // ---------- input ----------
@@ -436,8 +488,9 @@
     // ---------- main loop ----------
     async function loop() {
       // boss / elite intro lines
-      for (const e of E.alive(C, 'E')) if (e.def.intro) C.ev.push({ k: 'say', uid: e.uid, s: e.def.intro });
-      render();
+      for (const e of E.alive(C, 'E')) if (e.def.intro) C.ev.push({ k: 'say', uid: e.uid, s: e.def.intro, snap: E.snap(C) });
+      applySnap(snap0); // start from the pre-battle state so opening shields/statuses animate in
+      renderChrome();
       await flush();
       if (!G.meta.flags.tut) { await tutorial(); G.meta.flags.tut = true; G.saveMeta(); }
       UI.banner(kind === 'boss' ? 'BOSS BATTLE' : kind === 'elite' ? 'ELITE' : 'BATTLE START', kind === 'boss' ? '#e8352e' : null);
@@ -491,7 +544,7 @@
     }
 
     // expose for testing
-    UI._combat = { C, get inputHero() { return inputHero; }, get busy() { return busy; }, selectCard, onUnitClick, endHeroTurn, play };
+    UI._combat = { C, get inputHero() { return inputHero; }, get busy() { return busy; }, selectCard, onUnitClick, endHeroTurn, play, render };
     loop();
   };
 })();

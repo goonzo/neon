@@ -94,6 +94,7 @@
     nest: { n: '巣', k: 'buff', pw: 1, c: '#9a9cb2', g: '巣', d: 'ターン開始時、ドローン+{v}' },
     droneUp: { n: '改造', k: 'buff', pw: 1, c: '#9a9cb2', g: '改', d: 'ドローン1機の攻撃ダメージ+{v}' },
     ratKing: { n: '王', k: 'buff', pw: 1, c: '#c9a85a', g: '王', d: 'ドローンが攻撃するたび、HP割合が最も低い味方にシールド{v}' },
+    marking: { n: 'マーキング', k: 'buff', pw: 1, c: '#ffb36b', g: '印', d: '攻撃ヒット時、照準{v}を付与' },
     ignite: { n: '炎上体質', k: 'buff', pw: 1, c: '#ff8a2b', g: '炎', d: '攻撃ヒット時、焼損{v}を付与' },
     bloodlust: { n: '血の舞', k: 'buff', pw: 1, c: '#e8352e', g: '舞', d: '攻撃ヒット時、出血{v}を付与' },
     marksman: { n: '熟練', k: 'buff', pw: 1, c: '#ff3d8b', g: '熟', d: '照準1スタックあたりのボーナス+{v}' },
@@ -115,6 +116,16 @@
     if (!s) return key;
     return s.d.replace(/\{v\}/g, v);
   };
+  // 'buff' | 'debuff' | 'power' (permanent buff)
+  G.stKind = (key) => { const s = G.ST[key]; return !s ? 'buff' : s.k === 'debuff' ? 'debuff' : s.pw ? 'power' : 'buff'; };
+  G.ST_KIND_N = { buff: '▲バフ', debuff: '▼デバフ', power: '★パワー（永続）' };
+  G.stTip = (key, v) => {
+    const s = G.ST[key];
+    if (!s) return key;
+    const kind = G.stKind(key);
+    const val = v == null ? '' : ` ${v}`;
+    return `<div class="tn">${s.n}${val} <span class="tk ${kind}">${G.ST_KIND_N[kind]}</span></div>${G.stDesc(key, v == null ? 'X' : v)}`;
+  };
 
   // tiny DOM helper (browser only)
   G.h = (tag, attrs, ...kids) => {
@@ -124,7 +135,7 @@
         const v = attrs[k];
         if (v == null || v === false) continue;
         if (k === 'class') el.className = v;
-        else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+        else if (k === 'style' && typeof v === 'object') { for (const p in v) { if (p.startsWith('--')) el.style.setProperty(p, v[p]); else el.style[p] = v[p]; } }
         else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
         else if (k === 'html') el.innerHTML = v;
         else el.setAttribute(k, v);

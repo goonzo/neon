@@ -226,8 +226,26 @@ b { font-weight: normal; color: #fff; }
 .unit .blk { position: absolute; left: -22px; top: -5px; width: 22px; height: 20px; background: #3466d6; border: 2px solid #0b0a12; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff;
   clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
 .sts { display: flex; flex-wrap: wrap; gap: 2px; width: 110px; justify-content: center; margin-top: 2px; min-height: 16px; }
-.st { position: relative; min-width: 16px; height: 16px; padding: 0 2px; font-size: 10px; line-height: 14px; border: 1px solid #000; color: #000; display: flex; align-items: center; justify-content: center; gap: 1px; cursor: help; }
-.st sub { font-size: 9px; vertical-align: baseline; color: #000; }
+.st { position: relative; min-width: 16px; height: 16px; padding: 0 2px; font-size: 10px; line-height: 14px; border: 1px solid #000; color: #000; background: var(--c, #9a9cb2); display: flex; align-items: center; justify-content: center; gap: 1px; cursor: help; }
+.st sub { font-size: 9px; vertical-align: baseline; color: inherit; }
+/* buff = bright filled chip with a green corner; debuff = dark chip outlined in its color with a red corner */
+.st::before { content: ''; position: absolute; left: -1px; top: -1px; border-top: 5px solid #7dffb0; border-right: 5px solid transparent; }
+.st.power { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.75); }
+.st.power::before { border-top-color: #ffd93d; }
+.st.debuff { background: #1c0a14; color: var(--c); border-color: var(--c); box-shadow: 0 0 0 1px #000; }
+.st.debuff::before { border-top-color: #ff3d4f; }
+.st.pop { animation: stpop 0.45s steps(4); }
+@keyframes stpop { 0% { transform: scale(1.9); filter: brightness(2.2); z-index: 2; } 100% { transform: scale(1); } }
+.stsep { width: 5px; }
+.unit .blk.bhit { animation: bhit 0.35s steps(3); }
+@keyframes bhit { 0% { transform: translateX(-3px); filter: brightness(2.5); } 50% { transform: translateX(3px); } 100% { transform: none; } }
+.intent .idmg.up { color: #fff; background: #e8352e; padding: 0 3px; }
+.intent .idmg.dn { color: #7dffb0; }
+#tip .tk { font-size: 11px; margin-left: 4px; }
+.tk.buff { color: #7dffb0; } .tk.debuff { color: #ff5d6c; } .tk.power { color: #ffd93d; }
+#tip .mup { color: #ff9e9e; } #tip .mdn { color: #7dffb0; }
+.float.st-good { text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 6px rgba(125,255,176,0.8); }
+.float.st-bad { text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 6px rgba(255,61,79,0.9); }
 .intent { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 3px; padding: 1px 6px; font-size: 13px; white-space: nowrap; background: rgba(8,7,16,0.92); border: 2px solid var(--line2); cursor: help; z-index: 3; animation: bob3 1.2s steps(2) infinite; }
 @keyframes bob3 { 50% { margin-top: -2px; } }
 .intent.atk { border-color: var(--red); color: #ff9e9e; }
