@@ -5,7 +5,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const files = ['js/core.js', 'js/data/heroes.js', 'js/data/gear.js', 'js/data/enemies.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/data/bonds.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
+const files = ['js/core.js', 'js/data/heroes.js', 'js/data/gear.js', 'js/data/enemies.js', 'js/data/areas.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/data/bonds.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
 const ctx = { console, Math, JSON, setTimeout, Promise };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
@@ -86,11 +86,12 @@ for (let r = 0; r < N; r++) {
   run.credits = 0;
   let alive = true;
   try {
-    if (process.env.ACT4) run.act4 = true;
+    if (process.env.ROUTE) run.route = process.env.ROUTE.split(',');
+    if (process.env.MID) run.route[1] = process.env.MID;
     const last = G.finalAct(run);
     for (let act = 1; act <= last && alive; act++) {
       run.act = act;
-      run.map = G.genMap(act);
+      run.map = G.genMap(run, act);
       stats.reachAct[act]++;
       const plan = ['fight', 'fight', 'fight', 'elite', 'fight', 'rest', 'fight', 'elite', 'rest', 'boss'];
       for (let fi = 0; fi < plan.length; fi++) {
@@ -99,7 +100,7 @@ for (let r = 0; r < N; r++) {
         if (k === 'rest') { G.healParty(run, 0.35); continue; }
         const g = G.pickEncounter(run, k === 'fight' ? 'normal' : k);
         const C = fight(run, g, k);
-        if (C.over !== 'win') { alive = false; const key = act + ':' + k + (k !== 'fight' ? ':' + g[0] : ''); deathAt[key] = (deathAt[key] || 0) + 1; break; }
+        if (C.over !== 'win') { alive = false; const key = act + ':' + G.area(run).id + ':' + k + (k !== 'fight' ? ':' + g[0] : ''); deathAt[key] = (deathAt[key] || 0) + 1; break; }
         G.applyCombatToRun(run, C);
         const rw = G.combatRewards(run, C, k);
         // take a random card for each hero, upgrade one card per fight

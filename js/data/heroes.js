@@ -626,6 +626,35 @@
     { id: 'ech_vanish', n: '消失', c: 2, t: 'S', tg: 'E', r: 3, x: 1, fx: [['st', 'stun', 2]], uc: 1 },
   ]);
 
+  // ======================= HIDDEN =======================
+  hero({
+    id: 'nul', n: 'ヌル', role: 'special', hp: 32, spd: 7, col: '#b8ff3d', ai: true, hidden: true,
+    title: '名前のないバグ',
+    trait: { n: '未定義', d: 'ターン開始時、手札のランダムなカード1枚がバグる（このターン、コスト0）。' },
+    desc: '壊れたデータ区画で生まれた、名前のないAI。SIの統合からも、マザーの防壁からもこぼれ落ちた「未定義」の存在。少女の姿をしているが、輪郭がときどきずれる。本人は、それを気に入っている。',
+    quote: '「ヌル。なまえがないって意味。……かわいいでしょ？」',
+    deck: [['nul_poke', 3], ['nul_freeze', 2], ['nul_glitch', 1], ['nul_rand', 2], ['nul_copy', 1], ['nul_ref', 1]],
+  }, [
+    { id: 'nul_poke', n: 'ぬるぽ', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'nul_freeze', n: 'フリーズ', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'nul_glitch', n: 'グリッチ', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 4], ['glitch', 1]], u: [['blk', 6], ['glitch', 2]] },
+    { id: 'nul_rand', n: '乱数', c: 1, t: 'A', tg: 'E', r: 0, fx: [['rand', ['dmg', 4], ['dmg', 2, 3], ['dmg', 12]]], u: [['rand', ['dmg', 7], ['dmg', 3, 3], ['dmg', 16]]] },
+    { id: 'nul_copy', n: 'コピペ', c: 1, t: 'S', tg: 'S', r: 0, fx: [['sample', 1]], uc: 0 },
+    { id: 'nul_ref', n: 'ヌル参照', c: 0, t: 'S', tg: 'E', r: 0, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['st', 'vuln', 1]] },
+    { id: 'nul_bitflip', n: 'ビット反転', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 7], ['rand', ['st', 'weak', 1], ['st', 'vuln', 1], ['st', 'slow', 1]]], u: [['dmg', 10], ['rand', ['st', 'weak', 2], ['st', 'vuln', 2], ['st', 'slow', 2]]] },
+    { id: 'nul_overflow', n: 'オーバーフロー', c: 2, t: 'A', tg: 'RE', r: 1, fx: [['dmg', 3, 5]], u: [['dmg', 4, 5]] },
+    { id: 'nul_patch', n: '仮パッチ', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 6], ['cleanse', 1]], u: [['heal', 9], ['cleanse', 1]] },
+    { id: 'nul_undo', n: '元に戻す', c: 1, t: 'S', tg: 'S', r: 1, fx: [['recall', 2]], uc: 0 },
+    { id: 'nul_fork', n: 'フォーク', c: 1, t: 'S', tg: 'S', r: 2, x: 1, fx: [['copy', 2], ['glitch', 1]], u: [['copy', 3], ['glitch', 1]] },
+    { id: 'nul_sampling', n: 'サンプリング', c: 2, t: 'S', tg: 'S', r: 2, fx: [['sample', 2]], u: [['sample', 3]] },
+    { id: 'nul_mass', n: '大量発生', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 5], ['rand', ['st', 'virus', 4], ['st', 'weak', 2], ['st', 'vuln', 2]]], u: [['dmg', 7], ['rand', ['st', 'virus', 6], ['st', 'weak', 2], ['st', 'vuln', 2]]] },
+    { id: 'nul_crash', n: 'クラッシュ', c: 2, t: 'A', tg: 'E', r: 2, fx: [['dmg', 12], ['rand', ['st', 'stun', 1], ['st', 'vuln', 2]]], u: [['dmg', 16], ['rand', ['st', 'stun', 1], ['st', 'vuln', 3]]] },
+    { id: 'nul_nest', n: 'バグ増殖', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'bugnest', 1]], uc: 0 },
+    { id: 'nul_ub', n: '未定義動作', c: 0, t: 'A', tg: 'E', r: 3, x: 1, fx: [['rand', ['dmg', 30], ['dmg', 2], ['st', 'str', 3, '@S']]], u: [['rand', ['dmg', 40], ['dmg', 10], ['st', 'str', 4, '@S']]] },
+    { id: 'nul_root', n: 'root権限', c: 2, t: 'S', tg: 'S', r: 3, x: 1, fx: [['nrg', 1], ['glitch', 4]], uc: 1 },
+    { id: 'nul_reboot', n: '再起動', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 8], ['cleanse', 99]], u: [['heal', 12], ['cleanse', 99]] },
+  ]);
+
   // ======================= EXPANSION CARDS =======================
   function addCards(heroId, cards) {
     const def = H[heroId];
@@ -694,6 +723,34 @@
     { id: 'crw_mimic', n: 'ものまね', c: 1, t: 'S', tg: 'S', r: 2, fx: [['copy', 1], ['st', 'shiny', 1]], u: [['copy', 1], ['st', 'shiny', 2]], uc: 0 },
   ]);
 
+  // ---- legendary cards (r4): one per hero, only from late-stage rewards on 危険 and above ----
+  const LEGEND = {
+    gallon: { id: 'gal_leg', n: '摩天楼崩し', c: 3, t: 'A', tg: 'AE', r: 4, x: 1, fx: [['blk', 15, '@S'], ['dmgX', 'blk', 1, 0]], u: [['blk', 22, '@S'], ['dmgX', 'blk', 1, 0]] },
+    jin: { id: 'jin_leg', n: '熾天の翼', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['st', 'barrier', 2], ['st', 'str', 2, '@S']], uc: 1 },
+    pixe: { id: 'pix_leg', n: 'ご主人さまの声', c: 2, t: 'A', tg: 'AE', r: 4, x: 1, fx: [['st', 'charge', 4, '@S'], ['dmgX', 'charge', 2, 0], ['consume', 'charge']], u: [['st', 'charge', 6, '@S'], ['dmgX', 'charge', 2, 0], ['consume', 'charge']] },
+    goura: { id: 'gou_leg', n: '千年の庭', c: 2, t: 'P', tg: 'S', r: 4, fx: [['st', 'medic', 3], ['st', 'plating', 3]], u: [['st', 'medic', 4], ['st', 'plating', 4]] },
+    doll: { id: 'dol_leg', n: '痛みを、返して', c: 1, t: 'S', tg: 'S', r: 4, x: 1, fx: [['st', 'thorns', 8], ['blk', 8], ['st', 'taunt', 2]], u: [['st', 'thorns', 12], ['blk', 12], ['st', 'taunt', 2]] },
+    mina: { id: 'min_leg', n: '奇跡の手術', c: 3, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['heal', 15], ['st', 'regen', 4], ['cleanse', 99]], uc: 2 },
+    luka: { id: 'luk_leg', n: '聖なる沈黙', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['purify', 5], ['st', 'barrier', 1]], u: [['purify', 7], ['st', 'barrier', 1]] },
+    nono: { id: 'non_leg', n: '永久看護', c: 2, t: 'P', tg: 'S', r: 4, fx: [['st', 'nurse', 6]], u: [['st', 'nurse', 8]] },
+    yomi: { id: 'yom_leg', n: '百鬼夜行', c: 1, t: 'S', tg: 'AO', r: 4, x: 1, fx: [['lose', 6], ['heal', 12], ['st', 'regen', 3]], u: [['lose', 4], ['heal', 14], ['st', 'regen', 4]] },
+    crow: { id: 'crw_leg', n: 'ガラクタの王国', c: 2, t: 'P', tg: 'S', r: 4, fx: [['st', 'hoard', 3], ['st', 'shiny', 4]], u: [['st', 'hoard', 4], ['st', 'shiny', 6]] },
+    rei: { id: 'rei_leg', n: '千本桜', c: 2, t: 'A', tg: 'RE', r: 4, x: 1, fx: [['st', 'bloodlust', 1, '@S'], ['dmg', 3, 8]], u: [['st', 'bloodlust', 1, '@S'], ['dmg', 4, 8]] },
+    haru: { id: 'har_leg', n: 'ふたりの約束', c: 0, t: 'A', tg: 'E', r: 4, x: 1, fx: [['dmg', 8], ['linked', ['dmg', 8], ['nrg', 2]]], u: [['dmg', 12], ['linked', ['dmg', 12], ['nrg', 2]]] },
+    gen: { id: 'gen_leg', n: '一撃必殺', c: 3, t: 'A', tg: 'E', r: 4, x: 1, fx: [['dmg', 30, 1, { aim: 15, elite: 1.5 }]], u: [['dmg', 40, 1, { aim: 15, elite: 1.5 }]] },
+    kagura: { id: 'kag_leg', n: '大炎上', c: 2, t: 'A', tg: 'AE', r: 4, x: 1, fx: [['st', 'burn', 10], ['st', 'ignite', 2, '@S']], u: [['st', 'burn', 14], ['st', 'ignite', 2, '@S']] },
+    mike: { id: 'mik_leg', n: '九つの命', c: 1, t: 'S', tg: 'S', r: 4, x: 1, fx: [['st', 'stealth', 2], ['st', 'marking', 3], ['st', 'undying', 1]], uc: 0 },
+    octo: { id: 'oct_leg', n: '大渦潮', c: 2, t: 'A', tg: 'AE', r: 4, x: 1, fx: [['dmg', 4, 4], ['st', 'weak', 1]], u: [['dmg', 5, 4], ['st', 'weak', 2]] },
+    chip: { id: 'chp_leg', n: 'システム掌握', c: 2, t: 'S', tg: 'AE', r: 4, x: 1, fx: [['st', 'virus', 8], ['st', 'stun', 1]], u: [['st', 'virus', 12], ['st', 'stun', 1]] },
+    amane: { id: 'ama_leg', n: '設計者権限', c: 1, t: 'S', tg: 'AE', r: 4, x: 1, fx: [['reroll'], ['st', 'vuln', 3], ['st', 'weak', 2]], uc: 0 },
+    nezu: { id: 'nez_leg', n: 'チュウの大行進', c: 2, t: 'S', tg: 'S', r: 4, x: 1, fx: [['st', 'drone', 6], ['st', 'droneUp', 2]], uc: 1 },
+    pyon: { id: 'pyo_leg', n: '速達便', c: 1, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['rush'], ['st', 'haste', 2], ['draw', 2]], uc: 0 },
+    madame: { id: 'mad_leg', n: '大盤振る舞い', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['pay', 50], ['st', 'str', 2], ['blk', 10]], u: [['pay', 30], ['st', 'str', 2], ['blk', 12]] },
+    echo: { id: 'ech_leg', n: '残響の合唱', c: 2, t: 'S', tg: 'AO', r: 4, x: 1, fx: [['st', 'inspire', 2], ['draw', 2, '@S']], uc: 1 },
+    nul: { id: 'nul_leg', n: 'ゼロ・デイ', c: 1, t: 'A', tg: 'E', r: 4, fx: [['glitch', 2], ['dmgX', 'free', 6, 8]], u: [['glitch', 2], ['dmgX', 'free', 8, 10]] },
+  };
+  for (const hid in LEGEND) { const c = LEGEND[hid]; c.hero = hid; CARDS[c.id] = c; H[hid].legend = c.id; }
+
   // ---- neutral cards (anyone can take them) ----
   const NEUTRAL = [
     { id: 'neu_stim', n: '応急スティム', c: 0, t: 'S', tg: 'S', r: 1, x: 1, fx: [['heal', 5]], u: [['heal', 8]] },
@@ -732,19 +789,21 @@
     pyon: { q: 1, cost: { energy: 25, data: 15 }, cond: null, hint: '拠点の郵便受けに、毎朝誰かが手紙を届けている。差出人は不明。' },
     octo: { q: 2, cost: { food: 30, scrap: 30, data: 15 }, cond: 'a2reach', hint: 'ニューエデンの沈んだ水族館から、八本足の影が手を振っている。' },
     echo: { q: 3, cost: { data: 60, energy: 50 }, cond: 'a3reach', hint: '白の聖域の手前で、ノイズ混じりの声が誰かを呼んでいる。' },
+    nul: { q: 0, cost: { data: 30 }, cond: 'abyssclear', hidden: true, hint: '深淵の果てで、名前のないバグが待っている。' },
   };
 
   G.HEROES = H;
   G.CARDS = CARDS;
   G.UNLOCK = UNLOCK;
-  G.HERO_ORDER = ['gallon', 'jin', 'pixe', 'goura', 'doll', 'mina', 'luka', 'nono', 'yomi', 'crow', 'rei', 'haru', 'gen', 'kagura', 'mike', 'octo', 'chip', 'amane', 'nezu', 'pyon', 'madame', 'echo'];
+  G.HERO_ORDER = ['gallon', 'jin', 'pixe', 'goura', 'doll', 'mina', 'luka', 'nono', 'yomi', 'crow', 'rei', 'haru', 'gen', 'kagura', 'mike', 'octo', 'chip', 'amane', 'nezu', 'pyon', 'madame', 'echo', 'nul'];
   G.START_HEROES = ['gallon', 'mina', 'rei', 'chip'];
   G.COND_TEXT = {
     a1boss: '第一区画のボスを撃破',
     a2reach: '第二区画に到達',
     a2boss: '第二区画のボスを撃破',
     a3reach: '第三区画に到達',
-    a3boss: '第三区画のボスを撃破',
+    a3boss: 'ソフィアを撃破',
+    abyssclear: '深淵で作戦を完了',
     a4boss: '第四区画のボスを撃破',
   };
 })();

@@ -24,7 +24,7 @@
       const pre = to === 'S' ? '自身に' : tgN;
       const ref = E.effectiveTarget(C, u) || E.alive(C, 'H')[0];
       switch (fx[0]) {
-        case 'dmg': parts.push(`${pre}${ref ? E.previewAttack(C, u, ref, args[0], {}) : args[0]}ダメージ${args[1] > 1 ? '×' + args[1] : ''}`); break;
+        case 'dmg': parts.push(`${pre}${ref ? E.previewAttack(C, u, ref, args[0], args[2] || {}) : args[0]}ダメージ${args[1] > 1 ? '×' + args[1] : ''}${args[2] && args[2].ai ? `（AIの仲間には${args[2].ai}倍）` : ''}`); break;
         case 'drain': parts.push(`${pre}${ref ? E.previewAttack(C, u, ref, args[0], {}) : args[0]}ダメージ（与えた分回復）`); break;
         case 'blk': parts.push(`${pre}シールド${Math.round(args[0] * G.EK.blk)}`); break;
         case 'heal': parts.push(`${pre}HP${Math.round(args[0] * G.EK.heal)}回復`); break;
@@ -36,6 +36,7 @@
         case 'stealCred': parts.push(`クレジットを${args[0]}盗む（倒せば取り返せる）`); break;
         case 'flee': parts.push('盗んだものを持って逃走する'); break;
         case 'erase': parts.push(`${pre}山札のカード${args[0]}枚を、この戦闘のあいだ消去する`); break;
+        case 'strip': parts.push(`${pre}バフ（永続でないもの）をすべて消す`); break;
         default: break;
       }
     }
@@ -50,8 +51,8 @@
     E.begin(C, { startBlock: G.meta.fac.core >= 2 ? 3 : 0 });
     G.speedMul = G.meta.settings.speed || 1;
     const s = UI.screen('combat');
-    UI.actBg(s, run.act);
-    A.bgm(kind === 'boss' || kind === 'elite' ? 'boss' : 'battle');
+    UI.actBg(s, run);
+    A.runBgm(run, kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'battle');
     if (kind === 'boss') A.sfx('boss');
 
     // ---------- layout ----------
@@ -101,7 +102,7 @@
       const nm = h('div', { class: 'uname' }, u.n);
       const sts = h('div', { class: 'sts' });
       const intent = h('div', { class: 'intent hidden' });
-      const root = h('div', { class: 'unit idle' + (u.summoned ? ' spawn' : '') }, intent, spr, nm, bar, hpt, sts);
+      const root = h('div', { class: 'unit idle' + (u.summoned ? ' spawn' : '') + (u.bug ? ' bugged' : '') }, intent, spr, nm, bar, hpt, sts);
       const pos = assignSlot(u);
       root.style.left = pos.x + 'px';
       root.style.top = pos.y - sz.h * sc + 'px';
@@ -624,7 +625,13 @@
         await G.sleep(1100);
         run.stats.fights++;
         if (kind === 'elite') run.stats.elites++;
-        if (kind === 'boss') { run.stats.bosses++; G.setFlag(['a1boss', 'a2boss', 'a3boss', 'a4boss'][run.act - 1]); }
+        if (kind === 'boss') {
+          run.stats.bosses++;
+          if (run.act <= 2) G.setFlag(['a1boss', 'a2boss'][run.act - 1]);
+          if (group.includes('sophia')) G.setFlag('a3boss');
+          if (group.includes('noah')) G.setFlag('a4boss');
+          G.setFlag(group[0]);
+        }
         if (group.includes('incinerator')) G.setFlag('hestia');
         if (group.includes('archivist')) G.setFlag('mnemo');
         if (group.includes('mothercopy')) G.setFlag('copy');

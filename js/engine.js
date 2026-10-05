@@ -79,7 +79,21 @@
     };
     run.heroes.forEach((h, i) => C.units.push(mkHero(C, h, i)));
     group.forEach((id) => C.units.push(mkEnemy(C, id)));
+    // 深淵: now and then one regular enemy is corrupted by bugs (tougher, odd passive, extra loot)
+    if (run.diff >= 3 && C.kind === 'normal' && !opts.noBug && G.chance(0.35)) {
+      const cand = C.units.filter((u) => u.side === 'E' && !u.boss && !u.elite);
+      if (cand.length) E.bugify(C, G.pick(cand));
+    }
     return C;
+  };
+  const BUGS = [['thorns', 3], ['armorUp', 3], ['str', 2], ['spikeshell', 2], ['barrier', 2], ['regen', 6]];
+  E.bugify = (C, u) => {
+    const [k, v] = G.pick(BUGS);
+    u.bug = true;
+    u.n = 'バグ・' + u.n;
+    u.maxHp = u.hp = Math.round(u.hp * 1.25);
+    u.st[k] = (u.st[k] || 0) + v;
+    C.bugs = (C.bugs || 0) + 1;
   };
 
   E.begin = (C, opts) => {
@@ -210,8 +224,21 @@
       u.played = 0;
       u.firstTurn = false;
       E.draw(C, u, dr);
+      const bugs = (u.id === 'nul' ? 1 : 0) + (u.st.bugnest || 0);
+      if (bugs) glitchHand(C, u, bugs);
     }
     return true;
+  }
+  // make n random cards in hand cost 0 this turn
+  function glitchHand(C, u, n) {
+    let k = 0;
+    for (let i = 0; i < n; i++) {
+      const cand = u.hand.filter((c) => !c.free && (E.cardDef(c).c || 0) > 0);
+      if (!cand.length) break;
+      G.pick(cand).free = true;
+      k++;
+    }
+    if (k) push(C, { k: 'txt', uid: u.uid, s: `バグった！×${k}`, c: '#b8ff3d', small: 1 });
   }
 
   E.endTurn = (C, u) => {
@@ -224,7 +251,7 @@
         poke(C, u, f, 3 + (u.st.droneUp || 0));
         if (u.st.ratKing) { const a = E.lowestAlly(C, 'H'); if (a) E.gainBlock(C, a, u.st.ratKing); }
       }
-      while (u.hand.length) u.disc.push(u.hand.pop());
+      while (u.hand.length) { const c = u.hand.pop(); delete c.free; u.disc.push(c); }
     }
     for (const k in u.st) {
       const d = G.ST[k];
@@ -387,6 +414,7 @@
     if (o.hid && src && src.st.stealth > 0) d *= o.hid;
     if (o.aim && t.st.aim > 0) d += o.aim;
     if (o.elite && (t.elite || t.boss)) d *= o.elite;
+    if (o.ai && t.def && t.def.ai) d = Math.round(d * o.ai);
     if (src && src.st.weak > 0) d = Math.floor(d * 0.75);
     if (src && src.side === 'E') d = Math.round(d * C.diff.dmg * EK.dmg * EK.dmgAct[C.run.act || 1]);
     if (t.st.vuln > 0) d = Math.floor(d * 1.5);
@@ -458,6 +486,7 @@
       case 'drone': return u.st.drone || 0;
       case 'lost': return u.maxHp - u.hp;
       case 'cred': return Math.min(400, C.run.credits);
+      case 'free': return u.hand ? u.hand.filter((c) => c.free).length : 0;
       default: return 0;
     }
   }
@@ -702,6 +731,34 @@
       });
     },
     chargeHeal(C, u, T, [k]) { const v = (u.st.charge || 0) * k; delete u.st.charge; E.heal(C, u, u, v); },
+    // enemy: wipe every (non-permanent) buff from the targets
+    strip(C, u, T) {
+      T.forEach((t) => {
+        if (t.dead) return;
+        const ks = Object.keys(t.st).filter((k) => G.ST[k] && G.ST[k].k === 'buff' && !G.ST[k].pw);
+        if (!ks.length) return;
+        ks.forEach((k) => delete t.st[k]);
+        push(C, { k: 'txt', uid: t.uid, s: 'バフ消去', c: '#ff5ad1', small: 1 });
+      });
+    },
+    // one of the sub-effects, picked at random
+    rand(C, u, T, subs, ctx) { const f = G.pick(subs); if (f) runFx(C, u, f, T, ctx); },
+    // n cards in hand bug out (cost 0 this turn)
+    glitch(C, u, T, [n]) { glitchHand(C, u, n); },
+    // generate random cards from the other heroes' card pools (cost 0 this turn)
+    sample(C, u, T, [n]) {
+      const others = C.units.filter((x) => x.side === 'H' && x !== u);
+      let k = 0;
+      for (let i = 0; i < n; i++) {
+        if (u.hand.length >= HAND_MAX) break;
+        const src = others.length ? G.pick(others) : u;
+        const pool = src.def.pool.filter((id) => G.CARDS[id].r <= 3);
+        if (!pool.length) continue;
+        u.hand.push({ id: G.pick(pool), up: false, cid: C.seq++, tmp: true, free: true });
+        k++;
+      }
+      if (k) push(C, { k: 'txt', uid: u.uid, s: `サンプリング×${k}`, c: '#b8ff3d', small: 1 });
+    },
     nop() {},
   };
   E.OPS = OPS;
@@ -718,11 +775,11 @@
   }
 
   // ---------- player actions ----------
-  E.cardCost = (u, card) => E.cardDef(card).c;
+  E.cardCost = (u, card) => { const c = E.cardDef(card).c; return c == null ? c : card.free ? 0 : c; };
   E.canPlay = (C, u, card) => {
     const d = E.cardDef(card);
     if (d.c == null) return false;
-    if (u.energy < d.c) return false;
+    if (u.energy < E.cardCost(u, card)) return false;
     if (d.req && d.req.st && (u.st[d.req.st] || 0) < d.req.v) return false;
     for (const fx of d.fx) if (fx[0] === 'pay' && C.run.credits < fx[1]) return false;
     if (d.tg === 'D' && !C.units.some((x) => x.side === 'H' && x.dead)) return false;
@@ -757,7 +814,8 @@
     else if (d.tg === 'AO') T = E.allies(C, u).filter((x) => x !== u);
     else if (d.tg === 'AE') T = E.foes(C, u);
     else if (d.tg === 'RE') { const f = E.foes(C, u); T = f.length ? [G.pick(f)] : []; }
-    u.energy -= d.c;
+    u.energy -= E.cardCost(u, card);
+    delete card.free;
     u.hand.splice(idx, 1);
     const ctx = { mul: 1, tg: d.tg, card: d };
     if (d.t === 'A' && u.st.focus) { ctx.mul = 2; delete u.st.focus; }
@@ -837,7 +895,7 @@
     for (const fx of m.fx) {
       if (fx[0] === 'dmg' || fx[0] === 'drain' || fx[0] === 'selfdestruct') {
         const ref = t || E.alive(C, 'H')[0];
-        if (ref) { dmg = E.previewAttack(C, u, ref, fx[1], {}); mods = E.attackMods(C, u, ref); }
+        if (ref) { dmg = E.previewAttack(C, u, ref, fx[1], fx[3] || {}); mods = E.attackMods(C, u, ref); }
         base = Math.round(fx[1] * C.diff.dmg * EK.dmg * EK.dmgAct[C.run.act || 1]);
         hits = fx[2] || 1;
         break;
@@ -870,7 +928,7 @@
   };
 
   // ---------- card text ----------
-  const W = { blk: 'シールド値', shiny: '光りもの', charge: '充電', drone: 'ドローン数', lost: '失ったHP', cred: '所持クレジット', tvirus: '対象のウイルス' };
+  const W = { blk: 'シールド値', shiny: '光りもの', charge: '充電', drone: 'ドローン数', lost: '失ったHP', cred: '所持クレジット', tvirus: '対象のウイルス', free: 'バグったカード' };
   const PRE = { AE: '敵全体に', AA: '味方全体に', AO: '自分以外の味方全員に', RE: 'ランダムな敵に', S: '', E: '', A: '', D: '', N: '', LA: 'HP最低の味方に' };
   const PRE_O = { S: '自分に', AA: '味方全体に', AE: '敵全体に', RE: 'ランダムな敵に', LA: 'HP最低の味方に' };
 
@@ -955,6 +1013,16 @@
         case 'rush': parts.push(`味方を${kw('割り込ませる', 'このラウンドの次の行動に割り込ませる。すでに行動済みなら加速1。')}`); break;
         case 'delay': parts.push(`${pre.replace(/に$/, 'の')}行動を${kw('後回し', 'このラウンドの行動を最後に回す。すでに行動済みなら鈍足1。')}にする`); break;
         case 'chargeHeal': parts.push(`${stn('charge')}×${a}のHPを回復し、充電を消費`); break;
+        case 'rand': {
+          const before = parts.length;
+          const opts = args.map((f) => { lastSt = -1; handle(f); return parts.splice(before).join('、'); });
+          lastSt = -1;
+          parts.push(`${kw('ランダム', 'どれか1つの効果がランダムに発動する')}：${opts.join('／')}`);
+          break;
+        }
+        case 'glitch': parts.push(`手札のカード<b>${a}</b>枚を${kw('バグらせる', 'このターンのあいだ、コスト0になる')}`); break;
+        case 'sample': parts.push(`仲間のカードをランダムに<b>${a}</b>枚生成（${kw('バグ', 'このターンのあいだ、コスト0')}）`); break;
+        case 'strip': parts.push(`${pre}バフをすべて消す`); break;
         default: break;
       }
     };

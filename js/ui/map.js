@@ -10,19 +10,22 @@
 
   // ================= ACT INTRO =================
   UI.actIntro = (act) => {
+    const run = G.run;
     const s = UI.screen('actintro');
-    UI.actBg(s, act);
-    A.bgm(act >= 3 ? 'sanctum' : 'map');
-    if (act === 4) G.setFlag('a4reach');
-    const Aa = G.ACTS[act];
+    UI.actBg(s, run);
+    A.runBgm(run);
+    const Aa = G.area(run);
+    G.setFlag(Aa.id);
+    if (Aa.id === 'cradle') G.setFlag('a4reach');
     const txt = h('div', { style: { whiteSpace: 'pre-wrap', fontSize: '16px', lineHeight: '1.8', minHeight: '90px', marginTop: '12px' } });
     const box = h('div', { class: 'panel', style: { width: '560px', textAlign: 'center', padding: '22px', cursor: 'pointer' } },
       h('div', { class: 'sub', style: { letterSpacing: '6px' } }, `AREA 0${act} — ${Aa.en}`),
-      h('div', { class: 'ttl', style: { fontSize: '30px', marginTop: '6px' } }, `第${'一二三四'[act - 1]}区画　${Aa.n}`),
+      h('div', { class: 'ttl', style: { fontSize: '30px', marginTop: '6px' } }, `第${G.STAGE_N[act - 1]}区画　${Aa.n}`),
+      act === 1 && G.DIFF_LOOK[run.diff].note ? h('div', { style: { color: G.DIFF[run.diff].c, fontSize: '13px', marginTop: '4px' } }, G.DIFF_LOOK[run.diff].note) : null,
       txt,
       h('div', { class: 'sub', style: { marginTop: '10px' } }, 'クリックで進む'));
     s.appendChild(centerBox(box));
-    const tw = UI.typewrite(txt, G.ACT_INTRO[act], 36);
+    const tw = UI.typewrite(txt, G.AREA_INTRO[Aa.id] + (act === 1 ? '\n' + G.routeHint(run) : ''), 36);
     box.addEventListener('click', () => { if (!tw.done) { tw.finish(); return; } A.sfx('click'); UI.map(); });
   };
 
@@ -49,7 +52,7 @@
   function runTopbar(s, title) {
     const run = G.run;
     s.appendChild(h('div', { class: 'topbar' },
-      h('span', { class: 'ttl' }, title || `第${'一二三四'[run.act - 1]}区画　${G.ACTS[run.act].n}`),
+      h('span', { class: 'ttl' }, title || `第${G.STAGE_N[run.act - 1]}区画　${G.area(run).n}`),
       h('span', { class: 'sub', style: { color: G.DIFF[run.diff].c } }, G.DIFF[run.diff].n),
       h('span', { class: 'grow' }),
       UI.cred(run.credits),
@@ -85,8 +88,8 @@
   UI.map = () => {
     const run = G.run;
     const s = UI.screen('map');
-    UI.actBg(s, run.act);
-    A.bgm(run.act >= 3 ? 'sanctum' : 'map');
+    UI.actBg(s, run);
+    A.runBgm(run);
     runTopbar(s);
     const wrap = h('div', { class: 'mapwrap layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, top: '34px', height: '400px' } });
     s.appendChild(wrap);
@@ -128,12 +131,13 @@
     };
     wrap.appendChild(svg);
     for (const col of cols) for (const n of col) {
-      const nd = G.NODE[n.t];
+      const hid = n.q && !n.done;
+      const nd = hid ? G.NODE.bug : G.NODE[n.t];
       const isAvail = avail.includes(n.id);
       const el = h('div', {
-        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : '') + (!n.done && !reach.has(n.id) ? ' gone' : ''),
+        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : '') + (!n.done && !reach.has(n.id) ? ' gone' : '') + (hid ? ' bugnode' : ''),
         style: { left: X(n.c) + 'px', top: Y(n.y) + 'px', borderColor: isAvail ? nd.c : null },
-        'data-tip': `<div class="tn">${nd.n}</div>${nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
+        'data-tip': `<div class="tn">${nd.n}</div>${hid ? 'データが壊れていて、何のマスか読み取れない。入ってみるまでわからない。' : nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
         onclick: () => { if (!isAvail) return; A.sfx('click'); enterNode(n); },
         onmouseenter: () => lightFrom(n.id),
         onmouseleave: () => lightFrom(null),
@@ -143,7 +147,7 @@
     // legend
     const bottom = h('div', { class: 'mapbottom layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, bottom: 0, height: '106px' } },
       partyPanel(),
-      h('div', { class: 'col grow', style: { gap: '4px' } }, h('span', { class: 'sub' }, `パーツ（${run.relics.length}）`), h('div', { class: 'relics' }, run.relics.map((r) => UI.relicChip(r)))));
+      h('div', { class: 'col grow', style: { gap: '4px' } }, h('span', { class: 'sub' }, G.partsOK(run) ? `パーツ（${run.relics.length}）` : `パーツ（${run.relics.length}）　安全区では入手不可`), h('div', { class: 'relics' }, run.relics.map((r) => UI.relicChip(r)))));
     s.appendChild(bottom);
   };
 
@@ -152,9 +156,9 @@
       fight: 'SIの部隊との戦闘。勝利するとカードとクレジット、資源を得る。',
       elite: '強力な敵との戦闘。パーツと、高確率で装備を入手できる。',
       event: '何かが起こる。',
-      shop: 'カードやパーツを購入できる。カードの削除も可能。',
+      shop: 'カードや装備、パーツを購入できる。カードの削除も可能。',
       rest: 'HPを回復するか、カードを強化・削除できる。仲間と語らうこともできる。',
-      treasure: 'パーツとクレジットが入ったコンテナ。',
+      treasure: 'パーツや装備、クレジットが入ったコンテナ。',
       res: '拠点に持ち帰る資源を回収できる。',
       boss: '区画の管理者。倒せば次の区画へ進める。',
     }[t];
@@ -191,7 +195,7 @@
     const run = G.run;
     const ev = G.EVENTS.find((e) => e.id === id);
     const s = UI.screen('event');
-    UI.actBg(s, run.act);
+    UI.actBg(s, run);
     runTopbar(s);
     const art = h('div', { class: 'evart' }, G.sprImg(ev.spr, G.sprSize(ev.spr).w > 20 ? 5 : 8));
     const txt = h('div', { class: 'evtext' });
@@ -240,7 +244,7 @@
     const run = G.run;
     const shop = run.node.shop || (run.node.shop = G.genShop(run));
     const s = UI.screen('shop');
-    UI.actBg(s, run.act);
+    UI.actBg(s, run);
     runTopbar(s, '闇市');
     const body = h('div', { class: 'layer', style: { position: 'absolute', inset: 'auto', left: '20px', top: '44px', right: '20px', bottom: '10px' } });
     s.appendChild(body);
@@ -277,6 +281,7 @@
               } }, h('div', { class: 'row' }, UI.gearChip(it.id), h('span', { style: { fontSize: '13px', color: G.GEAR_RC[g.r] } }, g.n)), h('div', { style: { marginTop: '3px' } }, g.d),
                 h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `装備 ${it.price}cr`));
             }),
+            !shop.relics.length && !G.partsOK(run) ? h('div', { class: 'panel shopitem sub' }, 'パーツは品切れ。「安全区には、まだ流してないのさ」') : null,
             shop.relics.map((it) => {
               const can = run.credits >= it.price && !it.sold;
               const r = G.RELICS[it.id];
@@ -388,11 +393,11 @@
   UI.treasure = () => {
     const run = G.run;
     const s = UI.screen('treasure');
-    UI.actBg(s, run.act);
+    UI.actBg(s, run);
     runTopbar(s, '補給コンテナ');
     if (!run.node.loot) {
-      const id = G.randomRelic(run, 1);
-      run.node.loot = { relic: id, cred: G.rint(20, 40), gear: G.chance(0.45) ? G.gainGear(run, G.randomGear(run, 1)) : null };
+      const id = G.partsOK(run) ? G.randomRelic(run, 1) : null;
+      run.node.loot = { relic: id, cred: G.rint(20, 40) + (id ? 0 : 25), gear: G.chance(id ? 0.45 : 0.9) ? G.gainGear(run, G.randomGear(run, 1)) : null };
       if (id) G.addRelic(run, id);
       run.credits += run.node.loot.cred;
       G.saveRun();
@@ -411,7 +416,7 @@
   UI.resNode = () => {
     const run = G.run;
     const s = UI.screen('resnode');
-    UI.actBg(s, run.act);
+    UI.actBg(s, run);
     runTopbar(s, '物資回収ポイント');
     const box = h('div', { class: 'panel col', style: { width: '560px', gap: '10px' } });
     s.appendChild(centerBox(box));
@@ -452,8 +457,8 @@
   UI.reward = (rw, kind) => {
     const run = G.run;
     const s = UI.screen('reward');
-    UI.actBg(s, run.act);
-    A.bgm(run.act >= 3 ? 'sanctum' : 'map');
+    UI.actBg(s, run);
+    A.runBgm(run);
     runTopbar(s, '戦闘勝利');
     const body = h('div', { class: 'layer', style: { position: 'absolute', inset: 'auto', left: '20px', right: '20px', top: '44px', bottom: '10px' } });
     s.appendChild(body);
@@ -471,6 +476,7 @@
       const gains = h('div', { class: 'panel row', style: { gap: '18px', flexWrap: 'wrap' } },
         h('span', { class: 'ttl', style: { fontSize: '18px' } }, kind === 'boss' ? 'ボス撃破！' : kind === 'elite' ? 'エリート撃破！' : '勝利'),
         UI.cred('+' + rw.credits), UI.resRow(rw.res, { plus: true, nonzero: true }),
+        rw.bugs ? h('span', { style: { color: '#b8ff3d' } }, `バグった敵から壊れたデータを回収（データ+${3 * rw.bugs}）`) : null,
         rw.relic ? h('span', { class: 'row' }, 'パーツ入手：', UI.relicChip(rw.relic), G.RELICS[rw.relic].n) : null,
         rw.gear ? h('span', { class: 'row' }, '装備入手：', UI.gearChip(rw.gear), G.GEAR[rw.gear].n, UI.btn('装備する', () => UI.gearView(run), 'sm')) : null);
       body.appendChild(gains);
@@ -515,24 +521,26 @@
   // ================= ACT CLEAR =================
   UI.actClear = () => {
     const run = G.run;
-    if (run.act >= G.finalAct(run)) { UI.ending(run.act >= 4); return; }
-    if (run.act === 3) { UI.cutscene(G.ACT3_TO_4, 'sophia', () => goNextAct()); return; }
+    const here = G.area(run).id;
+    if (run.act >= G.finalAct(run)) { UI.ending(here === 'cradle' ? 'truth' : here === 'rim' ? 'survey' : 'part1'); return; }
+    if (here === 'sanctum') { UI.cutscene(G.ACT3_TO_4, 'sophia', () => goNextAct()); return; }
     const s = UI.screen('actclear');
-    UI.actBg(s, run.act);
+    UI.actBg(s, run);
     A.sfx('win');
     const nextAct = run.act + 1;
     s.appendChild(centerBox(h('div', { class: 'panel col', style: { alignItems: 'center', gap: '12px', width: '520px', padding: '20px' } },
-      h('div', { class: 'ttl', style: { fontSize: '28px' } }, `第${'一二三四'[run.act - 1]}区画　制圧`),
+      h('div', { class: 'ttl', style: { fontSize: '28px' } }, `第${G.STAGE_N[run.act - 1]}区画　制圧`),
       h('div', { style: { fontSize: '14px', textAlign: 'center' } }, '区画の管理者を倒した。SIの監視網に、小さな穴が空いた。', h('br'), 'マザーの支援で、全員のHPが大きく回復した。'),
       partyPanel(),
-      UI.btn(`第${'一二三四'[nextAct - 1]}区画へ`, () => goNextAct(), 'big pink'))));
+      h('div', { class: 'sub' }, `次の行き先：${G.areaAt(run, nextAct).n}`),
+      UI.btn(`第${G.STAGE_N[nextAct - 1]}区画へ`, () => goNextAct(), 'big pink'))));
   };
   function goNextAct() {
     const run = G.run;
     const nextAct = run.act + 1;
     {
         run.act = nextAct;
-        run.map = G.genMap(nextAct);
+        run.map = G.genMap(run, nextAct);
         run.pos = null; run.path = []; run.floor = 0; run.lastEnc = [];
         G.healParty(run, 0.6);
         run.node = null;
@@ -557,18 +565,20 @@
       if (!tw.done) { tw.finish(); return; }
       i++;
       A.sfx('click');
-      if (i >= lines.length) { onEnd(); return; }
+      if (i >= lines.length) { if (!box.dataset.done) { box.dataset.done = '1'; onEnd(); } return; }
       tw = UI.typewrite(txt, lines[i], 30);
     });
   };
 
   // ================= ENDING =================
-  UI.ending = (truth) => {
+  UI.ending = (kind) => {
+    const truth = kind === 'truth';
+    const survey = kind === 'survey';
     const s = UI.screen('ending');
-    UI.bg(s, 'sanctum');
-    A.bgm('sanctum');
+    UI.bg(s, survey ? 'rim' : 'sanctum', survey ? { area: G.AREAS.rim } : null);
+    A.bgm(truth ? 'cradle' : survey ? 'rim' : 'sanctum');
     let i = 0;
-    const lines = truth ? G.TRUE_ENDING : G.ENDING;
+    const lines = truth ? G.TRUE_ENDING : survey ? G.SURVEY_ENDING : G.ENDING;
     const art = h('div', { style: { position: 'absolute', left: '50%', top: '30px', transform: 'translateX(-50%)' } });
     s.appendChild(art);
     const txt = h('div');
@@ -576,9 +586,9 @@
     s.appendChild(box);
     const show = () => {
       art.innerHTML = '';
-      const spr = truth ? (i <= 1 ? 'noah' : i === 2 || i === 6 ? 'mother' : i === 4 ? 'pixe' : null) : i <= 2 ? 'sophia' : i >= 5 && i <= 5 ? 'mother' : null;
+      const spr = survey ? (i <= 1 ? 'janus' : i === 4 ? 'mother' : null) : truth ? (i <= 1 ? 'noah' : i === 2 || i === 6 ? 'mother' : i === 4 ? 'pixe' : null) : i <= 2 ? 'sophia' : i >= 5 && i <= 5 ? 'mother' : null;
       if (spr) art.appendChild(G.sprImg(spr, spr === 'pixe' ? 8 : 6));
-      else if (truth ? i === 7 : i === 4) art.appendChild(h('div', { style: { width: '300px', height: '180px', background: 'linear-gradient(#3a8ff0, #9fd4ff)', border: '4px solid #0b0a12', boxShadow: '0 0 40px #9fd4ff' } }));
+      else if (survey ? false : truth ? i === 7 : i === 4) art.appendChild(h('div', { style: { width: '300px', height: '180px', background: 'linear-gradient(#3a8ff0, #9fd4ff)', border: '4px solid #0b0a12', boxShadow: '0 0 40px #9fd4ff' } }));
       return UI.typewrite(txt, lines[i], 30);
     };
     let tw = show();
@@ -586,7 +596,7 @@
       if (!tw.done) { tw.finish(); return; }
       i++;
       A.sfx('click');
-      if (i >= lines.length) { UI.runEnd('win'); return; }
+      if (i >= lines.length) { if (!box.dataset.done) { box.dataset.done = '1'; UI.runEnd('win'); } return; }
       tw = show();
     });
   };
@@ -602,13 +612,15 @@
     const after = G.HERO_ORDER.filter((id) => !G.meta.unlocked.includes(id) && G.recruitInfo(id).cond);
     const newRecruits = after.filter((id) => !before.includes(id));
     const s = UI.screen('runend');
-    UI.bg(s, result === 'win' ? 'sanctum' : 'bunker', { seed: 5 });
+    const endArea = G.area(run);
+    UI.bg(s, result === 'win' ? (endArea.id === 'rim' ? 'rim' : 'sanctum') : 'bunker', { seed: 5, area: endArea });
     A.bgm('base');
     if (result === 'win') A.sfx('win'); else A.sfx('lose');
     s.appendChild(centerBox(h('div', { class: 'panel col', style: { alignItems: 'center', gap: '10px', width: '600px', padding: '20px' } },
       h('div', { class: 'ttl', style: { fontSize: '30px' } }, result === 'win' ? '作戦成功' : abandoned ? '撤退' : '全滅'),
-      h('div', { class: 'sub' }, result === 'win' ? (run.act >= 4 ? '揺りかごの底で、人々が目を覚ました。' : 'SIの中枢に、ひびが入った。') : `第${run.act}区画で、通信が途絶えた。……マザーが仲間たちを回収した。`),
+      h('div', { class: 'sub' }, result === 'win' ? ({ cradle: '揺りかごの底で、人々が目を覚ました。', rim: '聖域の外縁の調査を終えた。白い門の向こうに、まだ道は続いている。' }[G.area(run).id] || 'SIの中枢に、ひびが入った。') : `第${run.act}区画「${G.area(run).n}」で、通信が途絶えた。……マザーが仲間たちを回収した。`),
       h('div', { class: 'row', style: { gap: '6px' } }, run.heroes.map((hh) => G.sprImg(hh.id, 3))),
+      h('div', { class: 'sub' }, `ルート：${G.routeOf(run).map((a, i) => (i < run.act ? G.AREAS[a].n : '？？？')).join(' → ')}`),
       h('div', { style: { fontSize: '14px' } }, `到達：第${run.act}区画　戦闘${run.stats.fights}回　エリート${run.stats.elites}体　ボス${run.stats.bosses}体　獲得カード${run.stats.cards}枚`),
       h('div', { style: { fontSize: '14px' } }, `持ち帰った資源（${Math.round(r.keep * 100)}%）`),
       h('div', { class: 'sub' }, `うち、残りクレジット${r.exchange.credits}cr・パーツ${r.exchange.relics}個・装備${r.exchange.gear || 0}個を拠点用の資源に換金（10cr→資源1、パーツ1個→スクラップ3、装備1個→スクラップ2）`),
@@ -616,6 +628,7 @@
       r.unlockedDiff != null ? h('div', { style: { color: G.DIFF[r.unlockedDiff].c, fontSize: '16px' } }, `難易度「${G.DIFF[r.unlockedDiff].n}」が解放された！`) : null,
       G.meta.lore.length > loreBefore ? h('div', { style: { color: '#ff5ad1' } }, `新しい記録が${G.meta.lore.length - loreBefore}件解放された（拠点の「記録」で閲覧できます）`) : null,
       newRecruits.length ? h('div', { style: { color: '#7dffb0' } }, `新たな仲間の噂：${newRecruits.map((id) => G.HEROES[id].n).join('、')}（拠点の「仲間」から勧誘できます）`) : null,
+      newRecruits.includes('nul') ? h('div', { style: { color: '#b8ff3d' } }, '……通信に、知らない声が混ざった。「みつけた。ねえ、そっちに行ってもいい？」') : null,
       UI.btn('拠点へ帰還', () => UI.base(), 'big pink'))));
   };
 })();

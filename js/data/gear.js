@@ -72,6 +72,7 @@
   def({ id: 'sig_luka', hero: 'luka', n: '折れたロザリオ', r: 4, heal: 2, st: { barrier: 1 }, d: '回復量+2、戦闘開始時に障壁1', f: '祈る相手はいなくなった。祈る理由は増えた。' });
   def({ id: 'sig_haru', hero: 'haru', n: 'ソラの腕時計', r: 4, atk: 1, draw: 1, d: '攻撃ダメージ+1、最初のターン1枚多くドロー', f: '時刻表示はずっと狂っている。ソラいわく「わざと」。' });
   def({ id: 'sig_amane', hero: 'amane', n: '手書きの設計図', r: 4, draw: 2, foe: ['vuln', 1, 'all'], d: '最初のターン2枚多くドロー、戦闘開始時に全敵に脆弱1', f: '余白に「ごめんね」と、何度も書いては消した跡。' });
+  def({ id: 'sig_nul', hero: 'nul', n: '欠けた星のヘアピン', r: 4, draw: 1, st: { barrier: 1, bugnest: 1 }, d: '最初のターン1枚多くドロー、戦闘開始時に障壁1とバグ増殖1', f: '拾いものの髪飾り。欠けた星が、ずっと点滅している。' });
   G.GEAR = GEAR;
   G.GEAR_RC = ['', '#e8e8f0', '#2ee6ff', '#ff5ad1', '#ffd93d'];
   G.gearPrice = (g) => [0, 70, 110, 160, 0][g.r];

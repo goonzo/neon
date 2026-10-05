@@ -30,6 +30,8 @@
       settings: { sfx: true, bgm: true, speed: 1 },
       townSeen: null, // facility levels last shown in the town view (for the level-up sparkle)
       bonds: {}, // hero id -> bond level 0..3 (talks at safehouses)
+      seenAreas: [], // middle areas visited at least once (unseen ones come up first)
+      lastMid: null,
     };
   }
   G.loadMeta = () => {
@@ -42,6 +44,13 @@
     for (const k in d.res) if (m.res[k] === undefined) m.res[k] = 0;
     for (const k in d.settings) if (m.settings[k] === undefined) m.settings[k] = d.settings[k];
     if (!m.bonds) m.bonds = {};
+    // flags from before areas could change: the old 2nd/3rd acts were always New Eden / the Sanctum
+    const f = m.flags;
+    if (f.a2reach && !f.eden) f.eden = true;
+    if (f.a2boss && !f.hypnos) f.hypnos = true;
+    if (f.a3reach && !f.sanctum) f.sanctum = true;
+    if (f.a1boss && !f.smile) f.smile = true;
+    if (f.eden && !m.seenAreas.includes('eden')) m.seenAreas.push('eden');
     return m;
   };
   G.saveMeta = () => store.set(META_KEY, JSON.stringify(G.meta));
@@ -159,7 +168,7 @@
         return { id, hp: maxHp, maxHp, deck, gear: sig };
       }),
       bag: [],
-      act4: !!G.meta.flags.a3boss,
+      route: G.makeRoute(diff, G.meta),
       credits: 70 + [0, 40, 40, 100][f.market],
       relics: [],
       res: { energy: 0, scrap: 0, food: 0, data: 0 },
@@ -176,7 +185,10 @@
         if (cand.length) G.pick(cand).up = true;
       }
     }
-    run.map = G.genMap(1);
+    run.map = G.genMap(run, 1);
+    const mid = run.route[1];
+    if (!G.meta.seenAreas.includes(mid)) G.meta.seenAreas.push(mid);
+    G.meta.lastMid = mid;
     G.meta.runs++;
     G.meta.lastParty = party.slice();
     G.meta.lastDiff = diff;
@@ -244,7 +256,9 @@
     if (hi >= 0) G.equipGear(run, hi, id);
     return hi;
   };
-  G.finalAct = (run) => (run.act4 ? 4 : 3);
+  G.finalAct = (run) => G.routeOf(run).length;
+  // 安全区 is only a survey: no parts (relics) turn up on the surface
+  G.partsOK = (run) => run.diff >= 1;
 
   // ---------------- map ----------------
   const NODE = {
@@ -256,10 +270,11 @@
     treasure: { n: '補給コンテナ', spr: 'n_treasure', c: '#2ee6ff' },
     res: { n: '物資回収', spr: 'n_res', c: '#9a9cb2' },
     boss: { n: 'ボス', spr: 'n_boss', c: '#e8352e' },
+    bug: { n: '？？？', spr: 'n_bug', c: '#b8ff3d' },
   };
   G.NODE = NODE;
 
-  G.genMap = (act) => {
+  G.genMap = (run, stage) => {
     const COLS = 9;
     const cols = [];
     for (let c = 0; c < COLS; c++) {
@@ -303,8 +318,12 @@
         }
       });
     }
-    const A = G.ACTS[act];
-    return { act, cols, boss: G.pick(A.bosses).slice() };
+    // 深淵: some nodes are corrupted and hide what they are until entered
+    if (run.diff >= 3) {
+      for (let c = 1; c < COLS - 1; c++) for (const n of cols[c]) if (n.t !== 'boss' && G.chance(0.22)) n.q = true;
+    }
+    const A = G.areaAt(run, stage);
+    return { act: stage, area: A.id, cols, boss: G.pick(A.bosses).slice() };
   };
   G.mapNode = (run, id) => {
     for (const col of run.map.cols) for (const n of col) if (n.id === id) return n;
@@ -318,7 +337,7 @@
 
   // ---------------- encounters ----------------
   G.pickEncounter = (run, kind) => {
-    const A = G.ACTS[run.act];
+    const A = G.area(run);
     let table;
     if (kind === 'boss') return ((run.map && run.map.boss) || A.bosses[0]).slice();
     if (kind === 'elite') table = A.elite;
@@ -357,8 +376,18 @@
       if (G.NEUTRAL && G.chance(0.1)) { const nc = G.NEUTRAL.filter((x) => !out.includes(x)); if (nc.length) id = G.pick(nc); }
       out.push(id);
     }
+    // legendary cards: 危険 and above, from the third area on
+    const leg = G.legendChance(run, kind);
+    const lid = def.legend;
+    if (lid && leg && G.chance(leg) && !out.includes(lid) && !G.run_has(run, heroId, lid)) out[out.length - 1] = lid;
     return out;
   };
+  G.legendChance = (run, kind) => {
+    if (run.diff < 2 || run.act < 3) return 0;
+    const base = kind === 'boss' ? 0.5 : kind === 'elite' ? 0.25 : 0.04;
+    return base + (run.diff >= 3 ? 0.1 : 0);
+  };
+  G.run_has = (run, heroId, cardId) => { const h = run.heroes.find((x) => x.id === heroId); return !!h && h.deck.some((c) => c.id === cardId); };
 
   // returns reward object after a won combat
   G.combatRewards = (run, C, kind, bonus) => {
@@ -370,12 +399,13 @@
       G.RES_KEYS.forEach((k) => addRes(k, G.rint(4, 6) + run.act * 2));
       rw.relicChoices = [];
       if (!final) rw.gear = G.gainGear(run, G.randomGear(run, 2));
+      if (!G.partsOK(run)) rw.credits += 40;
       if (final) {
         // final boss: nothing left to spend a relic or card on — bring back SI core data instead
         rw.final = true;
         addRes('data', 15); addRes('energy', 10);
       }
-      for (let i = 0; i < (final ? 0 : 3); i++) {
+      for (let i = 0; i < (final || !G.partsOK(run) ? 0 : 3); i++) {
         const id = G.randomRelic({ relics: run.relics.concat(rw.relicChoices) }, 2);
         if (id) rw.relicChoices.push(id);
       }
@@ -383,8 +413,9 @@
       rw.credits = 35 + G.rint(0, 15);
       addRes(G.randomResKey(), G.rint(4, 7) + run.act);
       addRes(G.randomResKey(), G.rint(3, 5) + run.act);
-      rw.relic = G.randomRelic(run, 1);
-      if (G.chance(0.6)) rw.gear = G.gainGear(run, G.randomGear(run, 1));
+      rw.relic = G.partsOK(run) ? G.randomRelic(run, 1) : null;
+      if (G.chance(G.partsOK(run) ? 0.6 : 0.85)) rw.gear = G.gainGear(run, G.randomGear(run, 1));
+      if (!G.partsOK(run)) rw.credits += 20;
       if (run.relics.includes('feather')) { rw.credits += 30; addRes(G.randomResKey(), 4); }
     } else {
       rw.credits = 14 + G.rint(0, 10);
@@ -400,6 +431,8 @@
       if (loot) addRes('scrap', loot);
     }
     if (bonus) for (const k in bonus) addRes(k, bonus[k]);
+    // bugged enemies drop corrupted data
+    if (C && C.bugs) { addRes('data', 3 * C.bugs); rw.bugs = C.bugs; }
     run.credits += rw.credits;
     if (!rw.final) run.heroes.forEach((h) => {
       if (h.hp > 0) rw.cards.push({ hero: h.id, choices: G.rollCardChoices(run, h.id, kind) });
@@ -449,7 +482,7 @@
       cards.push({ hero: h.id, id, price: Math.round(base * pm), sold: false });
     }
     const relics = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < (G.partsOK(run) ? 3 : 0); i++) {
       const id = G.randomRelic({ relics: run.relics.concat(relics.map((r) => r.id)) }, 1);
       if (id) relics.push({ id, price: Math.round((G.relicPrice(G.RELICS[id]) + G.rint(-10, 10)) * pm), sold: false });
     }
@@ -464,8 +497,9 @@
   // ---------------- run end ----------------
   G.endRun = (run, result) => {
     const m = G.meta;
-    // reaching Act 4 means Sophia already fell: that run counts as a clear even if the party falls later
-    const cleared = result === 'win' || run.act >= 4;
+    // getting past Sophia counts as a clear even if the party falls later
+    const route = G.routeOf(run);
+    const cleared = result === 'win' || route.slice(0, run.act - 1).includes('sanctum');
     const keep = cleared ? 1 : 0.7;
     const brought = {};
     // leftover credits and parts are exchanged for base resources (same keep ratio)
@@ -485,6 +519,8 @@
     });
     m.bestAct = Math.max(m.bestAct, run.act);
     let unlockedDiff = null;
+    if (result === 'win' && run.diff >= 3) G.setFlag('abyssclear');
+    if (result === 'win' && route[route.length - 1] === 'rim') G.setFlag('rimclear');
     if (cleared) {
       m.wins++;
       m.clears[run.diff] = (m.clears[run.diff] || 0) + 1;
@@ -525,6 +561,7 @@
         return false;
       },
       relic: (id) => {
+        if (!G.partsOK(run)) { run.credits += 30; out.notes.push('（安全区ではパーツは流通していない。代わりに30クレジットを得た）'); return; }
         let rid = id;
         if (id === 'random1') rid = G.randomRelic(run, 1);
         if (id === 'random3') rid = G.randomRelic(run, 3) || G.randomRelic(run, 1);
@@ -574,7 +611,8 @@
 
   G.availableEvents = (run) => {
     const seen = run.seenEvents || [];
-    const ok = (e) => e.acts.includes(run.act) && (!e.need || run.heroes.some((h) => h.id === e.need)) && (!e.cond || e.cond(G.meta, run));
+    const ar = G.area(run);
+    const ok = (e) => (e.acts.includes(ar.tag) || (ar.gen && e.acts.length >= 3 && e.acts.every((a) => typeof a === 'number' && a <= 3))) && (!e.need || run.heroes.some((h) => h.id === e.need)) && (!e.cond || e.cond(G.meta, run));
     let ev = G.EVENTS.filter((e) => ok(e) && !seen.includes(e.id));
     if (!ev.length) ev = G.EVENTS.filter(ok);
     return ev;

@@ -107,7 +107,7 @@
       const p = h('div', { class: 'panel resume row', style: { gap: '14px', marginTop: '8px', alignItems: 'center' } },
         h('div', { class: 'col grow', style: { gap: '6px' } },
           h('div', { class: 'ttl' }, '進行中の任務'),
-          h('div', null, `${G.ACTS[saved.act].n}（第${saved.act}区画）　難易度：`, h('span', { style: { color: G.DIFF[saved.diff].c } }, G.DIFF[saved.diff].n)),
+          h('div', null, `${G.areaAt(saved, saved.act).n}（第${saved.act}区画）　難易度：`, h('span', { style: { color: G.DIFF[saved.diff].c } }, G.DIFF[saved.diff].n)),
           h('div', { class: 'row' }, saved.heroes.map((hh) => h('div', { class: 'col', style: { alignItems: 'center', gap: '2px' } }, G.sprImg(hh.id, 3), h('span', { class: 'sub' }, `${hh.hp}/${hh.maxHp}`))))),
         h('div', { class: 'col', style: { gap: '8px', alignItems: 'stretch' } },
           UI.btn('任務を再開する', () => { G.run = saved; UI.resume(); }, 'big pink'),
@@ -128,7 +128,7 @@
           '仲間を4人選んで地上へ。集めた資源で施設を強化すると、街も育っていきます。', h('br'),
           h('span', { class: 'sub' }, '※ 全滅しても、集めた資源の70%は持ち帰れます。'))),
       UI.btn('出撃準備へ', () => UI.sortie(), 'big pink')));
-    const best = m.bestAct ? `${m.bestAct}（${G.ACTS[m.bestAct].n}）` : '—';
+    const best = m.bestAct ? `${m.bestAct}` : '—';
     main.appendChild(h('div', { class: 'panel', style: { marginTop: '8px', fontSize: '13px' } },
       h('div', { class: 'row', style: { gap: '20px', flexWrap: 'wrap' } },
         h('span', null, `最高到達：第${best}区画`),
@@ -307,6 +307,10 @@
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【連携】ハル＆ソラの能力。直前のカードとタイプ（アタック／スキル）が違うと発動する。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【割り込み／後回し】このラウンドの行動順を入れ替える。すでに行動済みなら加速／鈍足になる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【記憶消去】敵の能力。山札のカードがその戦闘のあいだ使えなくなる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【ルート】第一区画はいつも同じ。第二区画はランダム（ニューエデン／沈んだ旧市街／壊れたデータ区画）。終点は難易度で変わる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【★伝説カード】危険以上の第三区画から、報酬にまれに出るキャラ専用の最強カード。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【バグ】深淵では、中身の読めない「？？？」マスや、HPが高く奇妙な能力をもつ「バグった敵」が出る。倒すとデータを落とす。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【バグったカード】そのターンのあいだコスト0になったカード。ターン終了で元に戻る。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【状態の見かた】明るく塗られたアイコン＝バフ（有利）、黒地に色枠のアイコン＝デバフ（不利）。右下の数字はスタック数または残りターン。'),
         head('buff', '　有利な効果'), of('buff').map(item),
         head('debuff', '　不利な効果'), of('debuff').map(item),
@@ -336,7 +340,8 @@
         const lock = i > m.diffMax;
         return h('div', { class: 'diff' + (i === diff ? ' sel' : '') + (lock ? ' lock' : ''), onclick: () => { if (lock) return; A.sfx('click'); diff = i; draw(); } },
           h('div', { class: 'dn', style: { color: d.c } }, (lock ? '🔒 ' : '') + d.n, h('span', { class: 'sub', style: { marginLeft: '6px' } }, d.en)),
-          h('div', { class: 'dd' }, lock ? 'ひとつ下の難易度で第三区画を制圧すると解放' : d.d),
+          h('div', { class: 'dd' }, lock ? 'ひとつ下の難易度で作戦を完了すると解放' : d.d),
+          !lock ? h('div', { class: 'dd', style: { color: '#c9c4dc' } }, G.DIFF_ROUTE[i]) : null,
           !lock ? h('div', { class: 'dd', style: { color: '#ffd93d' } }, `資源×${d.res}　制圧${m.clears[i] || 0}回`) : null);
       })));
       // roster
