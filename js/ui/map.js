@@ -245,11 +245,11 @@
               } }),
               h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `${it.price}cr`));
           })),
-          h('div', { class: 'row', style: { gap: '10px', alignItems: 'stretch' } },
+          h('div', { class: 'shopitems' },
             (shop.gear || []).map((it) => {
               const can = run.credits >= it.price && !it.sold;
               const g = G.GEAR[it.id];
-              return h('div', { class: 'panel', style: { width: '170px', opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default', fontSize: '12px' }, onclick: () => {
+              return h('div', { class: 'panel shopitem', 'data-tip': UI.gearTip(it.id), style: { opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default' }, onclick: () => {
                 if (!can) return;
                 A.sfx('coin');
                 run.credits -= it.price; it.sold = true;
@@ -262,16 +262,16 @@
             shop.relics.map((it) => {
               const can = run.credits >= it.price && !it.sold;
               const r = G.RELICS[it.id];
-              return h('div', { class: 'panel', style: { width: '170px', opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default', fontSize: '12px' }, onclick: () => {
+              return h('div', { class: 'panel shopitem', 'data-tip': `<div class="tn">${r.n}</div>${r.d}<div class="tf">${r.f}</div>`, style: { opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default' }, onclick: () => {
                 if (!can) return;
                 A.sfx('coin');
                 run.credits -= it.price; it.sold = true;
                 G.addRelic(run, it.id);
                 G.saveRun(); draw();
               } }, h('div', { class: 'row' }, UI.relicChip(it.id), h('span', { style: { fontSize: '13px' } }, r.n)), h('div', { style: { marginTop: '3px' } }, r.d),
-                h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `${it.price}cr`));
-            }),
-            h('div', { class: 'col', style: { gap: '6px' } },
+                h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `パーツ ${it.price}cr`));
+            })),
+          h('div', { class: 'row', style: { gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' } },
               UI.btn(`カード削除（${shop.removePrice}cr）`, () => {
                 UI.pickCard(run, 'remove', (r) => {
                   if (r) { run.credits -= shop.removePrice; shop.removed = true; run.removeCost += 25; G.saveRun(); }
@@ -283,7 +283,7 @@
                 run.credits -= shop.healPrice; shop.healed = true;
                 G.healParty(run, 0.25); G.saveRun(); draw();
               }, 'sm', { disabled: shop.healed || run.credits < shop.healPrice }),
-              UI.btn('店を出る', () => finishNode(), 'pink'))))));
+              UI.btn('店を出る', () => finishNode(), 'pink')))));
     };
     draw();
   };

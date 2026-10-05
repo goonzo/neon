@@ -297,6 +297,11 @@ b { font-weight: normal; color: #fff; }
 .turnbar .rnd { font-size: 15px; color: var(--yellow); margin-right: 8px; }
 
 .hud { position: absolute; left: 0; right: 0; bottom: 0; height: 206px; z-index: 40; background: linear-gradient(rgba(11,10,18,0), rgba(11,10,18,0.95) 30%); }
+/* the HUD strip overlaps the lower units' status chips: let the empty band pass the pointer through */
+.hud { pointer-events: none; }
+.hud > * { pointer-events: auto; }
+.hud .hand { pointer-events: none; }
+.hud .hand > .card { pointer-events: auto; }
 .hud .who { position: absolute; left: 10px; bottom: 10px; width: 150px; }
 .energy { width: 64px; height: 64px; border: 3px solid #0b0a12; background: radial-gradient(circle at 35% 35%, #fff6a8, #ffd93d 40%, #c98a1a); display: flex; align-items: center; justify-content: center; font-size: 26px; color: #1b1030; box-shadow: 0 0 14px rgba(255,217,61,0.6), inset -3px -3px 0 rgba(0,0,0,0.25);
   clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
@@ -445,3 +450,9 @@ body.bigui .relic { width: 28px; height: 28px; font-size: 15px; }
 body.bigui .chip { font-size: 13.5px; padding: 2px 8px; }
 body.bigui .evtext, body.bigui .talktext { font-size: 16px; }
 body.bigui .choice .cd { font-size: 13.5px; }
+
+/* black market: gear + parts share one 5-column row, buttons go below */
+.shopitems { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.shopitem { font-size: 12px; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; min-width: 0; }
+.shopitem .row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shopitem .price { margin-top: auto; }
