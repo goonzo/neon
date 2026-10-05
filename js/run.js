@@ -29,6 +29,7 @@
       lastDiff: 0,
       settings: { sfx: true, bgm: true, speed: 1 },
       townSeen: null, // facility levels last shown in the town view (for the level-up sparkle)
+      bonds: {}, // hero id -> bond level 0..3 (talks at safehouses)
     };
   }
   G.loadMeta = () => {
@@ -40,6 +41,7 @@
     for (const k in d.fac) if (m.fac[k] === undefined) m.fac[k] = 0;
     for (const k in d.res) if (m.res[k] === undefined) m.res[k] = 0;
     for (const k in d.settings) if (m.settings[k] === undefined) m.settings[k] = d.settings[k];
+    if (!m.bonds) m.bonds = {};
     return m;
   };
   G.saveMeta = () => store.set(META_KEY, JSON.stringify(G.meta));
@@ -123,6 +125,7 @@
       if (c === 'run1') return m.runs >= 1;
       if (c === 'loop3') return m.wins >= 3;
       if (c === 'abyss') return m.clears[3] >= 1;
+      if (c.startsWith('bond_')) return (m.bonds[c.slice(5)] || 0) >= 3;
       return !!m.flags[c];
     };
     for (const l of G.LORE) {
@@ -148,9 +151,15 @@
       diff, act: 1, floor: 0,
       heroes: party.map((id) => {
         const def = G.HEROES[id];
-        const maxHp = def.hp + hpBonus;
-        return { id, hp: maxHp, maxHp, deck: G.expandDeck(def) };
+        const bond = G.meta.bonds[id] || 0;
+        const sig = bond >= 3 ? G.sigGear(id) : null;
+        const maxHp = def.hp + hpBonus + (bond >= 1 ? 4 : 0) + (sig ? G.GEAR[sig].hp || 0 : 0);
+        const deck = G.expandDeck(def);
+        if (bond >= 2) { const cand = deck.filter((c) => G.E.canUpgrade(c)); if (cand.length) G.pick(cand).up = true; }
+        return { id, hp: maxHp, maxHp, deck, gear: sig };
       }),
+      bag: [],
+      act4: !!G.meta.flags.a3boss,
       credits: 70 + [0, 40, 40, 100][f.market],
       relics: [],
       res: { energy: 0, scrap: 0, food: 0, data: 0 },
@@ -197,6 +206,45 @@
     if (!pool.length) return null;
     return G.wpick(pool, (r) => (r.r === 1 ? 5 : r.r === 2 ? 3 : 1)).id;
   };
+
+  // ---------------- gear ----------------
+  G.sigGear = (heroId) => { const g = Object.values(G.GEAR).find((x) => x.hero === heroId); return g ? g.id : null; };
+  G.canEquip = (heroId, gid) => { const g = G.GEAR[gid]; return !!g && (!g.hero || g.hero === heroId); };
+  G.ownedGear = (run) => run.heroes.map((h) => h.gear).filter(Boolean).concat(run.bag || []);
+  G.randomGear = (run, minR, maxR) => {
+    const own = G.ownedGear(run);
+    const pool = Object.values(G.GEAR).filter((g) => !g.hero && g.r >= (minR || 1) && g.r <= (maxR || 3) && !own.includes(g.id));
+    if (!pool.length) return null;
+    return G.wpick(pool, (g) => (g.r === 1 ? 5 : g.r === 2 ? 3 : 1.4)).id;
+  };
+  G.gainGear = (run, id) => { if (id) (run.bag = run.bag || []).push(id); return id; };
+  G.unequipGear = (run, hi) => {
+    const h = run.heroes[hi];
+    if (!h || !h.gear) return;
+    const g = G.GEAR[h.gear];
+    (run.bag = run.bag || []).push(h.gear);
+    h.gear = null;
+    if (g.hp) { h.maxHp = Math.max(10, h.maxHp - g.hp); h.hp = Math.max(1, Math.min(h.hp, h.maxHp)); }
+  };
+  G.equipGear = (run, hi, id) => {
+    const h = run.heroes[hi];
+    if (!h || !G.canEquip(h.id, id)) return false;
+    const bi = (run.bag || []).indexOf(id);
+    if (bi < 0) return false;
+    run.bag.splice(bi, 1);
+    if (h.gear) G.unequipGear(run, hi);
+    h.gear = id;
+    const g = G.GEAR[id];
+    if (g.hp) { h.maxHp = Math.max(10, h.maxHp + g.hp); h.hp = Math.max(1, Math.min(h.maxHp, h.hp + Math.max(0, g.hp))); }
+    return true;
+  };
+  // equip the bag item on the first hero who has nothing (used by the sim / quick-equip)
+  G.autoEquip = (run, id) => {
+    const hi = run.heroes.findIndex((h) => !h.gear && G.canEquip(h.id, id));
+    if (hi >= 0) G.equipGear(run, hi, id);
+    return hi;
+  };
+  G.finalAct = (run) => (run.act4 ? 4 : 3);
 
   // ---------------- map ----------------
   const NODE = {
@@ -255,7 +303,8 @@
         }
       });
     }
-    return { act, cols };
+    const A = G.ACTS[act];
+    return { act, cols, boss: G.pick(A.bosses).slice() };
   };
   G.mapNode = (run, id) => {
     for (const col of run.map.cols) for (const n of col) if (n.id === id) return n;
@@ -271,7 +320,7 @@
   G.pickEncounter = (run, kind) => {
     const A = G.ACTS[run.act];
     let table;
-    if (kind === 'boss') return A.boss.slice();
+    if (kind === 'boss') return ((run.map && run.map.boss) || A.bosses[0]).slice();
     if (kind === 'elite') table = A.elite;
     else table = run.floor <= 2 ? A.easy : A.normal;
     let cand = table.filter((g) => !run.lastEnc.includes(g.join(',')));
@@ -302,8 +351,10 @@
       let r = G.wpick([1, 2, 3], (x) => (byR(x).length ? w[x] : 0));
       let p = byR(r);
       if (!p.length) p = pool;
-      const id = G.pick(p);
+      let id = G.pick(p);
       pool.splice(pool.indexOf(id), 1);
+      // now and then a neutral card shows up instead
+      if (G.NEUTRAL && G.chance(0.1)) { const nc = G.NEUTRAL.filter((x) => !out.includes(x)); if (nc.length) id = G.pick(nc); }
       out.push(id);
     }
     return out;
@@ -311,18 +362,20 @@
 
   // returns reward object after a won combat
   G.combatRewards = (run, C, kind, bonus) => {
-    const rw = { credits: 0, res: {}, cards: [], relic: null, relicChoices: null };
+    const rw = { credits: 0, res: {}, cards: [], relic: null, relicChoices: null, gear: null };
+    const final = kind === 'boss' && run.act >= G.finalAct(run);
     const addRes = (k, v) => { const n = G.resGain(run, k, v); rw.res[k] = (rw.res[k] || 0) + n; };
     if (kind === 'boss') {
       rw.credits = 80 + G.rint(0, 20);
       G.RES_KEYS.forEach((k) => addRes(k, G.rint(4, 6) + run.act * 2));
       rw.relicChoices = [];
-      if (run.act >= 3) {
+      if (!final) rw.gear = G.gainGear(run, G.randomGear(run, 2));
+      if (final) {
         // final boss: nothing left to spend a relic or card on — bring back SI core data instead
         rw.final = true;
         addRes('data', 15); addRes('energy', 10);
       }
-      for (let i = 0; i < (run.act >= 3 ? 0 : 3); i++) {
+      for (let i = 0; i < (final ? 0 : 3); i++) {
         const id = G.randomRelic({ relics: run.relics.concat(rw.relicChoices) }, 2);
         if (id) rw.relicChoices.push(id);
       }
@@ -331,6 +384,7 @@
       addRes(G.randomResKey(), G.rint(4, 7) + run.act);
       addRes(G.randomResKey(), G.rint(3, 5) + run.act);
       rw.relic = G.randomRelic(run, 1);
+      if (G.chance(0.6)) rw.gear = G.gainGear(run, G.randomGear(run, 1));
       if (run.relics.includes('feather')) { rw.credits += 30; addRes(G.randomResKey(), 4); }
     } else {
       rw.credits = 14 + G.rint(0, 10);
@@ -340,6 +394,7 @@
     if (run.relics.includes('phone')) rw.credits += 10;
     if (run.relics.includes('coin')) addRes(G.randomResKey(), 2);
     if (run.heroes.some((h) => h.id === 'madame')) { rw.credits += 12; addRes(G.randomResKey(), 2); }
+    run.heroes.forEach((h) => { const g = h.gear && G.GEAR[h.gear]; if (g && g.winCred) rw.credits += g.winCred; });
     if (C) {
       const loot = C.units.filter((u) => u.side === 'H').reduce((s, u) => s + (u.st.loot || 0), 0);
       if (loot) addRes('scrap', loot);
@@ -387,7 +442,8 @@
     const cards = [];
     for (let i = 0; i < 6; i++) {
       const h = run.heroes[i % run.heroes.length];
-      const id = G.rollCardChoices(run, h.id, 'normal')[0];
+      let id = G.rollCardChoices(run, h.id, 'normal')[0];
+      if (i === 5 && G.NEUTRAL) id = G.pick(G.NEUTRAL);
       const r = G.CARDS[id].r;
       const base = [0, 45, 70, 105][r] + G.rint(-5, 8);
       cards.push({ hero: h.id, id, price: Math.round(base * pm), sold: false });
@@ -397,20 +453,29 @@
       const id = G.randomRelic({ relics: run.relics.concat(relics.map((r) => r.id)) }, 1);
       if (id) relics.push({ id, price: Math.round((G.relicPrice(G.RELICS[id]) + G.rint(-10, 10)) * pm), sold: false });
     }
-    return { cards, relics, removePrice: Math.round(run.removeCost * pm), healPrice: Math.round(45 * pm), healed: false, removed: false };
+    const gear = [];
+    for (let i = 0; i < 2; i++) {
+      const id = G.randomGear({ heroes: run.heroes, bag: (run.bag || []).concat(gear.map((g) => g.id)) }, 1);
+      if (id) gear.push({ id, price: Math.round((G.gearPrice(G.GEAR[id]) + G.rint(-8, 8)) * pm), sold: false });
+    }
+    return { cards, relics, gear, removePrice: Math.round(run.removeCost * pm), healPrice: Math.round(45 * pm), healed: false, removed: false };
   };
 
   // ---------------- run end ----------------
   G.endRun = (run, result) => {
     const m = G.meta;
-    const keep = result === 'win' ? 1 : 0.7;
+    // reaching Act 4 means Sophia already fell: that run counts as a clear even if the party falls later
+    const cleared = result === 'win' || run.act >= 4;
+    const keep = cleared ? 1 : 0.7;
     const brought = {};
     // leftover credits and parts are exchanged for base resources (same keep ratio)
     const conv = { energy: 0, scrap: 0, food: 0, data: 0 };
     const credUnits = Math.floor(run.credits / 10);
     for (let i = 0; i < credUnits; i++) conv[G.RES_KEYS[i % 4]]++;
     conv.scrap += run.relics.length * 3;
-    const exchange = { credits: run.credits, relics: run.relics.length, res: {} };
+    const gearN = G.ownedGear(run).filter((id) => !G.GEAR[id].hero).length;
+    conv.scrap += gearN * 2;
+    const exchange = { credits: run.credits, relics: run.relics.length, gear: gearN, res: {} };
     G.RES_KEYS.forEach((k) => {
       const got = Math.floor(run.res[k] * keep);
       const ex = Math.floor(conv[k] * keep);
@@ -420,7 +485,7 @@
     });
     m.bestAct = Math.max(m.bestAct, run.act);
     let unlockedDiff = null;
-    if (result === 'win') {
+    if (cleared) {
       m.wins++;
       m.clears[run.diff] = (m.clears[run.diff] || 0) + 1;
       if (run.diff + 1 > m.diffMax && run.diff + 1 <= 3) { m.diffMax = run.diff + 1; unlockedDiff = m.diffMax; }
@@ -486,6 +551,20 @@
         h.deck.push({ id, up: false });
         return `${heroName(h)}は「${G.CARDS[id].n}」を手に入れた。`;
       },
+      gear: (id) => {
+        let gid = id;
+        if (id === 'random1') gid = G.randomGear(run, 1);
+        if (id === 'random2') gid = G.randomGear(run, 2) || G.randomGear(run, 1);
+        if (id === 'random3') gid = G.randomGear(run, 3) || G.randomGear(run, 2);
+        if (gid) { G.gainGear(run, gid); (out.gear = out.gear || []).push(gid); }
+        else { run.credits += 30; out.notes.push('（装備は見つからなかったので、30クレジットを拾った）'); }
+      },
+      flag: (f) => G.setFlag(f),
+      encounter: () => G.pickEncounter(run, 'normal'),
+      heroName: (id) => G.HEROES[id].n,
+      healHero: (id, pct) => { const h = run.heroes.find((x) => x.id === id); if (h) h.hp = Math.min(h.maxHp, h.hp + Math.ceil(h.maxHp * pct)); },
+      maxHpHero: (id, d) => { const h = run.heroes.find((x) => x.id === id); if (h) { h.maxHp = Math.max(10, h.maxHp + d); h.hp = Math.min(h.maxHp, Math.max(1, h.hp + Math.max(0, d))); } },
+      addCard: (heroId, cardId) => { const h = heroId === 'rand' ? randHero() : run.heroes.find((x) => x.id === heroId); if (h) { h.deck.push({ id: cardId, up: false }); return heroName(h); } return ''; },
       fight: (group, bonus) => { out.next = { type: 'fight', group, bonus }; },
       removePick: () => { out.next = { type: 'remove' }; },
       upgradePick: () => { out.next = { type: 'upgrade' }; },
@@ -495,8 +574,9 @@
 
   G.availableEvents = (run) => {
     const seen = run.seenEvents || [];
-    let ev = G.EVENTS.filter((e) => e.acts.includes(run.act) && !seen.includes(e.id));
-    if (!ev.length) ev = G.EVENTS.filter((e) => e.acts.includes(run.act));
+    const ok = (e) => e.acts.includes(run.act) && (!e.need || run.heroes.some((h) => h.id === e.need)) && (!e.cond || e.cond(G.meta, run));
+    let ev = G.EVENTS.filter((e) => ok(e) && !seen.includes(e.id));
+    if (!ev.length) ev = G.EVENTS.filter(ok);
     return ev;
   };
 })();

@@ -95,7 +95,7 @@ b { font-weight: normal; color: #fff; }
 
 /* modal */
 #modal { position: absolute; inset: 0; z-index: 8000; background: rgba(5,4,10,0.78); display: flex; align-items: center; justify-content: center; }
-#modal > .panel { max-width: 900px; max-height: 500px; }
+#modal > .panel { max-width: 900px; max-height: 520px; overflow-y: auto; }
 
 /* floating fx */
 #fx { position: absolute; inset: 0; pointer-events: none; z-index: 7000; }
@@ -370,3 +370,78 @@ b { font-weight: normal; color: #fff; }
 .town-ttl span { color: var(--dim); }
 .town-up { position: absolute; top: 60px; transform: translateX(-50%); font-size: 15px; color: #b8ff3d; white-space: nowrap; pointer-events: none; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; animation: townup 2.6s steps(16) forwards; }
 @keyframes townup { 0% { opacity: 0; margin-top: 10px; } 10% { opacity: 1; margin-top: 0; } 80% { opacity: 1; } 100% { opacity: 0; margin-top: -24px; } }
+
+/* ---------- gear ---------- */
+.gearchip { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 2px solid currentColor; background: #100e1e; font-size: 12px; cursor: help;
+  clip-path: polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%); flex: none; }
+.gearchip.sm { width: 16px; height: 16px; font-size: 10px; border-width: 1px; }
+.gearchip.r4 { background: #2a2410; box-shadow: inset 0 0 6px rgba(255,217,61,0.6); }
+.gearpanel { width: 200px; }
+.gearslots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gearslot { min-height: 128px; }
+.gearbag { display: flex; flex-wrap: wrap; gap: 8px; max-height: 230px; padding: 2px; }
+.gearbag .gearpanel { width: 196px; }
+
+/* ---------- bonds / talk ---------- */
+.hearts { color: #ff9ec4; font-size: 12px; letter-spacing: 1px; cursor: help; white-space: nowrap; }
+.bondbox { margin-top: 6px; padding: 6px 8px; border: 1px dashed #6b5f8a; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.talkbox { position: relative; display: flex; gap: 14px; align-items: flex-start; min-height: 120px; padding: 10px; background: #100e1e; border: 2px solid var(--line2); cursor: pointer; }
+.talkbox .more { position: absolute; right: 10px; bottom: 6px; color: var(--cyan); animation: blink 0.8s steps(2) infinite; }
+.talkport { width: 72px; min-height: 80px; display: flex; align-items: flex-end; justify-content: center; flex: none; }
+.talkname { font-size: 14px; }
+.talktext { font-size: 15px; line-height: 1.75; white-space: pre-wrap; }
+.talktext.narr { color: #a99fc9; font-style: italic; }
+.talkpick { width: 140px; }
+.talkpick:hover:not(.done) { border-color: var(--pink); }
+.talkpick.done { opacity: 0.45; }
+
+/* ---------- new intents ---------- */
+.intent.steal { border-color: var(--yellow); color: var(--yellow); }
+.intent.flee { border-color: var(--dim); color: var(--dim); }
+.intent.boom { border-color: var(--orange); color: var(--orange); animation: bob3 0.4s steps(2) infinite; }
+.card .cdesc .lk { color: #5ad1ff; cursor: help; }
+
+/* ---------- touch: zoomed card & unit info ---------- */
+.cardzoom { position: absolute; left: 6px; bottom: 6px; display: flex; flex-direction: row; align-items: flex-end; gap: 8px; z-index: 60; padding: 6px; background: rgba(8,7,16,0.94); border: 2px solid var(--line2); box-shadow: 3px 3px 0 rgba(0,0,0,0.6); }
+.cardzoom > .col { width: 128px; }
+.cardzoom.hidden { display: none; }
+.cardzoom .zhint { text-align: center; color: var(--yellow); font-size: 14px; text-shadow: 1px 1px 0 #000; background: rgba(8,7,16,0.85); border: 1px solid #3b3154; padding: 2px; }
+.card.big { width: 136px; height: 182px; padding: 30px 8px 8px; cursor: default; box-shadow: inset 0 0 0 2px var(--cc, #6b5f8a), 0 0 0 2px var(--acid), 0 0 18px rgba(184,255,61,0.5); }
+.card.big .cbg { height: 24px; }
+.card.big .cname { top: 7px; left: 26px; font-size: 15px; }
+.card.big .cname.long { font-size: 13px; top: 8px; }
+.card.big .cost { width: 30px; height: 30px; font-size: 18px; left: -8px; top: -8px; }
+.card.big .ctype { font-size: 12px; }
+.card.big .cdesc { font-size: 14px; line-height: 1.5; }
+.card.big .chero { font-size: 11px; }
+.unitinfo { font-size: 15px; line-height: 1.6; }
+.unitinfo .intentbox { border: 1px solid #6b3040; background: #1c0a14; padding: 4px 8px; }
+.unitinfo .st { cursor: default; }
+
+/* ---------- big text mode (default on touch devices) ---------- */
+body.bigui .unit .uname, body.bigui .unit .uhp { font-size: 13px; }
+body.bigui .sts { width: 140px; gap: 3px; }
+body.bigui .st { min-width: 20px; height: 20px; font-size: 13px; line-height: 18px; }
+body.bigui .st sub { font-size: 11px; }
+body.bigui .intent { font-size: 16px; padding: 2px 8px; top: -32px; }
+body.bigui .intent .tgt { font-size: 13px; }
+body.bigui .hint { font-size: 15px; }
+body.bigui .sub { font-size: 13.5px; }
+body.bigui .btn.sm { font-size: 14px; padding: 6px 12px; }
+body.bigui .card .cname { font-size: 13.5px; }
+body.bigui .card .cdesc { font-size: 12.5px; line-height: 1.38; }
+body.bigui .card .ctype { font-size: 11px; }
+body.bigui .piles { font-size: 14px; }
+body.bigui .piles span { padding: 2px 0; }
+body.bigui .float { font-size: 22px; }
+body.bigui .float.small { font-size: 16px; }
+body.bigui .float.big { font-size: 28px; }
+body.bigui .hptext { font-size: 13px; }
+body.bigui #tip { font-size: 16px; max-width: 380px; }
+body.bigui .mnode { width: 50px; height: 50px; }
+body.bigui .mnode img { width: 38px; height: 38px; }
+body.bigui .mnode.boss { width: 62px; height: 62px; }
+body.bigui .relic { width: 28px; height: 28px; font-size: 15px; }
+body.bigui .chip { font-size: 13.5px; padding: 2px 8px; }
+body.bigui .evtext, body.bigui .talktext { font-size: 16px; }
+body.bigui .choice .cd { font-size: 13.5px; }

@@ -5,7 +5,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const files = ['js/core.js', 'js/data/heroes.js', 'js/data/enemies.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
+const files = ['js/core.js', 'js/data/heroes.js', 'js/data/gear.js', 'js/data/enemies.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/data/bonds.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
 const ctx = { console, Math, JSON, setTimeout, Promise };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
@@ -76,7 +76,7 @@ function fight(run, group, kind) {
 const N = +process.argv[2] || 30;
 const diff = +(process.argv[3] || 1);
 const ids = G.HERO_ORDER;
-let stats = { runs: 0, reachAct: [0, 0, 0, 0], wins: 0, errors: 0 };
+let stats = { runs: 0, reachAct: [0, 0, 0, 0, 0], wins: 0, errors: 0 };
 for (let r = 0; r < N; r++) {
   // pick a party with one of each role-ish
   const byRole = (role) => ids.filter((id) => G.HEROES[id].role === role);
@@ -86,8 +86,11 @@ for (let r = 0; r < N; r++) {
   run.credits = 0;
   let alive = true;
   try {
-    for (let act = 1; act <= 3 && alive; act++) {
+    if (process.env.ACT4) run.act4 = true;
+    const last = G.finalAct(run);
+    for (let act = 1; act <= last && alive; act++) {
       run.act = act;
+      run.map = G.genMap(act);
       stats.reachAct[act]++;
       const plan = ['fight', 'fight', 'fight', 'elite', 'fight', 'rest', 'fight', 'elite', 'rest', 'boss'];
       for (let fi = 0; fi < plan.length; fi++) {
@@ -96,17 +99,18 @@ for (let r = 0; r < N; r++) {
         if (k === 'rest') { G.healParty(run, 0.35); continue; }
         const g = G.pickEncounter(run, k === 'fight' ? 'normal' : k);
         const C = fight(run, g, k);
-        if (C.over !== 'win') { alive = false; const key = act + ':' + k; deathAt[key] = (deathAt[key] || 0) + 1; break; }
+        if (C.over !== 'win') { alive = false; const key = act + ':' + k + (k !== 'fight' ? ':' + g[0] : ''); deathAt[key] = (deathAt[key] || 0) + 1; break; }
         G.applyCombatToRun(run, C);
         const rw = G.combatRewards(run, C, k);
         // take a random card for each hero, upgrade one card per fight
         rw.cards.forEach((cr) => { const h = run.heroes.find((x) => x.id === cr.hero); if (G.chance(0.7)) h.deck.push({ id: G.pick(cr.choices), up: false }); });
         if (rw.relic) G.addRelic(run, rw.relic);
+        if (rw.gear) G.autoEquip(run, rw.gear);
         if (rw.relicChoices && rw.relicChoices.length) G.addRelic(run, rw.relicChoices[0]);
       }
       if (alive) G.healParty(run, 0.5);
-      if (alive && act === 3) stats.wins++;
-      if (act === 3 || !alive) party.forEach((id) => { const hs = heroStat[id] || (heroStat[id] = { n: 0, w: 0, acts: 0 }); hs.n++; hs.w += alive && act === 3 ? 1 : 0; hs.acts += alive ? act : act - 1; });
+      if (alive && act === last) stats.wins++;
+      if (act === last || !alive) party.forEach((id) => { const hs = heroStat[id] || (heroStat[id] = { n: 0, w: 0, acts: 0 }); hs.n++; hs.w += alive && act === last ? 1 : 0; hs.acts += alive ? act : act - 1; });
     }
   } catch (e) {
     stats.errors++;

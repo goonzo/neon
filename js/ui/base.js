@@ -14,9 +14,11 @@
       h('div', { class: 'l1' }, 'NEON CRADLE'),
       h('div', { class: 'l2' }, 'ネオン・クレイドル'),
       h('div', { class: 'l3' }, '― 灰暦127年。SIの理想郷で、人とAIは抗う ―')));
-    const menu = h('div', { class: 'title-menu layer', style: { position: 'absolute', inset: 'auto 0 auto 0', top: '330px' } },
+    const menu = h('div', { class: 'title-menu layer', style: { position: 'absolute', inset: 'auto 0 auto 0', top: '320px' } },
       UI.btn('起動する', () => { A.unlock(); if (!G.meta.seenIntro) UI.intro(); else UI.base(); }, 'big pink'),
       UI.btn('設定', () => settingsModal()));
+    if (UI.isTouch && UI.canFullscreen() && !UI.isFullscreen()) menu.appendChild(UI.btn('全画面で遊ぶ', () => UI.toggleFullscreen(), 'sm'));
+    else if (UI.isTouch && UI.isIOS() && !navigator.standalone) menu.appendChild(h('div', { class: 'sub', style: { textAlign: 'center', maxWidth: '360px' } }, '共有 →「ホーム画面に追加」から起動すると全画面になります'));
     s.appendChild(menu);
     s.appendChild(h('div', { class: 'title-foot layer', style: { position: 'absolute', inset: 'auto 0 10px 0' } }, 'クリック／タップで操作　・　セーブは自動'));
   };
@@ -156,7 +158,8 @@
           h('div', { style: { fontSize: '13px' } }, d.desc),
           h('div', { style: { color: '#2ee6ff', fontSize: '13px' } }, d.quote),
           h('div', { style: { fontSize: '13px' } }, `HP ${d.hp}　速度 ${d.spd}`),
-          h('div', { style: { fontSize: '13px' } }, h('span', { style: { color: '#ffd93d' } }, `特性「${d.trait.n}」`), ' ', d.trait.d))),
+          h('div', { style: { fontSize: '13px' } }, h('span', { style: { color: '#ffd93d' } }, `特性「${d.trait.n}」`), ' ', d.trait.d),
+          bondBox(id))),
       h('div', { class: 'sub', style: { margin: '8px 0 4px' } }, '初期デッキ'),
       h('div', { class: 'cardgrid scroll', style: { maxHeight: '200px', paddingTop: '6px' } }, deck.filter((c, i, a) => a.findIndex((x) => x.id === c.id) === i).map((c) => {
         const n = deck.filter((x) => x.id === c.id).length;
@@ -165,6 +168,20 @@
       h('div', { style: { textAlign: 'right', marginTop: '8px' } }, UI.btn('閉じる', UI.closeModal, 'sm'))), { w: 760 });
   }
   UI.heroDetailModal = heroDetailModal;
+
+  function bondBox(id) {
+    const lv = G.meta.bonds[id] || 0;
+    const sig = G.sigGear(id);
+    const eps = G.BONDS[id] || [];
+    return h('div', { class: 'bondbox' },
+      h('div', { class: 'row', style: { gap: '6px' } }, h('span', { style: { color: '#ff9ec4' } }, '絆'), UI.heartRow(lv),
+        h('span', { class: 'sub' }, lv < 3 ? `次の報酬：${G.BOND_REWARD[lv + 1]}` : 'すべての絆を結んだ')),
+      h('div', { class: 'row', style: { gap: '6px', flexWrap: 'wrap' } }, eps.map((ep, i) => i < lv
+        ? UI.btn(`${i + 1}.「${ep.t}」`, () => UI.talkScene(id, i, () => heroDetailModal(id), { replay: true }), 'sm')
+        : h('span', { class: 'chip', style: { color: '#4b4b5c' } }, `${i + 1}. ？？？`))),
+      sig ? h('div', { class: 'row', style: { gap: '6px', opacity: lv >= 3 ? 1 : 0.45 } }, h('span', { class: 'sub' }, '専用装備：'), UI.gearChip(sig), h('span', { style: { color: '#ffd93d' } }, lv >= 3 ? G.GEAR[sig].n : '？？？（絆Lv3で解放）')) : null,
+      h('div', { class: 'sub' }, 'セーフハウスで「語らう」と絆が深まります。'));
+  }
 
   function tabRoster(main) {
     const m = G.meta;
@@ -176,7 +193,7 @@
       if (have) {
         grid.appendChild(h('div', { class: 'hcard panel', onclick: () => { A.sfx('click'); heroDetailModal(id); } },
           G.sprImg(id, 3),
-          h('div', { class: 'col', style: { gap: '1px' } }, h('span', { class: 'hn' }, d.n), UI.roleBadge(d.role), h('span', { class: 'ht' }, d.title))));
+          h('div', { class: 'col', style: { gap: '1px' } }, h('span', { class: 'hn' }, d.n), h('span', { class: 'row', style: { gap: '4px' } }, UI.roleBadge(d.role), UI.heartRow(m.bonds[id] || 0)), h('span', { class: 'ht' }, d.title))));
       } else {
         const r = G.recruitInfo(id);
         const u = r.u;
@@ -252,6 +269,10 @@
       body.appendChild(h('div', { class: 'row' }, h('span', { style: { width: '120px' } }, '効果音'), UI.btn(st.sfx ? 'ON' : 'OFF', () => { st.sfx = !st.sfx; G.saveMeta(); draw(); }, st.sfx ? 'sel sm' : 'sm')));
       body.appendChild(h('div', { class: 'row' }, h('span', { style: { width: '120px' } }, 'BGM'), UI.btn(st.bgm ? 'ON' : 'OFF', () => { st.bgm = !st.bgm; G.saveMeta(); draw(); }, st.bgm ? 'sel sm' : 'sm')));
       body.appendChild(h('div', { class: 'row' }, h('span', { style: { width: '120px' } }, '戦闘速度'), [1, 1.6, 2.4].map((v) => UI.btn(v === 1 ? '普通' : v < 2 ? '速い' : '最速', () => { st.speed = v; G.speedMul = v; G.saveMeta(); draw(); }, st.speed === v ? 'sel sm' : 'sm'))));
+      body.appendChild(h('div', { class: 'row' }, h('span', { style: { width: '120px' } }, '大きい文字'), UI.btn(UI.bigUI() ? 'ON' : 'OFF', () => { st.bigui = !UI.bigUI(); G.saveMeta(); UI.applyPrefs(); draw(); }, UI.bigUI() ? 'sel sm' : 'sm'),
+        h('span', { class: 'sub' }, 'スマホ向け。説明やボタンを大きくします')));
+      if (UI.canFullscreen()) body.appendChild(h('div', { class: 'row' }, h('span', { style: { width: '120px' } }, '全画面'), UI.btn(UI.isFullscreen() ? '解除' : '全画面にする', () => { UI.toggleFullscreen(); setTimeout(draw, 300); }, 'sm')));
+      else if (UI.isIOS()) body.appendChild(h('div', { class: 'sub' }, 'iPhoneでは、Safariの共有ボタン →「ホーム画面に追加」から起動すると全画面で遊べます。'));
       body.appendChild(h('div', { class: 'row', style: { justifyContent: 'space-between', marginTop: '6px' } },
         UI.btn('データ初期化', () => UI.confirm('すべての進行状況を削除します。\n本当によろしいですか？', () => { G.resetAll(); UI.title(); }, '削除する'), 'sm pink'),
         UI.btn('閉じる', UI.closeModal, 'sm')));
@@ -281,6 +302,11 @@
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【エナジー】カードを使うためのコスト。毎ターン3回復する。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【廃棄】使用後、この戦闘中はデッキから除外される。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【速度】ラウンドごとに、速度の高い順に行動する。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【装備】仲間ひとりにつき1つ。エリート・補給コンテナ・闇市・イベントで手に入り、マップ画面の「装備」で付け替えられる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【絆】セーフハウスで仲間と「語らう」と深まる。Lv1で最大HP+4、Lv2で初期カード強化、Lv3で専用装備（すべて永続）。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【連携】ハル＆ソラの能力。直前のカードとタイプ（アタック／スキル）が違うと発動する。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【割り込み／後回し】このラウンドの行動順を入れ替える。すでに行動済みなら加速／鈍足になる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【記憶消去】敵の能力。山札のカードがその戦闘のあいだ使えなくなる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【状態の見かた】明るく塗られたアイコン＝バフ（有利）、黒地に色枠のアイコン＝デバフ（不利）。右下の数字はスタック数または残りターン。'),
         head('buff', '　有利な効果'), of('buff').map(item),
         head('debuff', '　不利な効果'), of('debuff').map(item),
@@ -356,7 +382,7 @@
       if (focus) {
         const d = G.HEROES[focus];
         right.appendChild(h('div', { class: 'panel hdetail', style: { height: '262px', overflow: 'hidden' } },
-          h('div', { class: 'row' }, h('span', { style: { fontSize: '16px', color: '#fff' } }, d.n), UI.roleBadge(d.role), d.ai ? h('span', { class: 'chip', style: { color: '#2ee6ff' } }, 'AI') : null),
+          h('div', { class: 'row' }, h('span', { style: { fontSize: '16px', color: '#fff' } }, d.n), UI.roleBadge(d.role), d.ai ? h('span', { class: 'chip', style: { color: '#2ee6ff' } }, 'AI') : null, UI.heartRow(m.bonds[focus] || 0)),
           h('div', { class: 'sub' }, d.title + `　HP${d.hp} 速度${d.spd}`),
           h('div', { style: { color: '#ffd93d', marginTop: '3px' } }, `特性「${d.trait.n}」`),
           h('div', null, d.trait.d),

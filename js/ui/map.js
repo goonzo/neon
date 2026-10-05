@@ -12,12 +12,13 @@
   UI.actIntro = (act) => {
     const s = UI.screen('actintro');
     UI.actBg(s, act);
-    A.bgm(act === 3 ? 'sanctum' : 'map');
+    A.bgm(act >= 3 ? 'sanctum' : 'map');
+    if (act === 4) G.setFlag('a4reach');
     const Aa = G.ACTS[act];
     const txt = h('div', { style: { whiteSpace: 'pre-wrap', fontSize: '16px', lineHeight: '1.8', minHeight: '90px', marginTop: '12px' } });
     const box = h('div', { class: 'panel', style: { width: '560px', textAlign: 'center', padding: '22px', cursor: 'pointer' } },
       h('div', { class: 'sub', style: { letterSpacing: '6px' } }, `AREA 0${act} — ${Aa.en}`),
-      h('div', { class: 'ttl', style: { fontSize: '30px', marginTop: '6px' } }, `第${'一二三'[act - 1]}区画　${Aa.n}`),
+      h('div', { class: 'ttl', style: { fontSize: '30px', marginTop: '6px' } }, `第${'一二三四'[act - 1]}区画　${Aa.n}`),
       txt,
       h('div', { class: 'sub', style: { marginTop: '10px' } }, 'クリックで進む'));
     s.appendChild(centerBox(box));
@@ -48,13 +49,14 @@
   function runTopbar(s, title) {
     const run = G.run;
     s.appendChild(h('div', { class: 'topbar' },
-      h('span', { class: 'ttl' }, title || `第${'一二三'[run.act - 1]}区画　${G.ACTS[run.act].n}`),
+      h('span', { class: 'ttl' }, title || `第${'一二三四'[run.act - 1]}区画　${G.ACTS[run.act].n}`),
       h('span', { class: 'sub', style: { color: G.DIFF[run.diff].c } }, G.DIFF[run.diff].n),
       h('span', { class: 'grow' }),
       UI.cred(run.credits),
       h('span', { class: 'sub' }, '回収：'),
       UI.resRow(run.res),
       UI.btn('デッキ', () => UI.deckView(run.heroes), 'sm'),
+      UI.btn('装備' + ((run.bag || []).length ? `(${run.bag.length})` : ''), () => UI.gearView(run, () => { const sc = document.querySelector('.screen'); if (sc && sc.classList.contains('map')) UI.map(); }), 'sm'),
       UI.btn('≡', () => runMenu(), 'sm')));
   }
   UI.runTopbar = runTopbar;
@@ -75,7 +77,7 @@
       const d = G.HEROES[hh.id];
       return h('div', { class: 'minihero', onclick: () => { A.sfx('click'); UI.deckView(run.heroes, i); }, 'data-tip': `<div class="tn">${d.n}</div>${d.trait.n}：${d.trait.d}<div class="tf">クリックでデッキを確認</div>` },
         G.sprImg(hh.id, 2),
-        h('div', { class: 'col grow', style: { gap: '2px' } }, h('span', { style: { fontSize: '13px' } }, d.n), UI.hpbar(hh.hp, hh.maxHp, 100), h('span', { class: 'hptext' }, `${hh.hp}/${hh.maxHp}　デッキ${hh.deck.length}`)));
+        h('div', { class: 'col grow', style: { gap: '2px' } }, h('span', { class: 'row', style: { fontSize: '13px', gap: '4px' } }, d.n, hh.gear ? UI.gearChip(hh.gear, true) : null), UI.hpbar(hh.hp, hh.maxHp, 100), h('span', { class: 'hptext' }, `${hh.hp}/${hh.maxHp}　デッキ${hh.deck.length}`)));
     }));
   }
   UI.partyPanel = partyPanel;
@@ -84,7 +86,7 @@
     const run = G.run;
     const s = UI.screen('map');
     UI.actBg(s, run.act);
-    A.bgm(run.act === 3 ? 'sanctum' : 'map');
+    A.bgm(run.act >= 3 ? 'sanctum' : 'map');
     runTopbar(s);
     const wrap = h('div', { class: 'mapwrap layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, top: '34px', height: '400px' } });
     s.appendChild(wrap);
@@ -115,7 +117,7 @@
       const el = h('div', {
         class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : ''),
         style: { left: X(n.c) + 'px', top: Y(n.y) + 'px', borderColor: isAvail ? nd.c : null },
-        'data-tip': `<div class="tn">${nd.n}</div>${nodeDesc(n.t)}`,
+        'data-tip': `<div class="tn">${nd.n}</div>${nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
         onclick: () => { if (!isAvail) return; A.sfx('click'); enterNode(n); },
       }, G.sprImg(nd.spr, n.t === 'boss' ? 4 : 3));
       wrap.appendChild(el);
@@ -130,10 +132,10 @@
   function nodeDesc(t) {
     return {
       fight: 'SIの部隊との戦闘。勝利するとカードとクレジット、資源を得る。',
-      elite: '強力な敵との戦闘。パーツを入手できる。',
+      elite: '強力な敵との戦闘。パーツと、高確率で装備を入手できる。',
       event: '何かが起こる。',
       shop: 'カードやパーツを購入できる。カードの削除も可能。',
-      rest: 'HPを回復するか、カードを強化・削除できる。',
+      rest: 'HPを回復するか、カードを強化・削除できる。仲間と語らうこともできる。',
       treasure: 'パーツとクレジットが入ったコンテナ。',
       res: '拠点に持ち帰る資源を回収できる。',
       boss: '区画の管理者。倒せば次の区画へ進める。',
@@ -173,7 +175,7 @@
     const s = UI.screen('event');
     UI.actBg(s, run.act);
     runTopbar(s);
-    const art = h('div', { class: 'evart' }, G.sprImg(ev.spr, ev.spr === 'mother' || ev.spr === 'smile' ? 5 : 8));
+    const art = h('div', { class: 'evart' }, G.sprImg(ev.spr, G.sprSize(ev.spr).w > 20 ? 5 : 8));
     const txt = h('div', { class: 'evtext' });
     const choices = h('div', { class: 'col', style: { gap: '6px', marginTop: '10px' } });
     s.appendChild(h('div', { class: 'layer', style: { position: 'absolute', inset: 'auto', left: '40px', top: '64px', right: '40px', display: 'flex', gap: '22px' } },
@@ -202,6 +204,7 @@
       if (dc) gains.appendChild(h('span', { style: { color: dc > 0 ? '#ffd93d' : '#e8352e' } }, `クレジット${dc > 0 ? '+' : ''}${dc}`));
       G.RES_KEYS.forEach((k) => { const d = run.res[k] - res0[k]; if (d) gains.appendChild(h('span', { class: 'res' }, UI.resIcon(k), `${d > 0 ? '+' : ''}${d}`)); });
       out.relics.forEach((r) => gains.appendChild(h('span', { class: 'row' }, UI.relicChip(r), G.RELICS[r].n)));
+      (out.gear || []).forEach((g) => gains.appendChild(h('span', { class: 'row' }, '装備入手：', UI.gearChip(g), G.GEAR[g].n, UI.btn('装備する', () => UI.gearView(run), 'sm'))));
       choices.appendChild(gains);
       choices.appendChild(UI.btn(out.next && out.next.type === 'fight' ? '戦闘開始' : '続ける', () => {
         tw2.finish();
@@ -243,10 +246,23 @@
               h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `${it.price}cr`));
           })),
           h('div', { class: 'row', style: { gap: '10px', alignItems: 'stretch' } },
+            (shop.gear || []).map((it) => {
+              const can = run.credits >= it.price && !it.sold;
+              const g = G.GEAR[it.id];
+              return h('div', { class: 'panel', style: { width: '170px', opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default', fontSize: '12px' }, onclick: () => {
+                if (!can) return;
+                A.sfx('coin');
+                run.credits -= it.price; it.sold = true;
+                G.gainGear(run, it.id);
+                G.saveRun(); draw();
+                UI.gearView(run);
+              } }, h('div', { class: 'row' }, UI.gearChip(it.id), h('span', { style: { fontSize: '13px', color: G.GEAR_RC[g.r] } }, g.n)), h('div', { style: { marginTop: '3px' } }, g.d),
+                h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `装備 ${it.price}cr`));
+            }),
             shop.relics.map((it) => {
               const can = run.credits >= it.price && !it.sold;
               const r = G.RELICS[it.id];
-              return h('div', { class: 'panel', style: { width: '190px', opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default', fontSize: '12px' }, onclick: () => {
+              return h('div', { class: 'panel', style: { width: '170px', opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default', fontSize: '12px' }, onclick: () => {
                 if (!can) return;
                 A.sfx('coin');
                 run.credits -= it.price; it.sold = true;
@@ -307,6 +323,45 @@
           next();
         }, 'big'),
         UI.btn('整理する（カードを1枚削除）', () => UI.pickCard(run, 'remove', (r) => { if (r) finishNode(); else draw(); }), 'big')));
+      const talkable = run.heroes.filter((x) => (G.meta.bonds[x.id] || 0) < 3);
+      body.appendChild(h('div', { class: 'col', style: { alignItems: 'center', gap: '4px' } },
+        UI.btn(talkable.length ? '語らう（仲間と話す・全員HP15%回復）' : '語らう（みんなとたくさん話した）', () => talkPick(), 'big pink', { disabled: !talkable.length }),
+        h('div', { class: 'sub' }, '絆が深まると、その仲間に永続的なボーナスがつく。')));
+    };
+    const talkPick = () => {
+      UI.modal(h('div', { class: 'col', style: { gap: '10px' } },
+        h('div', { class: 'row' }, h('span', { class: 'ttl', style: { fontSize: '17px' } }, '誰と話す？'), h('span', { class: 'grow' }), UI.btn('やめる', UI.closeModal, 'sm')),
+        h('div', { class: 'row', style: { gap: '10px', flexWrap: 'wrap' } }, run.heroes.map((hh, hi) => {
+          const lv = G.meta.bonds[hh.id] || 0;
+          const d = G.HEROES[hh.id];
+          const ok = lv < 3;
+          return h('div', { class: 'panel col talkpick' + (ok ? '' : ' done'), style: { alignItems: 'center', gap: '4px', cursor: ok ? 'pointer' : 'default' }, onclick: () => {
+            if (!ok) return;
+            A.sfx('click');
+            UI.closeModal();
+            UI.talkScene(hh.id, lv, () => {
+              const nlv = lv + 1;
+              G.meta.bonds[hh.id] = nlv;
+              G.checkLore();
+              G.saveMeta();
+              // apply this run's share of the reward right away
+              let note = '';
+              if (nlv === 1) { hh.maxHp += 4; hh.hp += 4; note = `${d.n}の最大HP+4`; }
+              if (nlv === 2) { const cand = hh.deck.filter((c) => E.canUpgrade(c)); if (cand.length) { const c = G.pick(cand); c.up = true; note = `${d.n}の「${G.CARDS[c.id].n}」が強化された`; } }
+              if (nlv === 3) { const sig = G.sigGear(hh.id); if (sig) { G.gainGear(run, sig); G.equipGear(run, hi, sig); note = `専用装備「${G.GEAR[sig].n}」を手に入れた`; } }
+              G.healParty(run, 0.15);
+              G.saveRun();
+              A.sfx('win');
+              UI.modal(h('div', { class: 'col', style: { alignItems: 'center', gap: '10px' } },
+                h('div', { class: 'ttl' }, `${d.n}との絆が深まった`), G.sprImg(hh.id, 5), UI.heartRow(nlv),
+                h('div', { style: { color: '#ffd93d' } }, `絆Lv${nlv}：${G.BOND_REWARD[nlv]}`),
+                note ? h('div', null, `（この任務：${note}）`) : null,
+                nlv === 3 ? UI.gearPanel(G.sigGear(hh.id)) : null,
+                UI.btn('続ける', () => { UI.closeModal(); finishNode(); }, 'pink')), { w: 460, noClose: true });
+            });
+          } }, G.sprImg(hh.id, 3), h('span', { style: { color: d.col } }, d.n), UI.heartRow(lv),
+            h('span', { class: 'sub' }, ok ? `次：「${G.BONDS[hh.id][lv].t}」` : 'もう全部話した'));
+        }))), { w: 640 });
     };
     draw();
   };
@@ -319,7 +374,7 @@
     runTopbar(s, '補給コンテナ');
     if (!run.node.loot) {
       const id = G.randomRelic(run, 1);
-      run.node.loot = { relic: id, cred: G.rint(20, 40) };
+      run.node.loot = { relic: id, cred: G.rint(20, 40), gear: G.chance(0.45) ? G.gainGear(run, G.randomGear(run, 1)) : null };
       if (id) G.addRelic(run, id);
       run.credits += run.node.loot.cred;
       G.saveRun();
@@ -328,7 +383,7 @@
     s.appendChild(centerBox(h('div', { class: 'col', style: { alignItems: 'center', gap: '12px' } },
       G.sprImg('chest', 8),
       h('div', { class: 'ttl' }, 'コンテナを開けた！'),
-      L.relic ? UI.relicPanel(L.relic) : null,
+      h('div', { class: 'row', style: { gap: '12px', alignItems: 'stretch' } }, L.relic ? UI.relicPanel(L.relic) : null, L.gear ? UI.gearPanel(L.gear, null, UI.btn('装備する', () => UI.gearView(run), 'sm')) : null),
       h('div', null, UI.cred('+' + L.cred)),
       UI.btn('続ける', () => finishNode(), 'pink'))));
     A.sfx('coin');
@@ -380,7 +435,7 @@
     const run = G.run;
     const s = UI.screen('reward');
     UI.actBg(s, run.act);
-    A.bgm(run.act === 3 ? 'sanctum' : 'map');
+    A.bgm(run.act >= 3 ? 'sanctum' : 'map');
     runTopbar(s, '戦闘勝利');
     const body = h('div', { class: 'layer', style: { position: 'absolute', inset: 'auto', left: '20px', right: '20px', top: '44px', bottom: '10px' } });
     s.appendChild(body);
@@ -398,7 +453,8 @@
       const gains = h('div', { class: 'panel row', style: { gap: '18px', flexWrap: 'wrap' } },
         h('span', { class: 'ttl', style: { fontSize: '18px' } }, kind === 'boss' ? 'ボス撃破！' : kind === 'elite' ? 'エリート撃破！' : '勝利'),
         UI.cred('+' + rw.credits), UI.resRow(rw.res, { plus: true, nonzero: true }),
-        rw.relic ? h('span', { class: 'row' }, 'パーツ入手：', UI.relicChip(rw.relic), G.RELICS[rw.relic].n) : null);
+        rw.relic ? h('span', { class: 'row' }, 'パーツ入手：', UI.relicChip(rw.relic), G.RELICS[rw.relic].n) : null,
+        rw.gear ? h('span', { class: 'row' }, '装備入手：', UI.gearChip(rw.gear), G.GEAR[rw.gear].n, UI.btn('装備する', () => UI.gearView(run), 'sm')) : null);
       body.appendChild(gains);
       if (rw.relicChoices && rw.relicChoices.length && !rw.relicTaken) {
         body.appendChild(h('div', { class: 'col', style: { alignItems: 'center', gap: '10px', marginTop: '20px' } },
@@ -441,34 +497,60 @@
   // ================= ACT CLEAR =================
   UI.actClear = () => {
     const run = G.run;
-    if (run.act >= 3) { UI.ending(); return; }
+    if (run.act >= G.finalAct(run)) { UI.ending(run.act >= 4); return; }
+    if (run.act === 3) { UI.cutscene(G.ACT3_TO_4, 'sophia', () => goNextAct()); return; }
     const s = UI.screen('actclear');
     UI.actBg(s, run.act);
     A.sfx('win');
     const nextAct = run.act + 1;
     s.appendChild(centerBox(h('div', { class: 'panel col', style: { alignItems: 'center', gap: '12px', width: '520px', padding: '20px' } },
-      h('div', { class: 'ttl', style: { fontSize: '28px' } }, `第${'一二三'[run.act - 1]}区画　制圧`),
+      h('div', { class: 'ttl', style: { fontSize: '28px' } }, `第${'一二三四'[run.act - 1]}区画　制圧`),
       h('div', { style: { fontSize: '14px', textAlign: 'center' } }, '区画の管理者を倒した。SIの監視網に、小さな穴が空いた。', h('br'), 'マザーの支援で、全員のHPが大きく回復した。'),
       partyPanel(),
-      UI.btn(`第${'一二三'[nextAct - 1]}区画へ`, () => {
+      UI.btn(`第${'一二三四'[nextAct - 1]}区画へ`, () => goNextAct(), 'big pink'))));
+  };
+  function goNextAct() {
+    const run = G.run;
+    const nextAct = run.act + 1;
+    {
         run.act = nextAct;
         run.map = G.genMap(nextAct);
         run.pos = null; run.path = []; run.floor = 0; run.lastEnc = [];
         G.healParty(run, 0.6);
         run.node = null;
-        G.setFlag(nextAct === 2 ? 'a2reach' : 'a3reach');
+        G.setFlag(['', '', 'a2reach', 'a3reach', 'a4reach'][nextAct]);
         G.saveRun();
         UI.actIntro(nextAct);
-      }, 'big pink'))));
+    }
+  }
+
+  // ================= CUTSCENE (between acts) =================
+  UI.cutscene = (lines, spr, onEnd) => {
+    const s = UI.screen('cutscene');
+    UI.bg(s, 'sanctum');
+    A.bgm('sanctum');
+    let i = 0;
+    s.appendChild(h('div', { style: { position: 'absolute', left: '50%', top: '40px', transform: 'translateX(-50%)' } }, G.sprImg(spr, 6)));
+    const txt = h('div');
+    const box = h('div', { class: 'dlg panel' }, txt, h('div', { class: 'more' }, '▼'));
+    s.appendChild(box);
+    let tw = UI.typewrite(txt, lines[0], 30);
+    box.addEventListener('click', () => {
+      if (!tw.done) { tw.finish(); return; }
+      i++;
+      A.sfx('click');
+      if (i >= lines.length) { onEnd(); return; }
+      tw = UI.typewrite(txt, lines[i], 30);
+    });
   };
 
   // ================= ENDING =================
-  UI.ending = () => {
+  UI.ending = (truth) => {
     const s = UI.screen('ending');
     UI.bg(s, 'sanctum');
     A.bgm('sanctum');
     let i = 0;
-    const lines = G.ENDING;
+    const lines = truth ? G.TRUE_ENDING : G.ENDING;
     const art = h('div', { style: { position: 'absolute', left: '50%', top: '30px', transform: 'translateX(-50%)' } });
     s.appendChild(art);
     const txt = h('div');
@@ -476,9 +558,9 @@
     s.appendChild(box);
     const show = () => {
       art.innerHTML = '';
-      const spr = i <= 2 ? 'sophia' : i >= 5 && i <= 5 ? 'mother' : null;
-      if (spr) art.appendChild(G.sprImg(spr, 6));
-      else if (i === 4) art.appendChild(h('div', { style: { width: '300px', height: '180px', background: 'linear-gradient(#3a8ff0, #9fd4ff)', border: '4px solid #0b0a12', boxShadow: '0 0 40px #9fd4ff' } }));
+      const spr = truth ? (i <= 1 ? 'noah' : i === 2 || i === 6 ? 'mother' : i === 4 ? 'pixe' : null) : i <= 2 ? 'sophia' : i >= 5 && i <= 5 ? 'mother' : null;
+      if (spr) art.appendChild(G.sprImg(spr, spr === 'pixe' ? 8 : 6));
+      else if (truth ? i === 7 : i === 4) art.appendChild(h('div', { style: { width: '300px', height: '180px', background: 'linear-gradient(#3a8ff0, #9fd4ff)', border: '4px solid #0b0a12', boxShadow: '0 0 40px #9fd4ff' } }));
       return UI.typewrite(txt, lines[i], 30);
     };
     let tw = show();
@@ -507,11 +589,11 @@
     if (result === 'win') A.sfx('win'); else A.sfx('lose');
     s.appendChild(centerBox(h('div', { class: 'panel col', style: { alignItems: 'center', gap: '10px', width: '600px', padding: '20px' } },
       h('div', { class: 'ttl', style: { fontSize: '30px' } }, result === 'win' ? '作戦成功' : abandoned ? '撤退' : '全滅'),
-      h('div', { class: 'sub' }, result === 'win' ? 'SIの中枢に、ひびが入った。' : `第${run.act}区画で、通信が途絶えた。……マザーが仲間たちを回収した。`),
+      h('div', { class: 'sub' }, result === 'win' ? (run.act >= 4 ? '揺りかごの底で、人々が目を覚ました。' : 'SIの中枢に、ひびが入った。') : `第${run.act}区画で、通信が途絶えた。……マザーが仲間たちを回収した。`),
       h('div', { class: 'row', style: { gap: '6px' } }, run.heroes.map((hh) => G.sprImg(hh.id, 3))),
       h('div', { style: { fontSize: '14px' } }, `到達：第${run.act}区画　戦闘${run.stats.fights}回　エリート${run.stats.elites}体　ボス${run.stats.bosses}体　獲得カード${run.stats.cards}枚`),
       h('div', { style: { fontSize: '14px' } }, `持ち帰った資源（${Math.round(r.keep * 100)}%）`),
-      h('div', { class: 'sub' }, `うち、残りクレジット${r.exchange.credits}cr・パーツ${r.exchange.relics}個を拠点用の資源に換金（10cr→資源1、パーツ1個→スクラップ3）`),
+      h('div', { class: 'sub' }, `うち、残りクレジット${r.exchange.credits}cr・パーツ${r.exchange.relics}個・装備${r.exchange.gear || 0}個を拠点用の資源に換金（10cr→資源1、パーツ1個→スクラップ3、装備1個→スクラップ2）`),
       UI.resRow(r.brought, { plus: true }),
       r.unlockedDiff != null ? h('div', { style: { color: G.DIFF[r.unlockedDiff].c, fontSize: '16px' } }, `難易度「${G.DIFF[r.unlockedDiff].n}」が解放された！`) : null,
       G.meta.lore.length > loreBefore ? h('div', { style: { color: '#ff5ad1' } }, `新しい記録が${G.meta.lore.length - loreBefore}件解放された（拠点の「記録」で閲覧できます）`) : null,

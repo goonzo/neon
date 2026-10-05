@@ -19,7 +19,7 @@
 
   // ======================= TANKS =======================
   hero({
-    id: 'gallon', n: 'ガロン', role: 'tank', hp: 64, spd: 3, col: '#ff8a2b',
+    id: 'gallon', n: 'ガロン', role: 'tank', hp: 68, spd: 3, col: '#ff8a2b',
     title: '元・解体屋の大男',
     trait: { n: '解体屋の矜持', d: '戦闘開始時、挑発2とシールド6を得る。' },
     desc: '旧時代の高層ビルを素手で解体していたという男。右腕は自作の重機アーム。口は悪いが、子供には甘い。',
@@ -31,7 +31,7 @@
     { id: 'gal_oi', n: 'おいコラ', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'taunt', 2], ['blk', 4]], u: [['st', 'taunt', 2], ['blk', 8]] },
     { id: 'gal_press', n: 'ボディプレス', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmgX', 'blk', 1, 0]], uc: 0 },
     { id: 'gal_arm', n: 'かばう腕', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 7]], u: [['blk', 11]] },
-    { id: 'gal_heavy', n: 'ヘビーアーム', c: 2, t: 'A', tg: 'E', r: 0, fx: [['dmg', 10], ['blk', 4, '@S']], u: [['dmg', 13], ['blk', 6, '@S']] },
+    { id: 'gal_heavy', n: 'ヘビーアーム', c: 2, t: 'A', tg: 'E', r: 0, fx: [['dmg', 11], ['blk', 5, '@S']], u: [['dmg', 14], ['blk', 7, '@S']] },
     { id: 'gal_wall', n: '防壁展開', c: 2, t: 'S', tg: 'AA', r: 1, fx: [['blk', 6]], u: [['blk', 9]] },
     { id: 'gal_spike', n: '反撃装甲', c: 1, t: 'S', tg: 'S', r: 1, fx: [['st', 'thorns', 3], ['blk', 4]], u: [['st', 'thorns', 5], ['blk', 5]] },
     { id: 'gal_crush', n: '重機の一撃', c: 2, t: 'A', tg: 'E', r: 1, fx: [['dmg', 14], ['st', 'slow', 1]], u: [['dmg', 19], ['st', 'slow', 2]] },
@@ -44,6 +44,34 @@
     { id: 'gal_last', n: '最後の砦', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['blk', 10], ['st', 'taunt', 2, '@S']], u: [['blk', 14], ['st', 'taunt', 2, '@S']] },
     { id: 'gal_spin', n: '巨腕旋回', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmgX', 'blk', 0.5, 0]], u: [['dmgX', 'blk', 0.75, 0]] },
     { id: 'gal_gaunt', n: 'ガントレット改', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'str', 2], ['st', 'plating', 2]], u: [['st', 'str', 3], ['st', 'plating', 3]] },
+  ]);
+
+  hero({
+    id: 'jin', n: 'ジン', role: 'tank', hp: 60, spd: 6, col: '#e8e8f0', ai: true,
+    title: 'SIから離反した天使型ユニット',
+    trait: { n: '反逆プロトコル', d: 'ノイズを受けない。ハッキングされるたびシールド6と強化1を得る。戦闘開始時、障壁1。' },
+    desc: '白の聖域を守っていた天使型戦闘ユニット。処分を命じられた子供をかばって、はじめて命令を拒否した。理由は本人にもわからない。片翼は、自分で折った。',
+    quote: '「命令を受信。……拒否する」',
+    deck: [['jin_blade', 2], ['jin_wing', 2], ['jin_cover', 1], ['jin_halo', 1], ['jin_judge', 1], ['jin_refuse', 1], ['jin_diag', 1]],
+  }, [
+    { id: 'jin_blade', n: '光刃', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'jin_wing', n: '片翼の盾', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 7]], u: [['blk', 10]] },
+    { id: 'jin_cover', n: 'かばう', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 6], ['st', 'taunt', 1, '@S']], u: [['blk', 9], ['st', 'taunt', 1, '@S']] },
+    { id: 'jin_halo', n: '光輪', c: 1, t: 'S', tg: 'A', r: 0, fx: [['st', 'barrier', 1]], uc: 0 },
+    { id: 'jin_judge', n: '裁きの光', c: 1, t: 'A', tg: 'AE', r: 0, fx: [['dmg', 4]], u: [['dmg', 6]] },
+    { id: 'jin_refuse', n: '拒否', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'taunt', 2], ['blk', 4]], u: [['st', 'taunt', 2], ['blk', 7]] },
+    { id: 'jin_diag', n: '自己診断', c: 0, t: 'S', tg: 'S', r: 0, fx: [['cleanse', 1], ['blk', 3]], u: [['cleanse', 1], ['blk', 5]] },
+    { id: 'jin_lance', n: '光槍', c: 2, t: 'A', tg: 'E', r: 1, fx: [['dmg', 11]], u: [['dmg', 15]] },
+    { id: 'jin_guard', n: '守護', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['blk', 4]], u: [['blk', 6]] },
+    { id: 'jin_feather', n: '散る羽根', c: 1, t: 'A', tg: 'RE', r: 1, fx: [['dmg', 3, 3]], u: [['dmg', 4, 3]] },
+    { id: 'jin_trace', n: '逆探知', c: 1, t: 'S', tg: 'E', r: 1, fx: [['st', 'vuln', 2], ['st', 'aim', 2]], u: [['st', 'vuln', 2], ['st', 'aim', 3]] },
+    { id: 'jin_aegis', n: 'イージス', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'guardian', 3]], u: [['st', 'guardian', 4]] },
+    { id: 'jin_overdrive', n: 'オーバードライブ', c: 0, t: 'S', tg: 'S', r: 2, fx: [['lose', 4], ['st', 'str', 2]], u: [['lose', 2], ['st', 'str', 2]] },
+    { id: 'jin_sanctum', n: '聖域展開', c: 2, t: 'S', tg: 'AA', r: 2, x: 1, fx: [['st', 'barrier', 1]], uc: 1 },
+    { id: 'jin_counter', n: '反撃機構', c: 1, t: 'S', tg: 'S', r: 2, fx: [['st', 'thorns', 4], ['blk', 6]], u: [['st', 'thorns', 5], ['blk', 9]] },
+    { id: 'jin_fallen', n: '堕天', c: 3, t: 'A', tg: 'E', r: 3, x: 1, fx: [['dmg', 30]], u: [['dmg', 40]] },
+    { id: 'jin_wings', n: '両翼', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['blk', 10], ['st', 'taunt', 2, '@S']], u: [['blk', 14], ['st', 'taunt', 2, '@S']] },
+    { id: 'jin_will', n: '自由意志', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'str', 2], ['st', 'plating', 3]], uc: 1 },
   ]);
 
   hero({
@@ -71,6 +99,34 @@
     { id: 'pix_wait', n: '主人を待つ', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'guardian', 3]], u: [['st', 'guardian', 4]] },
     { id: 'pix_overload', n: 'オーバーロード', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['mul', 'charge', 2]], uc: 0 },
     { id: 'pix_thunder', n: '雷吠', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmg', 8], ['st', 'slow', 2]], u: [['dmg', 11], ['st', 'slow', 2]] },
+  ]);
+
+  hero({
+    id: 'goura', n: 'ゴウラ', role: 'tank', hp: 70, spd: 1, col: '#7dffb0', ai: true,
+    title: '甲羅に庭をもつ庭園ロボ',
+    trait: { n: '甲羅の庭', d: '戦闘開始時、味方全員に再生1。ゴウラのシールドは、ターン開始時に半分だけ残る。' },
+    desc: '旧時代の植物園で、三百年ぶん庭の手入れを続けてきたカメ型ロボット。甲羅の上には小さな庭がある。とにかく動きが遅い。とにかく動じない。',
+    quote: '「……あせらんでも、ええ。芽は、ちゃあんと出る」',
+    deck: [['gou_shell', 2], ['gou_bump', 2], ['gou_sprout', 2], ['gou_shade', 1], ['gou_slow', 1], ['gou_hide', 1]],
+  }, [
+    { id: 'gou_shell', n: 'こうら', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 7]], u: [['blk', 10]] },
+    { id: 'gou_bump', n: 'ずっしり体当たり', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6], ['st', 'slow', 1]], u: [['dmg', 9], ['st', 'slow', 1]] },
+    { id: 'gou_sprout', n: '芽吹き', c: 1, t: 'S', tg: 'A', r: 0, fx: [['st', 'regen', 3]], u: [['st', 'regen', 5]] },
+    { id: 'gou_shade', n: '日陰をつくる', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'gou_slow', n: 'のんびり', c: 0, t: 'S', tg: 'S', r: 0, fx: [['blk', 3], ['draw', 1]], u: [['blk', 5], ['draw', 1]] },
+    { id: 'gou_hide', n: '甲羅にこもる', c: 2, t: 'S', tg: 'S', r: 0, fx: [['blk', 13], ['st', 'taunt', 1]], u: [['blk', 17], ['st', 'taunt', 1]] },
+    { id: 'gou_fruit', n: '実りのおすそわけ', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['heal', 3]], u: [['heal', 5]] },
+    { id: 'gou_moss', n: '苔のじゅうたん', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['blk', 4]], u: [['blk', 6]] },
+    { id: 'gou_thorn', n: 'こうらのトゲ', c: 1, t: 'S', tg: 'S', r: 1, fx: [['st', 'thorns', 3], ['blk', 4]], u: [['st', 'thorns', 4], ['blk', 7]] },
+    { id: 'gou_root', n: '根を張る', c: 1, t: 'S', tg: 'S', r: 1, fx: [['st', 'fortify', 2], ['blk', 4]], u: [['st', 'fortify', 2], ['blk', 8]] },
+    { id: 'gou_rain', n: '恵みの雨', c: 2, t: 'S', tg: 'AA', r: 1, fx: [['st', 'regen', 2]], u: [['st', 'regen', 3]] },
+    { id: 'gou_flip', n: 'こうら返し', c: 1, t: 'A', tg: 'E', r: 2, fx: [['dmgX', 'blk', 1, 0]], uc: 0 },
+    { id: 'gou_garden', n: '甲羅の楽園', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'medic', 2]], u: [['st', 'medic', 3]] },
+    { id: 'gou_ancient', n: '千年の歩み', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'plating', 4]], uc: 1 },
+    { id: 'gou_mountain', n: '動かざること山のごとし', c: 1, t: 'S', tg: 'S', r: 2, fx: [['st', 'taunt', 2], ['blk', 8]], u: [['st', 'taunt', 2], ['blk', 12]] },
+    { id: 'gou_forest', n: '森になる', c: 3, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['blk', 8], ['st', 'regen', 3]], uc: 2 },
+    { id: 'gou_quake', n: '大地の鼓動', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmgX', 'blk', 0.5, 0]], u: [['dmgX', 'blk', 0.75, 0]] },
+    { id: 'gou_dream', n: '亀の見る夢', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'barrier', 1]], uc: 0 },
   ]);
 
   hero({
@@ -126,6 +182,33 @@
     { id: 'min_revive', n: '蘇生処置', c: 3, t: 'S', tg: 'D', r: 3, x: 1, fx: [['revive', 30]], uc: 2 },
     { id: 'min_angel', n: '白衣の天使', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 6], ['st', 'regen', 2]], u: [['heal', 8], ['st', 'regen', 3]] },
     { id: 'min_lethal', n: '致死量', c: 1, t: 'A', tg: 'E', r: 3, fx: [['mul', 'virus', 2], ['dmg', 3]], u: [['mul', 'virus', 3], ['dmg', 3]] },
+  ]);
+
+  hero({
+    id: 'luka', n: 'ルカ', role: 'healer', hp: 40, spd: 5, col: '#fff1d6',
+    title: '教会から逃げた元シスター',
+    trait: { n: '浄めの祈り', d: 'ルカがノイズを引くと、自動で廃棄して味方全員のHPを3回復する。' },
+    desc: 'SIを神とあがめる教会で育った元シスター。毎日「SIは私たちを愛している」と祈っていた。ある日届いた祈りの返事は「最適化対象」だった。',
+    quote: '「神さまはいないけど、祈りはあるの。……あなたのために、祈らせて」',
+    deck: [['luk_pray', 2], ['luk_staff', 2], ['luk_veil', 2], ['luk_purify', 1], ['luk_hymn', 1], ['luk_confess', 1]],
+  }, [
+    { id: 'luk_pray', n: '祈り', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 6]], u: [['heal', 9]] },
+    { id: 'luk_staff', n: '錫杖', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 5]], u: [['dmg', 8]] },
+    { id: 'luk_veil', n: 'ヴェール', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 5]], u: [['blk', 8]] },
+    { id: 'luk_purify', n: '浄化', c: 1, t: 'S', tg: 'AA', r: 0, fx: [['purify', 2], ['heal', 2]], u: [['purify', 3], ['heal', 3]] },
+    { id: 'luk_hymn', n: '聖歌', c: 1, t: 'S', tg: 'AA', r: 0, fx: [['st', 'regen', 1]], u: [['st', 'regen', 2]] },
+    { id: 'luk_confess', n: '懺悔なさい', c: 1, t: 'S', tg: 'E', r: 0, fx: [['st', 'weak', 1], ['st', 'vuln', 1]], u: [['st', 'weak', 2], ['st', 'vuln', 1]] },
+    { id: 'luk_bless', n: '祝福', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 4], ['cleanse', 1]], u: [['heal', 7], ['cleanse', 1]] },
+    { id: 'luk_shelter', n: '避難所', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['blk', 4]], u: [['blk', 6]] },
+    { id: 'luk_rebuke', n: '叱責', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 7], ['st', 'weak', 1]], u: [['dmg', 10], ['st', 'weak', 1]] },
+    { id: 'luk_candle', n: 'ろうそく', c: 0, t: 'S', tg: 'S', r: 1, fx: [['draw', 1], ['heal', 2]], u: [['draw', 2], ['heal', 2]] },
+    { id: 'luk_vigil', n: '夜通しの祈り', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'nurse', 5]], u: [['st', 'nurse', 7]] },
+    { id: 'luk_miracle', n: '小さな奇跡', c: 2, t: 'S', tg: 'A', r: 2, fx: [['heal', 13]], u: [['heal', 18]] },
+    { id: 'luk_exorcise', n: '悪魔祓い', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 6], ['st', 'weak', 1]], u: [['dmg', 9], ['st', 'weak', 1]] },
+    { id: 'luk_absolve', n: '赦し', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['cleanse', 99], ['purify', 1]], u: [['cleanse', 99], ['purify', 2], ['blk', 3]] },
+    { id: 'luk_resurrect', n: '復活の祈り', c: 2, t: 'S', tg: 'D', r: 3, x: 1, fx: [['revive', 40]], uc: 1 },
+    { id: 'luk_saint', n: '聖女の微笑み', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 8]], u: [['heal', 11]] },
+    { id: 'luk_ashes', n: '灰の中から', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['purify', 4], ['st', 'str', 1]], uc: 0 },
   ]);
 
   hero({
@@ -239,6 +322,34 @@
   ]);
 
   hero({
+    id: 'haru', n: 'ハル＆ソラ', role: 'attacker', hp: 36, spd: 7, col: '#5ad1ff',
+    title: '少年と腕時計のAI',
+    trait: { n: 'ふたりでひとり', d: '直前に使ったカードとタイプ（アタック／スキル）が違うと「連携」：ソラがランダムな敵に4ダメージで追撃し、カードの連携効果も発動する。' },
+    desc: 'SIへの統合を拒んだ腕時計型AI「ソラ」と、その持ち主の少年ハル。生まれたときからずっと一緒。ハルが殴って、ソラが計算する。ケンカも多い。',
+    quote: '「ソラ、右！」「左だよ、ハル」',
+    deck: [['haru_punch', 2], ['haru_guard', 2], ['haru_combo', 1], ['haru_calc', 1], ['haru_scan', 1], ['haru_dash', 1], ['haru_trust', 1]],
+  }, [
+    { id: 'haru_punch', n: 'ハルパンチ', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'haru_guard', n: 'ソラの警告', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 5]], u: [['blk', 8]] },
+    { id: 'haru_combo', n: 'コンビネーション', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 4], ['linked', ['dmg', 4]]], u: [['dmg', 5], ['linked', ['dmg', 6]]] },
+    { id: 'haru_calc', n: '弾道計算', c: 1, t: 'S', tg: 'S', r: 0, fx: [['draw', 1], ['linked', ['blk', 5]]], u: [['draw', 1], ['blk', 2], ['linked', ['blk', 6]]] },
+    { id: 'haru_scan', n: 'ソラのスキャン', c: 0, t: 'S', tg: 'E', r: 0, fx: [['st', 'vuln', 1], ['linked', ['draw', 1]]], u: [['st', 'vuln', 2], ['linked', ['draw', 1]]] },
+    { id: 'haru_dash', n: '突っ込む', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 5], ['linked', ['st', 'haste', 1, '@S']]], u: [['dmg', 7], ['linked', ['st', 'haste', 1, '@S'], ['blk', 3, '@S']]] },
+    { id: 'haru_trust', n: 'まかせた！', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 4], ['linked', ['heal', 4]]], u: [['blk', 6], ['linked', ['heal', 5]]] },
+    { id: 'haru_onetwo', n: 'ワンツー', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 3, 2], ['linked', ['dmg', 3]]], u: [['dmg', 4, 2], ['linked', ['dmg', 4]]] },
+    { id: 'haru_dodge', n: '予測回避', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 6], ['linked', ['st', 'stealth', 1]]], u: [['blk', 9], ['linked', ['st', 'stealth', 1]]] },
+    { id: 'haru_signal', n: '合図', c: 0, t: 'S', tg: 'A', r: 1, fx: [['blk', 2], ['linked', ['st', 'inspire', 1]]], u: [['blk', 4], ['linked', ['st', 'inspire', 1]]] },
+    { id: 'haru_kick', n: '回し蹴り', c: 1, t: 'A', tg: 'AE', r: 1, fx: [['dmg', 4], ['linked', ['st', 'weak', 1]]], u: [['dmg', 6], ['linked', ['st', 'weak', 1]]] },
+    { id: 'haru_sync', n: '完全同期', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'sync', 2]], u: [['st', 'sync', 3]] },
+    { id: 'haru_counter', n: 'カウンター', c: 2, t: 'A', tg: 'E', r: 2, fx: [['dmg', 9], ['linked', ['dmg', 9]]], u: [['dmg', 12], ['linked', ['dmg', 10]]] },
+    { id: 'haru_shield', n: 'ソラの盾', c: 1, t: 'S', tg: 'A', r: 2, fx: [['blk', 6], ['linked', ['st', 'barrier', 1]]], u: [['blk', 9], ['linked', ['st', 'barrier', 1]]] },
+    { id: 'haru_hack', n: 'ソラのハッキング', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'weak', 2], ['linked', ['reroll']]], u: [['st', 'weak', 2], ['st', 'vuln', 1], ['linked', ['reroll']]] },
+    { id: 'haru_twinstar', n: '双子星', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmg', 7], ['linked', ['dmg', 7]]], u: [['dmg', 9], ['linked', ['dmg', 9]]] },
+    { id: 'haru_promise', n: 'ずっと一緒', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 4], ['linked', ['st', 'str', 1]]], uc: 0 },
+    { id: 'haru_unison', n: 'ユニゾン', c: 2, t: 'A', tg: 'E', r: 3, fx: [['dmg', 5, 2], ['linked', ['dmg', 5, 2]]], u: [['dmg', 6, 2], ['linked', ['dmg', 6, 2]]] },
+  ]);
+
+  hero({
     id: 'gen', n: 'ゲン', role: 'attacker', hp: 38, spd: 3, col: '#c9a85a',
     title: '自称・伝説の老狙撃手',
     trait: { n: '老兵の眼', d: 'ターン開始時、HPが最も高い敵に照準3。' },
@@ -321,6 +432,34 @@
     { id: 'mik_nine', n: '九つの命', c: 3, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'undying', 1]], uc: 2 },
   ]);
 
+  hero({
+    id: 'octo', n: 'オクト', role: 'attacker', hp: 40, spd: 5, col: '#ff6a7e', ai: true,
+    title: '沈んだ水族館の清掃ロボ',
+    trait: { n: '八本腕', d: 'オクトの複数回攻撃は、ヒット数が1回増える。' },
+    desc: '水没した水族館で、誰も見に来ない水槽を百年みがき続けてきたタコ型ロボット。八本の腕で同時に八つのことができるが、たいてい全部掃除。',
+    quote: '「ピカピカにしてあげる！　あ、あなたじゃなくて、床をね」',
+    deck: [['oct_slap', 2], ['oct_suction', 2], ['oct_ink', 1], ['oct_wrap', 1], ['oct_scrub', 1], ['oct_squirt', 1], ['oct_camo', 1]],
+  }, [
+    { id: 'oct_slap', n: 'ぺちぺち', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 3, 2]], u: [['dmg', 4, 2]] },
+    { id: 'oct_suction', n: '吸盤ガード', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'oct_ink', n: 'スミ吐き', c: 1, t: 'S', tg: 'E', r: 0, fx: [['st', 'weak', 2]], u: [['st', 'weak', 2], ['st', 'vuln', 1]] },
+    { id: 'oct_wrap', n: 'からみつく', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 5], ['st', 'slow', 1]], u: [['dmg', 7], ['st', 'slow', 1]] },
+    { id: 'oct_scrub', n: '床みがき', c: 1, t: 'A', tg: 'AE', r: 0, fx: [['dmg', 3]], u: [['dmg', 5]] },
+    { id: 'oct_squirt', n: '水鉄砲', c: 0, t: 'A', tg: 'E', r: 0, fx: [['dmg', 1, 2]], u: [['dmg', 2, 2]] },
+    { id: 'oct_camo', n: '擬態', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'stealth', 1], ['blk', 3]], u: [['st', 'stealth', 1], ['blk', 6]] },
+    { id: 'oct_eight', n: '八連撃', c: 2, t: 'A', tg: 'E', r: 1, fx: [['dmg', 2, 7]], u: [['dmg', 3, 7]] },
+    { id: 'oct_tentacle', n: '触手ラッシュ', c: 1, t: 'A', tg: 'RE', r: 1, fx: [['dmg', 2, 3]], u: [['dmg', 3, 3]] },
+    { id: 'oct_cloud', n: 'スミの煙幕', c: 1, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['blk', 4, '@S']] },
+    { id: 'oct_regrow', n: '腕は生えてくる', c: 1, t: 'S', tg: 'S', r: 1, fx: [['st', 'regen', 3], ['blk', 3]], u: [['st', 'regen', 4], ['blk', 5]] },
+    { id: 'oct_grip', n: '締めあげ', c: 2, t: 'A', tg: 'E', r: 2, fx: [['dmg', 4, 2], ['st', 'slow', 1]], u: [['dmg', 5, 2], ['st', 'slow', 2]] },
+    { id: 'oct_art', n: '墨絵', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'confuse', 1], ['st', 'vuln', 1]], u: [['st', 'confuse', 1], ['st', 'vuln', 2]] },
+    { id: 'oct_multi', n: 'マルチタスク', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'extraDraw', 1]], uc: 0 },
+    { id: 'oct_hug', n: 'ぎゅー', c: 1, t: 'A', tg: 'E', r: 2, fx: [['drain', 2, 2]], u: [['drain', 3, 2]] },
+    { id: 'oct_kraken', n: 'クラーケン', c: 3, t: 'A', tg: 'AE', r: 3, fx: [['dmg', 3, 3]], u: [['dmg', 4, 3]] },
+    { id: 'oct_aquarium', n: '水族館の記憶', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 4], ['st', 'regen', 2]], u: [['heal', 6], ['st', 'regen', 3]] },
+    { id: 'oct_storm', n: '墨の嵐', c: 2, t: 'S', tg: 'AE', r: 3, x: 1, fx: [['st', 'weak', 2], ['st', 'confuse', 1]], uc: 1 },
+  ]);
+
   // ======================= SPECIALS =======================
   hero({
     id: 'chip', n: 'チップ', role: 'special', hp: 34, spd: 7, col: '#b8ff3d',
@@ -350,6 +489,33 @@
   ]);
 
   hero({
+    id: 'amane', n: 'アマネ博士', role: 'special', hp: 38, spd: 4, col: '#b4a0ff',
+    title: 'SIを設計した科学者',
+    trait: { n: '設計者の目', d: 'ターン開始時、最も大きな攻撃を予定している敵の行動を再計算させ、脆弱1を付与する。' },
+    desc: '旧時代、AIの「共感モジュール」を設計した研究者の一人。自分の作ったものが世界をこうしたと知りながら、八十を過ぎても白衣を脱がない。マザーとは古い知り合いらしい。',
+    quote: '「バグは直せる。直せないのは、直そうとしない人間だけさ」',
+    deck: [['ama_cane', 2], ['ama_probe', 1], ['ama_firewall', 1], ['ama_reroll', 2], ['ama_notes', 1], ['ama_lecture', 1], ['ama_debug', 1]],
+  }, [
+    { id: 'ama_cane', n: '杖でこつん', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'ama_firewall', n: '簡易防壁', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 6]], u: [['blk', 9]] },
+    { id: 'ama_reroll', n: '再計算', c: 1, t: 'S', tg: 'E', r: 0, fx: [['reroll'], ['st', 'weak', 1], ['st', 'vuln', 1]], uc: 0 },
+    { id: 'ama_notes', n: '研究ノート', c: 1, t: 'S', tg: 'S', r: 0, fx: [['draw', 2]], u: [['draw', 3]] },
+    { id: 'ama_lecture', n: '講義', c: 1, t: 'S', tg: 'AE', r: 0, fx: [['st', 'vuln', 1]], u: [['st', 'vuln', 2]] },
+    { id: 'ama_debug', n: 'デバッグ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['cleanse', 1], ['blk', 4]], u: [['cleanse', 1], ['blk', 7]] },
+    { id: 'ama_patch', n: '緊急パッチ', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 5], ['cleanse', 1]], u: [['heal', 8], ['cleanse', 1]] },
+    { id: 'ama_probe', n: '探査針', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 4], ['st', 'aim', 2]], u: [['dmg', 6], ['st', 'aim', 3]] },
+    { id: 'ama_override', n: '権限上書き', c: 1, t: 'S', tg: 'E', r: 1, fx: [['st', 'confuse', 1]], u: [['st', 'confuse', 1], ['st', 'weak', 1]] },
+    { id: 'ama_allnighter', n: '徹夜', c: 0, t: 'S', tg: 'S', r: 1, x: 1, fx: [['nrg', 1], ['draw', 1]], u: [['nrg', 2], ['draw', 1]] },
+    { id: 'ama_kernel', n: 'カーネルパニック', c: 2, t: 'S', tg: 'E', r: 2, x: 1, fx: [['st', 'stun', 1]], uc: 1 },
+    { id: 'ama_rewrite', n: '全体書き換え', c: 1, t: 'S', tg: 'AE', r: 2, fx: [['reroll'], ['st', 'slow', 1]], uc: 0 },
+    { id: 'ama_sandbox', n: 'サンドボックス', c: 1, t: 'S', tg: 'A', r: 2, fx: [['st', 'barrier', 1], ['blk', 4]], u: [['st', 'barrier', 1], ['blk', 7]] },
+    { id: 'ama_lab', n: '研究室', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'extraDraw', 1]], uc: 0 },
+    { id: 'ama_source', n: 'ソースコード', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['copy', 2], ['draw', 2]], uc: 0 },
+    { id: 'ama_shutdown', n: '強制停止', c: 3, t: 'S', tg: 'AE', r: 3, x: 1, fx: [['st', 'stun', 1]], uc: 2 },
+    { id: 'ama_legacy', n: '遺産', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'str', 1], ['st', 'inspire', 1]], uc: 1 },
+  ]);
+
+  hero({
     id: 'nezu', n: 'ネズ', role: 'special', hp: 34, spd: 7, col: '#9a9cb2',
     title: 'ネズミドローン使い',
     trait: { n: '群れの主', d: '戦闘開始時、ドローン2。ドローンはターン終了時に敵を攻撃する。' },
@@ -374,6 +540,34 @@
     { id: 'nez_march', n: '大行進', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmgX', 'drone', 2, 0]], u: [['dmgX', 'drone', 3, 0]] },
     { id: 'nez_king', n: '王の帰還', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'ratKing', 2]], u: [['st', 'ratKing', 3]] },
     { id: 'nez_parade', n: 'チュウチュウ・パレード', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['st', 'drone', 5]], u: [['st', 'drone', 7]] },
+  ]);
+
+  hero({
+    id: 'pyon', n: 'ピョン', role: 'special', hp: 32, spd: 10, col: '#ffd0e8', ai: true,
+    title: 'いつも急いでいる郵便ウサギ',
+    trait: { n: 'はやあし', d: '戦闘開始時に加速2。1ターンに3枚目以降のカードを使うたび、1枚引く。' },
+    desc: '旧時代の郵便局で、もう届け先のない手紙を配り続けているウサギ型ロボット。誰よりも速いが、いつも何かに遅れている気がしている。',
+    quote: '「急いで急いで！　……何に遅れてるのかは、わかんないけど！」',
+    deck: [['pyo_kick', 2], ['pyo_hop', 2], ['pyo_rush', 1], ['pyo_carrot', 1], ['pyo_dodge', 1], ['pyo_trip', 1], ['pyo_letter', 1]],
+  }, [
+    { id: 'pyo_kick', n: 'けりっ', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'pyo_hop', n: 'ぴょん', c: 0, t: 'S', tg: 'S', r: 0, fx: [['blk', 3]], u: [['blk', 5]] },
+    { id: 'pyo_rush', n: '先に行って！', c: 1, t: 'S', tg: 'A', r: 0, fx: [['rush'], ['blk', 3]], uc: 0 },
+    { id: 'pyo_carrot', n: 'にんじん', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 4]], u: [['heal', 6]] },
+    { id: 'pyo_dodge', n: '跳びのく', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'stealth', 1], ['blk', 4]], u: [['st', 'stealth', 1], ['blk', 7]] },
+    { id: 'pyo_trip', n: '足払い', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 3], ['delay']], u: [['dmg', 5], ['delay']] },
+    { id: 'pyo_letter', n: '速達', c: 0, t: 'S', tg: 'A', r: 0, x: 1, fx: [['st', 'inspire', 1]], u: [['st', 'inspire', 1], ['draw', 1]] },
+    { id: 'pyo_double', n: '二段げり', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 3, 2]], u: [['dmg', 4, 2]] },
+    { id: 'pyo_relay', n: 'バトンタッチ', c: 0, t: 'S', tg: 'A', r: 1, fx: [['rush'], ['draw', 1]], u: [['rush'], ['draw', 1], ['blk', 3]] },
+    { id: 'pyo_moon', n: 'お月見', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['st', 'haste', 1], ['blk', 2]], u: [['st', 'haste', 1], ['blk', 4]] },
+    { id: 'pyo_ears', n: '聞き耳', c: 0, t: 'S', tg: 'E', r: 1, fx: [['st', 'aim', 2], ['draw', 1]], u: [['st', 'aim', 3], ['draw', 1]] },
+    { id: 'pyo_spring', n: 'スプリング脚', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'hop', 1]], u: [['st', 'hop', 2]] },
+    { id: 'pyo_stall', n: '時間かせぎ', c: 1, t: 'S', tg: 'AE', r: 2, fx: [['delay'], ['st', 'weak', 1]], uc: 0 },
+    { id: 'pyo_express', n: '特急便', c: 1, t: 'S', tg: 'AA', r: 2, x: 1, fx: [['st', 'inspire', 1]], uc: 0 },
+    { id: 'pyo_flurry', n: '連続キック', c: 1, t: 'A', tg: 'RE', r: 2, fx: [['dmg', 2, 4]], u: [['dmg', 3, 4]] },
+    { id: 'pyo_encore', n: 'アンコール', c: 1, t: 'S', tg: 'S', r: 3, fx: [['copy', 2]], u: [['copy', 3]] },
+    { id: 'pyo_moonjump', n: '月面宙返り', c: 2, t: 'A', tg: 'AE', r: 3, fx: [['dmg', 7], ['st', 'haste', 2, '@S']], u: [['dmg', 10], ['st', 'haste', 2, '@S']] },
+    { id: 'pyo_lucky', n: '幸運の後ろ足', c: 1, t: 'S', tg: 'A', r: 3, x: 1, fx: [['st', 'undying', 1]], uc: 0 },
   ]);
 
   hero({
@@ -432,6 +626,88 @@
     { id: 'ech_vanish', n: '消失', c: 2, t: 'S', tg: 'E', r: 3, x: 1, fx: [['st', 'stun', 2]], uc: 1 },
   ]);
 
+  // ======================= EXPANSION CARDS =======================
+  function addCards(heroId, cards) {
+    const def = H[heroId];
+    for (const c of cards) {
+      c.hero = heroId;
+      CARDS[c.id] = c;
+      if (c.r > 0) def.pool.push(c.id);
+    }
+  }
+  addCards('gallon', [
+    { id: 'gal_brace', n: '踏ん張り', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 6], ['st', 'fortify', 1]], u: [['blk', 9], ['st', 'fortify', 1]] },
+    { id: 'gal_lift', n: '担いで走る', c: 1, t: 'S', tg: 'A', r: 2, fx: [['rush'], ['blk', 6]], u: [['rush'], ['blk', 9]] },
+  ]);
+  addCards('pixe', [
+    { id: 'pix_fetch', n: 'とってこい', c: 0, t: 'S', tg: 'S', r: 1, fx: [['recall', 1], ['st', 'charge', 1]], u: [['recall', 1], ['st', 'charge', 2]] },
+    { id: 'pix_howl', n: '遠吠え', c: 1, t: 'S', tg: 'AA', r: 2, x: 1, fx: [['st', 'str', 1], ['st', 'charge', 1, '@S']], uc: 0 },
+  ]);
+  addCards('doll', [
+    { id: 'dol_stitch', n: '縫い合わせ', c: 1, t: 'S', tg: 'S', r: 1, fx: [['heal', 6], ['st', 'thorns', 2]], u: [['heal', 8], ['st', 'thorns', 3]] },
+    { id: 'dol_string', n: '操り糸', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'confuse', 1], ['st', 'weak', 1]], u: [['st', 'confuse', 1], ['st', 'weak', 2]] },
+  ]);
+  addCards('mina', [
+    { id: 'min_triage', n: 'トリアージ', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 5], ['cleanse', 1]], u: [['heal', 8], ['cleanse', 1]] },
+    { id: 'min_vaccine', n: '予防接種', c: 2, t: 'S', tg: 'AA', r: 2, fx: [['blk', 4], ['st', 'regen', 1]], u: [['blk', 6], ['st', 'regen', 2]] },
+  ]);
+  addCards('nono', [
+    { id: 'non_wheel', n: '車椅子タックル', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 8]], u: [['dmg', 11]] },
+    { id: 'non_drip', n: '点滴', c: 1, t: 'S', tg: 'A', r: 2, fx: [['st', 'regen', 5]], u: [['st', 'regen', 7]] },
+  ]);
+  addCards('yomi', [
+    { id: 'yom_bell', n: '鈴の音', c: 0, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['draw', 1]] },
+    { id: 'yom_lantern', n: '灯籠流し', c: 1, t: 'S', tg: 'AA', r: 2, x: 1, fx: [['lose', 3], ['heal', 7]], u: [['lose', 2], ['heal', 9]] },
+  ]);
+  addCards('rei', [
+    { id: 'rei_sheath', n: '納刀', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 6], ['st', 'focus', 1]], u: [['blk', 9], ['st', 'focus', 1]] },
+    { id: 'rei_moon', n: '三日月', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 6], ['st', 'bleed', 2]], u: [['dmg', 8], ['st', 'bleed', 3]] },
+  ]);
+  addCards('gen', [
+    { id: 'gen_patience', n: '辛抱', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 5], ['st', 'focus', 1]], u: [['blk', 8], ['st', 'focus', 1]] },
+    { id: 'gen_flash', n: '閃光弾', c: 1, t: 'S', tg: 'AE', r: 2, fx: [['delay'], ['st', 'weak', 1]], u: [['delay'], ['st', 'weak', 1], ['st', 'aim', 1]] },
+  ]);
+  addCards('kagura', [
+    { id: 'kag_extinguish', n: '消火器（逆）', c: 1, t: 'S', tg: 'A', r: 1, fx: [['blk', 6], ['cleanse', 1]], u: [['blk', 9], ['cleanse', 1]] },
+    { id: 'kag_fireworks', n: '打ち上げ花火', c: 2, t: 'A', tg: 'RE', r: 2, fx: [['dmg', 3, 4]], u: [['dmg', 4, 4]] },
+  ]);
+  addCards('mike', [
+    { id: 'mik_knead', n: 'ふみふみ', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 3], ['st', 'regen', 2]], u: [['heal', 5], ['st', 'regen', 2]] },
+  ]);
+  addCards('chip', [
+    { id: 'chp_patch', n: 'パッチ配布', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['blk', 3], ['cleanse', 1]], u: [['blk', 5], ['cleanse', 1]] },
+    { id: 'chp_ransom', n: 'ランサムウェア', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'virus', 4], ['cred', 5]], u: [['st', 'virus', 6], ['cred', 8]] },
+  ]);
+  addCards('nezu', [
+    { id: 'nez_feast', n: 'みんなでごはん', c: 1, t: 'S', tg: 'AA', r: 1, fx: [['heal', 3]], u: [['heal', 4], ['st', 'drone', 1, '@S']] },
+    { id: 'nez_tunnel', n: '抜け道', c: 0, t: 'S', tg: 'A', r: 2, fx: [['rush'], ['draw', 1]], u: [['rush'], ['draw', 1], ['st', 'drone', 1, '@S']] },
+  ]);
+  addCards('madame', [
+    { id: 'mad_fan', n: '扇で払う', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 6], ['st', 'weak', 1]], u: [['dmg', 8], ['st', 'weak', 2]] },
+    { id: 'mad_auction', n: '競売', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['pay', 20], ['st', 'str', 1]], u: [['pay', 12], ['st', 'str', 1]] },
+  ]);
+  addCards('echo', [
+    { id: 'ech_rewind', n: '巻き戻し', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 6]], u: [['heal', 6], ['recall', 1]] },
+    { id: 'ech_split', n: '分身', c: 2, t: 'S', tg: 'S', r: 2, fx: [['copy', 2], ['st', 'stealth', 1]], uc: 1 },
+  ]);
+  addCards('crow', [
+    { id: 'crw_mimic', n: 'ものまね', c: 1, t: 'S', tg: 'S', r: 2, fx: [['copy', 1], ['st', 'shiny', 1]], u: [['copy', 1], ['st', 'shiny', 2]], uc: 0 },
+  ]);
+
+  // ---- neutral cards (anyone can take them) ----
+  const NEUTRAL = [
+    { id: 'neu_stim', n: '応急スティム', c: 0, t: 'S', tg: 'S', r: 1, x: 1, fx: [['heal', 5]], u: [['heal', 8]] },
+    { id: 'neu_pipe', n: '鉄パイプ', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 7]], u: [['dmg', 10]] },
+    { id: 'neu_cover', n: '遮蔽物', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 8]], u: [['blk', 11]] },
+    { id: 'neu_scan', n: 'スキャン', c: 0, t: 'S', tg: 'E', r: 1, fx: [['st', 'vuln', 1], ['draw', 1]], u: [['st', 'vuln', 2], ['draw', 1]] },
+    { id: 'neu_coffee', n: '缶コーヒー', c: 0, t: 'S', tg: 'S', r: 2, x: 1, fx: [['nrg', 1], ['draw', 1]], u: [['nrg', 2], ['draw', 1]] },
+    { id: 'neu_teamwork', n: '連携', c: 1, t: 'S', tg: 'A', r: 2, fx: [['st', 'inspire', 1], ['blk', 3]], u: [['st', 'inspire', 1], ['blk', 6]] },
+    { id: 'neu_emp', n: 'EMPグレネード', c: 2, t: 'S', tg: 'AE', r: 2, x: 1, fx: [['delay'], ['st', 'slow', 1], ['st', 'weak', 1]], uc: 1 },
+    { id: 'neu_sky', n: '空の写真', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'str', 1], ['heal', 3]], uc: 0 },
+  ];
+  for (const c of NEUTRAL) { c.hero = null; CARDS[c.id] = c; }
+  G.NEUTRAL = NEUTRAL.map((c) => c.id);
+
   // ======================= NEUTRAL / CURSES =======================
   CARDS.noise = { id: 'noise', n: 'ノイズ', c: 1, t: 'C', tg: 'N', r: -1, x: 1, fx: [], desc: 'SIの干渉ノイズ。何も起こらない。', hero: null };
   CARDS.trauma = { id: 'trauma', n: 'トラウマ', c: null, t: 'C', tg: 'N', r: -1, fx: [], desc: '使用できない。忘れられない記憶。', hero: null };
@@ -448,13 +724,20 @@
     doll: { q: 2, cost: { data: 40, energy: 40 }, cond: 'a2boss', hint: '眠りの管理者の傍らに、白い義体の少女がいた。' },
     crow: { q: 1, cost: { scrap: 20, food: 20, data: 10 }, cond: null, hint: '拠点の換気口に、光るものを山ほど抱えたカラスが居座っている。' },
     mike: { q: 0, cost: { scrap: 20, data: 15 }, cond: null, hint: '拠点のダクトの奥で、なにかがゴロゴロ鳴っている。' },
+    haru: { q: 0, cost: { energy: 15, scrap: 15, food: 10 }, cond: null, hint: '拠点の配電盤を、知らない子供と腕時計がいじっている。' },
+    luka: { q: 1, cost: { food: 25, data: 15 }, cond: 'a2reach', hint: 'ニューエデンの教会から、ひとりのシスターが逃げ出したという。' },
+    jin: { q: 2, cost: { scrap: 45, energy: 35 }, cond: 'a2boss', hint: '片翼の天使型ユニットが、SIの追手を返り討ちにしているらしい。' },
+    amane: { q: 2, cost: { data: 50, energy: 30 }, cond: 'a3reach', hint: '白の聖域の手前に、白衣の老婆がひとりで住んでいる。' },
+    goura: { q: 1, cost: { food: 30, energy: 15 }, cond: 'a1boss', hint: '第七区画の地下水路で、苔むした岩がゆっくり動いていたという。' },
+    pyon: { q: 1, cost: { energy: 25, data: 15 }, cond: null, hint: '拠点の郵便受けに、毎朝誰かが手紙を届けている。差出人は不明。' },
+    octo: { q: 2, cost: { food: 30, scrap: 30, data: 15 }, cond: 'a2reach', hint: 'ニューエデンの沈んだ水族館から、八本足の影が手を振っている。' },
     echo: { q: 3, cost: { data: 60, energy: 50 }, cond: 'a3reach', hint: '白の聖域の手前で、ノイズ混じりの声が誰かを呼んでいる。' },
   };
 
   G.HEROES = H;
   G.CARDS = CARDS;
   G.UNLOCK = UNLOCK;
-  G.HERO_ORDER = ['gallon', 'pixe', 'doll', 'mina', 'nono', 'yomi', 'crow', 'rei', 'gen', 'kagura', 'mike', 'chip', 'nezu', 'madame', 'echo'];
+  G.HERO_ORDER = ['gallon', 'jin', 'pixe', 'goura', 'doll', 'mina', 'luka', 'nono', 'yomi', 'crow', 'rei', 'haru', 'gen', 'kagura', 'mike', 'octo', 'chip', 'amane', 'nezu', 'pyon', 'madame', 'echo'];
   G.START_HEROES = ['gallon', 'mina', 'rei', 'chip'];
   G.COND_TEXT = {
     a1boss: '第一区画のボスを撃破',
@@ -462,5 +745,6 @@
     a2boss: '第二区画のボスを撃破',
     a3reach: '第三区画に到達',
     a3boss: '第三区画のボスを撃破',
+    a4boss: '第四区画のボスを撃破',
   };
 })();

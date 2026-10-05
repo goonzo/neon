@@ -12,7 +12,7 @@
   const BIG_SLOT = { x: 760, y: 262 };
   const E_SLOTS_BIG = [{ x: 595, y: 262 }, { x: 900, y: 262 }, { x: 605, y: 128 }, { x: 900, y: 128 }];
 
-  const ICON = { atk: '攻', def: '防', buf: '強', deb: '弱', hack: '害', heal: '癒', sum: '召' };
+  const ICON = { atk: '攻', def: '防', buf: '強', deb: '弱', hack: '害', heal: '癒', sum: '召', steal: '盗', flee: '逃', boom: '爆' };
 
   function moveText(C, u, m) {
     const tgN = { E: '仲間1人に', AE: '仲間全員に', S: '自身に', AA: '敵全体に', LA: '最も弱った敵に' }[m.tg] || '';
@@ -32,6 +32,10 @@
         case 'noise': parts.push(`${pre}ノイズカード${args[0]}枚を混入（ハッキング）`); break;
         case 'summon': parts.push(`${G.ENEMIES[args[0]].n}を${args[1] || 1}体呼ぶ`); break;
         case 'cleanse': parts.push('自身のデバフを解除'); break;
+        case 'selfdestruct': parts.push(`自爆し、仲間全員に${ref ? E.previewAttack(C, u, ref, args[0], {}) : args[0]}ダメージ`); break;
+        case 'stealCred': parts.push(`クレジットを${args[0]}盗む（倒せば取り返せる）`); break;
+        case 'flee': parts.push('盗んだものを持って逃走する'); break;
+        case 'erase': parts.push(`${pre}山札のカード${args[0]}枚を、この戦闘のあいだ消去する`); break;
         default: break;
       }
     }
@@ -58,7 +62,9 @@
     const endBtn = UI.btn('ターン終了', () => { if (!busy && inputHero) { endHeroTurn(); } }, 'big endbtn');
     const hud = h('div', { class: 'hud layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, bottom: 0, height: '206px' } }, whoBox, handEl, endBtn);
     const hint = h('div', { class: 'hint' });
-    s.appendChild(field); s.appendChild(hud); s.appendChild(turnbar); s.appendChild(hint);
+    const zoom = h('div', { class: 'cardzoom hidden' });
+    s.appendChild(field); s.appendChild(hud); s.appendChild(turnbar); s.appendChild(hint); s.appendChild(zoom);
+    let lastPT = 'mouse'; // pointer type of the last press on a card
 
     const els = {};
     const slotOf = {};
@@ -205,7 +211,7 @@
       }
       const d = G.HEROES[u.id];
       whoBox.appendChild(h('div', { class: 'col', style: { gap: '4px' } },
-        h('div', { class: 'row' }, G.sprImg(u.id, 2), h('div', { class: 'col', style: { gap: '0' } }, h('span', { style: { fontSize: '15px', color: d.col } }, d.n), h('span', { class: 'sub', 'data-tip': `<div class="tn">${d.trait.n}</div>${d.trait.d}` }, '特性：' + d.trait.n))),
+        h('div', { class: 'row' }, G.sprImg(u.id, 2), h('div', { class: 'col', style: { gap: '0' } }, h('span', { style: { fontSize: '15px', color: d.col } }, d.n), h('span', { class: 'sub', 'data-tip': `<div class="tn">${d.trait.n}</div>${d.trait.d}` }, '特性：' + d.trait.n), u.gear ? h('span', { class: 'sub row', style: { gap: '3px' } }, UI.gearChip(u.gear.id, true), u.gear.n) : null)),
         h('div', { class: 'row' }, h('div', { class: 'energy' + (u.energy ? '' : ' zero'), 'data-tip': '<div class="tn">エナジー</div>カードを使うためのコスト。毎ターン3回復。' }, String(u.energy)),
           h('div', { class: 'piles col', style: { gap: '2px' } },
             h('span', { onclick: () => pileModal('山札', u.draw, true) }, `山札 ${u.draw.length}`),
@@ -218,7 +224,7 @@
         const can = E.canPlay(C, u, c);
         if (can && c.id !== 'noise') anyPlayable = true;
         const el = UI.card(c, { u, C, cls: (can ? '' : 'unplayable') + (i === sel ? ' selected' : '') });
-        el.addEventListener('click', (e) => { e.stopPropagation(); if (justDragged) return; selectCard(i); });
+        el.addEventListener('click', (e) => { e.stopPropagation(); if (justDragged) return; if (lastPT === 'touch') touchCard(i); else selectCard(i); });
         el.addEventListener('pointerdown', (e) => startDrag(e, i, el));
         el.dataset.k = String((i + 1) % 10);
         handEl.appendChild(el);
@@ -231,14 +237,46 @@
       if (inputHero && sel >= 0) {
         const c = inputHero.hand[sel];
         const d = c && E.cardDef(c);
-        hint.textContent = d ? (d.tg === 'A' ? '対象の味方をクリック' : d.tg === 'D' ? '蘇生する仲間をクリック' : '対象の敵をクリック') + '（キーボード：←→で選択、Enter／同じ数字で決定）' : '';
-      } else if (inputHero) hint.textContent = `${inputHero.n}のターン — カードをクリック、またはドラッグして使用`;
+        hint.textContent = !d ? '' : !E.needsTarget(c) ? '「使う」か、もう一度カードをタップで発動' : (d.tg === 'A' ? '対象の味方を' : d.tg === 'D' ? '蘇生する仲間を' : '対象の敵を') + (UI.isTouch ? 'タップ' : 'クリック（キーボード：←→で選択、Enter／同じ数字で決定）');
+      } else if (inputHero) hint.textContent = UI.isTouch ? `${inputHero.n}のターン — カードをタップで拡大／キャラをタップで詳細` : `${inputHero.n}のターン — カードをクリック、またはドラッグして使用`;
       else hint.textContent = '';
     }
 
     function render() {
       C.units.forEach((u) => updUnit(u));
       renderChrome();
+      renderZoom();
+    }
+    // touch: a tapped card is shown large so it can be read before using it
+    let zoomOn = false;
+    function renderZoom() {
+      const c = zoomOn && inputHero && sel >= 0 ? inputHero.hand[sel] : null;
+      zoom.classList.toggle('hidden', !c);
+      zoom.innerHTML = '';
+      if (!c) return;
+      const needs = E.needsTarget(c);
+      zoom.appendChild(UI.card(c, { u: inputHero, C, cls: 'big' }));
+      zoom.appendChild(h('div', { class: 'col', style: { gap: '6px', alignItems: 'stretch' } },
+        needs ? h('div', { class: 'zhint' }, '対象をタップ') : UI.btn('使う', () => { const i = sel; zoomOn = false; play(i, null); }, 'pink'),
+        needs && selTargets().includes(kcur) ? UI.btn(`▶の対象に使う`, () => { const i = sel; zoomOn = false; play(i, kcur); }, 'sm') : null,
+        UI.btn('やめる', () => { sel = -1; zoomOn = false; render(); }, 'sm')));
+    }
+    function touchCard(i) {
+      if (busy || !inputHero) return;
+      const c = inputHero.hand[i];
+      if (!c) return;
+      if (!E.canPlay(C, inputHero, c)) { selectCard(i); return; }
+      if (sel === i) {
+        // second tap on the same card uses it (on the ▶ target for targeted cards)
+        if (!E.needsTarget(c)) { zoomOn = false; play(i, null); return; }
+        if (selTargets().includes(kcur)) { zoomOn = false; play(i, kcur); }
+        return;
+      }
+      A.sfx('click');
+      sel = i;
+      zoomOn = true;
+      kcur = E.needsTarget(c) ? defaultTarget(c) : null;
+      render();
     }
     // everything except unit bars/statuses (those follow the event snapshots during flush)
     function renderChrome() {
@@ -381,6 +419,7 @@
     async function play(i, tuid) {
       busy = true;
       sel = -1;
+      zoomOn = false;
       const tu = tuid != null && E.unit(C, tuid);
       if (tu && tu.side === 'E') lastFoe = tuid;
       const ok = E.playCard(C, inputHero, i, tuid);
@@ -398,6 +437,7 @@
       return r ? E.unit(C, +r.dataset.uid) : null;
     }
     function startDrag(e, i, el) {
+      lastPT = e.pointerType || 'mouse';
       if (busy || !inputHero || e.button > 0) return;
       const c = inputHero.hand[i];
       if (!c) return;
@@ -459,9 +499,29 @@
     function cancelDrag() { cleanupDrag(); }
 
     function onUnitClick(u) {
-      if (busy || !inputHero || sel < 0) return;
+      if (sel < 0 || busy || !inputHero) { if (!drag) unitInfo(u); return; }
       const c = inputHero.hand[sel];
-      if (c && E.validTargets(C, inputHero, c).includes(u.uid)) play(sel, u.uid);
+      if (c && E.validTargets(C, inputHero, c).includes(u.uid)) { zoomOn = false; play(sel, u.uid); }
+    }
+    function unitInfo(u) {
+      if (u.dead) return;
+      A.sfx('click');
+      const sts = Object.keys(u.st).filter((k) => G.ST[k]);
+      const info = u.side === 'E' && E.intentInfo(C, u);
+      const d = u.side === 'H' ? G.HEROES[u.id] : null;
+      UI.modal(h('div', { class: 'unitinfo col', style: { gap: '8px' } },
+        h('div', { class: 'row', style: { gap: '14px', alignItems: 'flex-start' } },
+          G.sprImg(u.id, G.sprSize(u.id).w > 20 ? 3 : 5),
+          h('div', { class: 'col grow', style: { gap: '4px' } },
+            h('div', { class: 'row' }, h('span', { class: 'ttl', style: { fontSize: '20px', color: d ? d.col : '#ff9e9e' } }, u.n), h('span', { class: 'grow' }), UI.btn('閉じる', UI.closeModal, 'sm')),
+            h('div', null, `HP ${u.hp}/${u.maxHp}`, u.blk ? h('span', { style: { color: '#9ec4ff', marginLeft: '12px' } }, `シールド ${u.blk}`) : null, h('span', { class: 'sub', style: { marginLeft: '12px' } }, `速度 ${E.speed(u)}`)),
+            d ? h('div', null, h('span', { style: { color: '#ffd93d' } }, `特性「${d.trait.n}」`), ' ', d.trait.d) : null,
+            u.gear ? h('div', { class: 'row' }, '装備：', UI.gearChip(u.gear.id), u.gear.n, h('span', { class: 'sub' }, u.gear.d)) : null,
+            info ? h('div', { class: 'intentbox' }, h('span', { style: { color: '#ff9e9e' } }, `次の行動「${info.m.n}」`), h('div', null, moveText(C, u, info.m))) : null,
+            u.side === 'E' && u.def.lore ? h('div', { class: 'sub' }, u.def.lore) : null)),
+        h('div', { class: 'col', style: { gap: '4px' } }, sts.length ? sts.map((k) => h('div', { class: 'row', style: { gap: '8px' } },
+          h('span', { class: 'st ' + G.stKind(k), style: { '--c': G.ST[k].c } }, G.ST[k].g, h('sub', null, String(u.st[k]))),
+          h('span', { style: { color: G.ST[k].c } }, G.ST[k].n), h('span', null, G.stDesc(k, u.st[k])))) : h('div', { class: 'sub' }, '状態異常なし'))), { w: 620 });
     }
     function endHeroTurn() {
       if (!waitResolve) return;
@@ -564,7 +624,9 @@
         await G.sleep(1100);
         run.stats.fights++;
         if (kind === 'elite') run.stats.elites++;
-        if (kind === 'boss') { run.stats.bosses++; G.setFlag(['a1boss', 'a2boss', 'a3boss'][run.act - 1]); }
+        if (kind === 'boss') { run.stats.bosses++; G.setFlag(['a1boss', 'a2boss', 'a3boss', 'a4boss'][run.act - 1]); }
+        if (group.includes('incinerator')) G.setFlag('hestia');
+        if (group.includes('archivist')) G.setFlag('mnemo');
         if (group.includes('mothercopy')) G.setFlag('copy');
         G.applyCombatToRun(run, C);
         const rw = G.combatRewards(run, C, kind, bonus);

@@ -8,7 +8,7 @@
   const DRONE_MAX = 10;
   const ENEMY_MAX = 5;
   // global enemy tuning (party of four outputs a lot of damage)
-  const EK = (G.EK = { hp: 2.3, dmg: 1.6, blk: 1.8, heal: 2.0, hpAct: [1, 1, 1.1, 0.9], dmgAct: [1, 1, 1.12, 0.88] });
+  const EK = (G.EK = { hp: 2.45, dmg: 1.65, blk: 1.8, heal: 2.0, hpAct: [1, 1, 1.1, 0.9, 0.95], dmgAct: [1, 1, 1.12, 0.88, 0.9] });
 
   // ---------- card helpers ----------
   E.cardDef = (card) => {
@@ -51,7 +51,9 @@
       spd: def.spd + (E.hasRelic(C, 'watch') ? 1 : 0),
       draw: G.shuffle(h.deck.map((c) => ({ id: c.id, up: c.up, cid: C.seq++ }))),
       hand: [], disc: [], exh: [], energy: 0, played: 0, firstTurn: true, ref: h,
+      gear: (h.gear && G.GEAR && G.GEAR[h.gear]) || null,
     };
+    if (u.gear && u.gear.spd) u.spd += u.gear.spd;
     return u;
   }
   function mkEnemy(C, id) {
@@ -90,7 +92,21 @@
       if (u.id === 'nezu') E.addSt(C, u, 'drone', 2, u);
       if (u.id === 'mike') E.addSt(C, u, 'stealth', 1, u);
       if (u.id === 'crow') E.addSt(C, u, 'shiny', 2, u);
+      if (u.id === 'goura') E.alive(C, 'H').forEach((a) => E.addSt(C, a, 'regen', 1, u));
+      if (u.id === 'pyon') E.addSt(C, u, 'haste', 2, u);
+      if (u.id === 'jin') E.addSt(C, u, 'barrier', 1, u);
       if (opts.startBlock) E.gainBlock(C, u, opts.startBlock);
+      const g = u.gear;
+      if (g) {
+        if (g.st) for (const k in g.st) E.addSt(C, u, k, g.st[k], u);
+        if (g.startBlk) E.gainBlock(C, u, g.startBlk);
+        if (g.ally) E.alive(C, 'H').forEach((a) => E.addSt(C, a, g.ally[0], g.ally[1], u));
+        if (g.foe) {
+          const fs = E.alive(C, 'E');
+          const ts = g.foe[2] === 'all' ? fs : fs.sort((a, b) => b.hp - a.hp).slice(0, 1);
+          ts.forEach((e) => E.addSt(C, e, g.foe[0], g.foe[1], u));
+        }
+      }
     }
     for (const rid of C.run.relics) {
       const r = G.RELICS[rid];
@@ -138,7 +154,7 @@
   }
 
   function startTurn(C, u) {
-    if (!(u.st.fortify > 0)) u.blk = 0;
+    if (!(u.st.fortify > 0)) u.blk = u.id === 'goura' ? Math.floor(u.blk / 2) : 0;
     push(C, { k: 'turn', uid: u.uid });
     // damage over time
     if (u.st.burn > 0) { const v = u.st.burn; E.dealDamage(C, u, v, { pierce: true, dot: 'burn' }); u.st.burn = Math.floor(v / 2); }
@@ -160,11 +176,18 @@
     if (s.rage) { E.loseHp(C, u, 2); E.addSt(C, u, 'str', s.rage, u); }
     if (s.possess) { E.loseHp(C, u, 2); E.allies(C, u).forEach((a) => E.heal(C, u, a, s.possess)); }
     if (s.dividend) { gainCred(C, 3); E.allies(C, u).forEach((a) => E.gainBlock(C, a, s.dividend)); }
+    if (u.gear && u.gear.turnHeal && u.hp < u.maxHp) E.heal(C, u, u, u.gear.turnHeal, { noBonus: true });
     // traits
     if (u.id === 'crow' && u.st.shiny > 0) { const a = E.lowestAlly(C, 'H'); if (a && a.hp < a.maxHp) E.heal(C, u, a, Math.min(6, u.st.shiny)); }
     if (u.id === 'mina') { const a = E.lowestAlly(C, 'H'); if (a && a.hp < a.maxHp) E.heal(C, u, a, 2); }
     if (u.id === 'echo') { const nx = E.upcoming(C).find((x) => x.side === 'H' && x !== u) || E.alive(C, 'H').find((x) => x !== u); if (nx) E.addSt(C, nx, 'inspire', 1, u); }
     if (u.id === 'gen') { const f = E.foes(C, u).sort((a, b) => b.hp - a.hp)[0]; if (f) E.addSt(C, f, 'aim', 3, u); }
+    if (u.id === 'amane') {
+      const scary = E.foes(C, u).map((e) => ({ e, i: E.intentInfo(C, e) })).filter((x) => x.i && x.i.dmg)
+        .sort((a, b) => b.i.dmg * b.i.hits * (b.i.aoe ? 3 : 1) - a.i.dmg * a.i.hits * (a.i.aoe ? 3 : 1))[0];
+      if (scary) { E.reroll(C, scary.e); E.addSt(C, scary.e, 'vuln', 1, u); }
+    }
+    u.lastT = null;
     checkEnd(C);
     if (u.dead || C.over) return false;
     // stun
@@ -181,6 +204,7 @@
       if (u.firstTurn) {
         if (E.hasRelic(C, 'battery')) en += 1;
         if (E.hasRelic(C, 'memory')) dr += 2;
+        if (u.gear) { en += u.gear.nrg || 0; dr += u.gear.draw || 0; }
       }
       u.energy = en;
       u.played = 0;
@@ -197,9 +221,7 @@
         const f = G.pick(E.foes(C, u));
         if (!f) break;
         push(C, { k: 'txt', uid: u.uid, s: 'チュウ!', c: '#9a9cb2', small: 1 });
-        const nullified = f.st.barrier > 0;
-        E.dealDamage(C, f, 3 + (u.st.droneUp || 0), { src: u });
-        if (!nullified) openWound(C, f, u);
+        poke(C, u, f, 3 + (u.st.droneUp || 0));
         if (u.st.ratKing) { const a = E.lowestAlly(C, 'H'); if (a) E.gainBlock(C, a, u.st.ratKing); }
       }
       while (u.hand.length) u.disc.push(u.hand.pop());
@@ -227,7 +249,15 @@
         u.draw = G.shuffle(u.disc);
         u.disc = [];
       }
-      u.hand.push(u.draw.pop());
+      const c = u.draw.pop();
+      if (u.id === 'luka' && c.id === 'noise' && C) {
+        u.exh.push(c);
+        push(C, { k: 'txt', uid: u.uid, s: '浄化', c: '#fff1d6', small: 1 });
+        E.allies(C, u).forEach((a) => E.heal(C, u, a, 3));
+        i--;
+        continue;
+      }
+      u.hand.push(c);
     }
   };
 
@@ -272,6 +302,7 @@
     o = o || {};
     if (!t || t.dead || v <= 0) return 0;
     if (src && src.side === 'H' && !o.noBonus && E.hasRelic(C, 'redthread')) v += 2;
+    if (src && src.gear && src.gear.heal && !o.noBonus) v += src.gear.heal;
     const gain = Math.min(v, t.maxHp - t.hp);
     t.hp += gain;
     if (gain > 0) push(C, { k: 'heal', uid: t.uid, v: gain });
@@ -287,6 +318,7 @@
     if (u.id === 'yomi') E.allies(C, u).forEach((a) => E.addSt(C, a, 'regen', 1, u));
   };
 
+  E.kill = (C, u) => kill(C, u);
   E.dealDamage = (C, t, d, o) => {
     o = o || {};
     if (!t || t.dead || d <= 0) return 0;
@@ -317,6 +349,7 @@
   function kill(C, u) {
     u.hp = 0; u.dead = true; u.blk = 0;
     push(C, { k: 'die', uid: u.uid });
+    if (u.stolen > 0) { gainCred(C, u.stolen); push(C, { k: 'txt', uid: u.uid, s: `${u.stolen}cr取り返した`, c: '#ffd93d' }); u.stolen = 0; }
     if (u.side === 'E') {
       if (u.st.virus > 0) {
         const others = E.alive(C, 'E');
@@ -348,7 +381,7 @@
 
   // attack damage (with modifiers & on-hit effects)
   function calcAttack(C, src, t, base, o, preview) {
-    let d = base + (src ? src.st.str || 0 : 0);
+    let d = base + (src ? src.st.str || 0 : 0) + (src && src.gear ? src.gear.atk || 0 : 0);
     if (src && src.id === 'kagura' && t.st.burn > 0) d += 3;
     if (src && src.id === 'mike' && src.st.stealth > 0) d += 2;
     if (o.hid && src && src.st.stealth > 0) d *= o.hid;
@@ -382,6 +415,14 @@
     if (!t.st.bleed) delete t.st.bleed;
   }
 
+  // small non-card hit (drones, hop): opens wounds like an attack
+  function poke(C, src, t, v) {
+    if (!t || t.dead) return;
+    const nullified = t.st.barrier > 0;
+    E.dealDamage(C, t, v, { src });
+    if (!nullified) openWound(C, t, src);
+  }
+
   function attack(C, src, t, base, o) {
     o = o || {};
     if (!t || t.dead) return 0;
@@ -396,6 +437,7 @@
       if (src && src.st.ignite) E.addSt(C, t, 'burn', src.st.ignite, src);
       if (src && src.st.bloodlust) E.addSt(C, t, 'bleed', src.st.bloodlust, src);
       if (src && src.st.marking) E.addSt(C, t, 'aim', src.st.marking, src);
+      if (src && src.gear && src.gear.onHit && !nullified) E.addSt(C, t, src.gear.onHit[0], src.gear.onHit[1], src);
       if (t.st.spikeshell) E.gainBlock(C, t, t.st.spikeshell);
       if (t.id === 'pixe') E.addSt(C, t, 'charge', 1, t);
     }
@@ -435,6 +477,7 @@
 
   const OPS = {
     dmg(C, u, T, [v, n = 1, o = {}], ctx) {
+      if (u.id === 'octo' && n > 1) n += 1;
       for (const t0 of T) {
         for (let i = 0; i < n; i++) {
           let t = t0;
@@ -455,8 +498,8 @@
         if (C.over || u.dead) return;
       }
     },
-    blk(C, u, T, [v]) { if (u.side === 'E') v = Math.round(v * EK.blk); T.forEach((t) => E.gainBlock(C, t, v)); },
-    blkX(C, u, T, [what, k, base = 0]) { const v = base + Math.floor(k * amount(C, u, what)); T.forEach((t) => E.gainBlock(C, t, v)); },
+    blk(C, u, T, [v]) { if (u.side === 'E') v = Math.round(v * EK.blk); else if (u.gear && u.gear.blk) v += u.gear.blk; T.forEach((t) => E.gainBlock(C, t, v)); },
+    blkX(C, u, T, [what, k, base = 0]) { let v = base + Math.floor(k * amount(C, u, what)); if (u.gear && u.gear.blk && v > 0) v += u.gear.blk; T.forEach((t) => E.gainBlock(C, t, v)); },
     heal(C, u, T, [v]) { if (u.side === 'E') v = Math.round(v * EK.heal); T.forEach((t) => E.heal(C, u, t, v)); },
     st(C, u, T, [key, v]) { T.forEach((t) => E.addSt(C, t, key, v, u)); },
     stX(C, u, T, [key, what, k]) { const v = Math.floor(k * amount(C, u, what)); if (v > 0) T.forEach((t) => E.addSt(C, t, key, v, u)); },
@@ -499,6 +542,7 @@
     noise(C, u, T, [v]) {
       T.forEach((t) => {
         if (t.side !== 'H' || t.dead) return;
+        if (t.id === 'jin') { push(C, { k: 'txt', uid: t.uid, s: 'ハッキング拒否', c: '#e8e8f0' }); E.gainBlock(C, t, 6); E.addSt(C, t, 'str', 1, t); return; }
         if (C.firewall > 0) { C.firewall--; push(C, { k: 'txt', uid: t.uid, s: '防壁', c: '#2ee6ff' }); return; }
         for (let i = 0; i < v; i++) {
           const pos = G.rnd(t.draw.length + 1);
@@ -586,6 +630,77 @@
         } else E.addSt(C, u, 'shiny', 1, u);
       });
     },
+    // extra effects that only happen on a Haru & Sora link
+    linked(C, u, T, subs, ctx) { if (ctx.link) for (const f of subs) runFx(C, u, f, T, ctx); },
+    // wipe every noise card from the party; heal everyone per card removed
+    purify(C, u, T, [k]) {
+      let n = 0;
+      for (const a of E.alive(C, 'H')) {
+        for (const pile of ['hand', 'draw', 'disc']) {
+          const before = a[pile].length;
+          a[pile] = a[pile].filter((c) => c.id !== 'noise');
+          n += before - a[pile].length;
+        }
+      }
+      push(C, { k: 'txt', uid: u.uid, s: n ? `ノイズ${n}枚を浄化` : '浄化', c: '#fff1d6', small: 1 });
+      if (n) E.alive(C, 'H').forEach((a) => E.heal(C, u, a, n * k));
+    },
+    reroll(C, u, T) { T.forEach((t) => E.reroll(C, t)); },
+    // move allies to the front of this round's turn order (or speed them up if they already acted)
+    rush(C, u, T) {
+      T.forEach((t) => {
+        if (t.dead || t === u) return;
+        const i = C.queue.indexOf(t.uid);
+        if (i >= 0) { C.queue.splice(i, 1); C.queue.unshift(t.uid); push(C, { k: 'txt', uid: t.uid, s: '先行！', c: '#2ee6ff', small: 1 }); }
+        else E.addSt(C, t, 'haste', 1, u);
+      });
+    },
+    // push enemies to the back of this round's turn order (or slow them if they already acted)
+    delay(C, u, T) {
+      T.forEach((t) => {
+        if (t.dead) return;
+        const i = C.queue.indexOf(t.uid);
+        if (i >= 0) { C.queue.splice(i, 1); C.queue.push(t.uid); push(C, { k: 'txt', uid: t.uid, s: '後回し', c: '#9ec4ff', small: 1 }); }
+        else E.addSt(C, t, 'slow', 1, u);
+      });
+    },
+    // enemy: blow itself up, hitting every hero
+    selfdestruct(C, u, T, [v]) {
+      push(C, { k: 'txt', uid: u.uid, s: '自爆！', c: '#ff8a2b' });
+      E.alive(C, 'H').forEach((h) => { if (!u.dead) attack(C, u, h, v, {}); });
+      if (!u.dead) kill(C, u);
+    },
+    // enemy: run away from the fight (with whatever it stole)
+    flee(C, u) {
+      if (u.dead) return;
+      u.dead = true; u.fled = true; u.hp = 0;
+      push(C, { k: 'txt', uid: u.uid, s: u.stolen ? `${u.stolen}cr持ち逃げ！` : '逃走', c: '#ffd93d' });
+      push(C, { k: 'die', uid: u.uid, fled: 1 });
+      checkEnd(C);
+    },
+    stealCred(C, u, T, [v]) {
+      const n = Math.min(v, C.run.credits);
+      if (n <= 0) return;
+      C.run.credits -= n;
+      u.stolen = (u.stolen || 0) + n;
+      push(C, { k: 'txt', uid: u.uid, s: `-${n}cr`, c: '#ffd93d' });
+    },
+    // enemy: wipe random cards from a hero's draw pile for this combat
+    erase(C, u, T, [n]) {
+      T.forEach((t) => {
+        if (t.side !== 'H' || t.dead) return;
+        let k = 0;
+        for (let i = 0; i < n; i++) {
+          const pile = t.draw.length ? t.draw : t.disc;
+          const idx = pile.map((c, j) => j).filter((j) => pile[j].id !== 'noise');
+          if (!idx.length) break;
+          const j = G.pick(idx);
+          t.exh.push(pile.splice(j, 1)[0]);
+          k++;
+        }
+        if (k) push(C, { k: 'txt', uid: t.uid, s: `記憶消去-${k}`, c: '#ff5ad1' });
+      });
+    },
     chargeHeal(C, u, T, [k]) { const v = (u.st.charge || 0) * k; delete u.st.charge; E.heal(C, u, u, v); },
     nop() {},
   };
@@ -645,13 +760,19 @@
     u.hand.splice(idx, 1);
     const ctx = { mul: 1, tg: d.tg, card: d };
     if (d.t === 'A' && u.st.focus) { ctx.mul = 2; delete u.st.focus; }
+    ctx.link = u.id === 'haru' && (d.t === 'A' || d.t === 'S') && !!u.lastT && u.lastT !== d.t;
     push(C, { k: 'play', uid: u.uid, name: d.n, t: d.t });
+    if (ctx.link) push(C, { k: 'txt', uid: u.uid, s: '連携！', c: '#5ad1ff' });
     for (const fx of d.fx) {
       runFx(C, u, fx, T, ctx);
       if (C.over) break;
     }
     if (d.x || d.t === 'P') u.exh.push(card);
     else u.disc.push(card);
+    if (!C.over && u.st.hop) poke(C, u, G.pick(E.foes(C, u)), u.st.hop);
+    if (!C.over && ctx.link) poke(C, u, G.pick(E.foes(C, u)), 4 + (u.st.sync || 0));
+    if (d.t === 'A' || d.t === 'S') u.lastT = d.t;
+    if (!C.over && u.id === 'pyon' && u.played >= 2) E.draw(C, u, 1);
     u.played++;
     checkEnd(C);
     return true;
@@ -677,6 +798,13 @@
     u.intent = { m, tuid: m.tg === 'E' ? chooseTarget(C, m) : null };
   }
   E.pickIntent = pickIntent;
+  // make an enemy choose a different move (if it has one)
+  E.reroll = (C, e) => {
+    if (!e || e.dead || !e.intent || !e.moves || e.moves.length < 2) return;
+    const old = e.intent.m;
+    for (let i = 0; i < 6; i++) { pickIntent(C, e); if (e.intent.m !== old) break; }
+    push(C, { k: 'txt', uid: e.uid, s: '行動再計算', c: '#b4a0ff', small: 1 });
+  };
 
   function chooseTarget(C, m) {
     let hs = E.alive(C, 'H').filter((h) => !(h.st.stealth > 0));
@@ -706,7 +834,7 @@
     const t = E.effectiveTarget(C, u);
     let dmg = null, hits = 0, base = null, mods = [];
     for (const fx of m.fx) {
-      if (fx[0] === 'dmg' || fx[0] === 'drain') {
+      if (fx[0] === 'dmg' || fx[0] === 'drain' || fx[0] === 'selfdestruct') {
         const ref = t || E.alive(C, 'H')[0];
         if (ref) { dmg = E.previewAttack(C, u, ref, fx[1], {}); mods = E.attackMods(C, u, ref); }
         base = Math.round(fx[1] * C.diff.dmg * EK.dmg * EK.dmgAct[C.run.act || 1]);
@@ -714,7 +842,7 @@
         break;
       }
     }
-    return { m, t, dmg, base, mods, hits, aoe: m.tg === 'AE' };
+    return { m, t, dmg, base, mods, hits, aoe: m.tg === 'AE' || m.fx.some((f) => f[0] === 'selfdestruct') };
   };
 
   E.enemyAct = (C, u) => {
@@ -753,13 +881,13 @@
     let hid = 0;
     const dmgVal = (v) => {
       if (!u || !u.st) return { v, mod: 0 };
-      let x = v * mul + (u.st.str || 0);
+      let x = v * mul + (u.st.str || 0) + (u.gear ? u.gear.atk || 0 : 0);
       if (u.st.stealth > 0) { if (u.id === 'mike') x += 2; if (hid) x *= hid; }
       if (u.st.weak > 0) x = Math.floor(x * 0.75);
       return { v: x, mod: x > v ? 1 : x < v ? -1 : 0 };
     };
     const num = (o) => (o.mod ? `<b class="${o.mod > 0 ? 'up' : 'dn'}">${o.v}</b>` : `<b>${o.v}</b>`);
-    for (const fx of d.fx) {
+    const handle = (fx) => {
       const args = fx.slice(1);
       let to = null;
       if (typeof args[args.length - 1] === 'string' && args[args.length - 1][0] === '@') to = args.pop().slice(1);
@@ -769,7 +897,8 @@
       switch (fx[0]) {
         case 'dmg': {
           hid = c && c.hid ? c.hid : 0;
-          let s = `${pre}${num(dmgVal(a))}ダメージ${b > 1 ? '×' + b : ''}`;
+          const hits = b > 1 && (u ? u.id : d.hero) === 'octo' ? b + 1 : b;
+          let s = `${pre}${num(dmgVal(a))}ダメージ${hits > 1 ? '×' + hits : ''}`;
           if (c && c.aim) s += `（照準中なら+${c.aim}）`;
           if (c && c.elite) s += `（エリート・ボスに${c.elite}倍）`;
           if (c && c.hid) s += `（${stn('stealth')}中なら${c.hid}倍）`;
@@ -805,10 +934,22 @@
         case 'dismiss': parts.push('通常敵1体を戦闘から離脱させる（エリート・ボス不可）'); break;
         case 'spendHeal': parts.push(`${pre}${stn(a)}×${b}のHPを回復し、${stn(a)}をすべて消費${u && u.st && u.st[a] ? `（現在${Math.floor(u.st[a] * b)}）` : ''}`); break;
         case 'pilfer': parts.push(`対象のバフを1つ盗む（盗めたら${stn('shiny')}+2、なければ+1）`); break;
+        case 'linked': {
+          const before = parts.length;
+          args.forEach(handle);
+          const sub = parts.splice(before).join('、');
+          parts.push(`<b class="lk" data-tip="&lt;div class=&quot;tn&quot;&gt;連携&lt;/div&gt;直前に使ったカードとタイプ（アタック／スキル）が違うときに発動">連携</b>：${sub}`);
+          break;
+        }
+        case 'purify': parts.push(`味方全員のノイズをすべて消し、消した枚数×<b>${a}</b>だけ味方全員のHPを回復`); break;
+        case 'reroll': parts.push(`${pre}敵の行動を再計算させる`); break;
+        case 'rush': parts.push(`${pre || '対象の'}味方をこのラウンドの次の行動に割り込ませる（行動済みなら加速1）`); break;
+        case 'delay': parts.push(`${pre}このラウンドの行動を最後に後回しにする（行動済みなら鈍足1）`); break;
         case 'chargeHeal': parts.push(`${stn('charge')}×${a}のHPを回復し、充電を消費`); break;
         default: break;
       }
-    }
+    };
+    for (const fx of d.fx) handle(fx);
     let s = parts.join('。');
     if (s) s += '。';
     if (d.x) s += '<span class="ex">廃棄</span>';

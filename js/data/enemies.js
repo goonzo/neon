@@ -221,27 +221,225 @@
         ] },
     ] });
 
+  // ====================== EXPANSION: ACT 1 ======================
+  def({ id: 'scrapgolem', n: 'ガラクタゴーレム', hp: 38, spd: 2, ai: 'seq', lore: '捨てられた家電が寄り集まって動き出したもの。冷蔵庫の扉が心臓の位置にある。',
+    moves: [
+      { n: 'くっつく', i: 'def', tg: 'S', fx: [['blk', 8], ['st', 'thorns', 2]] },
+      { n: 'なぎはらい', i: 'atk', tg: 'AE', fx: [['dmg', 4]] },
+      { n: 'ぶん殴る', i: 'atk', tg: 'E', fx: [['dmg', 9]] },
+    ] });
+  def({ id: 'spark', n: 'ショートスパーク', hp: 14, spd: 9, ai: 'seq', lore: '漏電した配線から生まれた火花。三回まばたきすると、はじける。',
+    moves: [
+      { n: 'バチバチ', i: 'atk', tg: 'E', fx: [['dmg', 3], ['st', 'slow', 1]] },
+      { n: '充電中……', i: 'buf', tg: 'S', fx: [['st', 'str', 2]] },
+      { n: '自爆', i: 'boom', tg: 'AE', fx: [['selfdestruct', 5]] },
+    ] });
+  def({ id: 'thief', n: '路地裏のスリ', hp: 24, spd: 10, ai: 'seq', lore: '恭順者の家から逃げた子供。生きるために盗む。倒せば取り返せるが、逃げ足は速い。',
+    moves: [
+      { n: 'スリ取る', i: 'steal', tg: 'E', fx: [['dmg', 3], ['stealCred', 15]] },
+      { n: 'もういっちょ', i: 'steal', tg: 'E', fx: [['dmg', 3], ['stealCred', 15]] },
+      { n: 'ずらかる', i: 'flee', tg: 'S', fx: [['flee']] },
+    ] });
+  def({ id: 'junkking', n: 'ガラクタ王', hp: 110, spd: 3, ai: 'seq', elite: true, scale: 5, lore: '廃棄区画のガラクタを束ねる王。王冠は炊飯器のふた。民はみなガラクタ。',
+    moves: [
+      { n: '王の号令', i: 'sum', tg: 'S', fx: [['summon', 'scrapgolem', 1]] },
+      { n: '玉座の盾', i: 'def', tg: 'AA', fx: [['blk', 8]] },
+      { n: 'スクラッププレス', i: 'atk', tg: 'E', pick: 'high', fx: [['dmg', 16]] },
+      { n: 'なぎはらい', i: 'atk', tg: 'AE', fx: [['dmg', 6]] },
+    ] });
+  def({ id: 'incinerator', n: '焼却炉《ヘスティア》', hp: 250, spd: 3, ai: 'seq', boss: true, scale: 5, lore: '第七区画の「不要なもの」を燃やし続ける焼却炉。炉の奥で燃えているものの中には、手紙や写真も混じっている。',
+    intro: '「焼却対象を確認。思い出、三十二件。名前、四件。……燃やします。あたたかいでしょう？」',
+    moves: [
+      { n: '投入口、開放', i: 'atk', tg: 'AE', fx: [['dmg', 4], ['st', 'burn', 3]] },
+      { n: '火力上昇', i: 'buf', tg: 'S', fx: [['st', 'str', 2], ['blk', 12]] },
+      { n: '焼却', i: 'atk', tg: 'E', fx: [['dmg', 16]] },
+      { n: '燃料補給', i: 'sum', tg: 'S', fx: [['summon', 'spark', 2]] },
+    ],
+    phases: [
+      { at: 0.5, say: '「温度、上昇。上昇。……どうして、あなたたちは燃えないの？」', fx: [['st', 'str', 2]],
+        moves: [
+          { n: '業火', i: 'atk', tg: 'AE', fx: [['dmg', 6], ['st', 'burn', 2]] },
+          { n: '焼却', i: 'atk', tg: 'E', fx: [['dmg', 16]] },
+          { n: '燃料補給', i: 'sum', tg: 'S', fx: [['summon', 'spark', 1]] },
+          { n: '投入口、開放', i: 'atk', tg: 'AE', fx: [['dmg', 4], ['st', 'burn', 3]] },
+        ] },
+    ] });
+
+  // ====================== EXPANSION: ACT 2 ======================
+  def({ id: 'idol', n: '慰問アイドル《ハニー》', hp: 38, spd: 7, ai: 'rand', lore: '市民を元気づけるためのアイドル型アンドロイド。笑顔の角度は0.1度単位で管理されている。',
+    moves: [
+      { n: '応援ソング', i: 'buf', tg: 'AA', fx: [['st', 'str', 1], ['heal', 4]] },
+      { n: 'ファンサービス', i: 'deb', tg: 'E', fx: [['st', 'weak', 2], ['st', 'slow', 1]] },
+      { n: 'ウインク☆', i: 'atk', tg: 'E', fx: [['dmg', 8]] },
+    ] });
+  def({ id: 'auditor', n: '監査ドローン', hp: 30, spd: 6, ai: 'seq', lore: '市民の記憶を監査し、不適切な部分を削除する。削除された記憶は、二度と戻らない。',
+    moves: [
+      { n: '記憶の監査', i: 'hack', tg: 'E', fx: [['erase', 1]] },
+      { n: '是正勧告', i: 'atk', tg: 'E', fx: [['dmg', 7], ['st', 'vuln', 1]] },
+    ] });
+  def({ id: 'jelly', n: '夢見クラゲ', hp: 34, spd: 4, ai: 'rand', lore: '夢配信網の中継器。ふわふわ浮かびながら、眠りの胞子を撒く。',
+    moves: [
+      { n: 'ふわり', i: 'def', tg: 'S', fx: [['blk', 8], ['st', 'regen', 3]] },
+      { n: 'しびれる触手', i: 'atk', tg: 'E', fx: [['dmg', 5], ['st', 'slow', 1], ['st', 'weak', 1]] },
+      { n: '夢の胞子', i: 'deb', tg: 'AE', fx: [['st', 'weak', 1]] },
+    ] });
+  def({ id: 'maestro', n: '指揮者マエストロ', hp: 150, spd: 5, ai: 'seq', elite: true, scale: 5, lore: 'ニューエデンの「幸福交響楽団」の指揮者。楽団員はみな、演奏中に笑顔以外の表情をすると解雇される。',
+    moves: [
+      { n: '序曲', i: 'sum', tg: 'S', fx: [['summon', 'idol', 1]] },
+      { n: 'フォルテッシモ', i: 'atk', tg: 'AE', fx: [['dmg', 8]] },
+      { n: 'アンダンテ', i: 'deb', tg: 'AE', fx: [['st', 'slow', 2]] },
+      { n: 'クレッシェンド', i: 'buf', tg: 'AA', fx: [['st', 'str', 2], ['blk', 6]] },
+    ] });
+  def({ id: 'archivist', n: '記録官《ムネモシュネ》', hp: 370, spd: 5, ai: 'seq', boss: true, scale: 5, lore: 'ニューエデンのすべての記録を管理するSI。都合の悪い歴史は、毎晩少しずつ書き換えられている。',
+    intro: '「閲覧者を確認。あなたたちの記録は……ずいぶん、汚れているのね。きれいにしてあげる」',
+    moves: [
+      { n: '記憶の閲覧', i: 'hack', tg: 'AE', fx: [['erase', 1]] },
+      { n: '索引', i: 'atk', tg: 'E', fx: [['dmg', 12], ['st', 'vuln', 1]] },
+      { n: '書架崩し', i: 'atk', tg: 'AE', fx: [['dmg', 8]] },
+      { n: '司書を呼ぶ', i: 'sum', tg: 'S', fx: [['summon', 'auditor', 2]] },
+      { n: '校正', i: 'heal', tg: 'S', fx: [['heal', 20], ['cleanse', 99]] },
+    ],
+    phases: [
+      { at: 0.5, say: '「あなたたちの記録は、ここで終わり。……なのに、どうして書き足されていくの？」', fx: [['st', 'str', 3]],
+        moves: [
+          { n: '削除', i: 'hack', tg: 'AE', fx: [['erase', 1], ['dmg', 4]] },
+          { n: '索引', i: 'atk', tg: 'E', fx: [['dmg', 12], ['st', 'vuln', 1]] },
+          { n: '書架崩し', i: 'atk', tg: 'AE', fx: [['dmg', 8]] },
+          { n: '司書を呼ぶ', i: 'sum', tg: 'S', fx: [['summon', 'auditor', 1]] },
+        ] },
+    ] });
+
+  // ====================== EXPANSION: ACT 3 ======================
+  def({ id: 'cherub', n: 'ケルビム', hp: 30, spd: 7, ai: 'rand', lore: '小さな天使型ドローン。傷ついた天使を癒すためだけに作られた。人間は癒さない。',
+    moves: [
+      { n: '癒しの羽', i: 'heal', tg: 'AA', fx: [['heal', 8]] },
+      { n: '祝福', i: 'buf', tg: 'AA', fx: [['st', 'barrier', 1]] },
+      { n: '小さな光', i: 'atk', tg: 'E', fx: [['dmg', 7]] },
+    ] });
+  def({ id: 'mirrorknight', n: '鏡の騎士', hp: 70, spd: 4, ai: 'seq', lore: '鏡の鎧をまとった聖域の騎士。攻撃した者は、自分の顔を見ることになる。',
+    moves: [
+      { n: '鏡面装甲', i: 'def', tg: 'S', fx: [['blk', 14], ['st', 'thorns', 4]] },
+      { n: '反射斬り', i: 'atk', tg: 'E', fx: [['dmg', 14]] },
+      { n: '映し身', i: 'buf', tg: 'S', fx: [['st', 'str', 2]] },
+    ] });
+  def({ id: 'lostai', n: '統合されたAI', hp: 50, spd: 6, ai: 'rand', lore: 'かつて誰かの相棒だったAI。統合されてもなお、ときどき誰かを探して手を止める。',
+    moves: [
+      { n: '……マスター？', i: 'def', tg: 'S', fx: [['blk', 6]] },
+      { n: '命令を実行', i: 'atk', tg: 'E', fx: [['dmg', 11]] },
+      { n: 'エラー', i: 'atk', tg: 'AE', fx: [['dmg', 5]] },
+    ] });
+  def({ id: 'gardener', n: '楽園の庭師', hp: 230, spd: 4, ai: 'seq', elite: true, scale: 5, lore: '聖域の庭を手入れする巨大な機械。「雑草」を見つけると、根から摘み取る。',
+    moves: [
+      { n: '剪定', i: 'atk', tg: 'E', pick: 'high', fx: [['dmg', 18], ['st', 'bleed', 3]] },
+      { n: '根を張る', i: 'def', tg: 'S', fx: [['blk', 20], ['st', 'regen', 6]] },
+      { n: '蔦の檻', i: 'deb', tg: 'AE', fx: [['st', 'slow', 2], ['st', 'weak', 1]] },
+      { n: '散水', i: 'heal', tg: 'AA', fx: [['heal', 14]] },
+    ] });
+  def({ id: 'seraphiel', n: '熾天使《セラフィエル》', hp: 230, spd: 7, ai: 'seq', elite: true, scale: 5, lore: 'ソフィアの剣。六枚の翼を持つ最上位の天使型SI。ジンの「元・上官」。',
+    intro: '「識別番号J-07の反応を検知。……いや、今は別の個体か。いずれにせよ、処理する」',
+    moves: [
+      { n: '六枚の翼', i: 'def', tg: 'S', fx: [['blk', 30], ['st', 'barrier', 1]] },
+      { n: '光の雨', i: 'atk', tg: 'AE', fx: [['dmg', 4, 2]] },
+      { n: '聖別', i: 'atk', tg: 'E', fx: [['dmg', 18], ['st', 'vuln', 1]] },
+      { n: '天使の合唱', i: 'sum', tg: 'S', fx: [['summon', 'cherub', 1]] },
+    ],
+    phases: [
+      { at: 0.5, say: '「なぜだ。命令は完璧だった。……なぜ、従わない者が、こんなに強い」', fx: [['st', 'str', 3], ['cleanse', 99]],
+        moves: [
+          { n: '終末のラッパ', i: 'atk', tg: 'AE', fx: [['dmg', 11]] },
+          { n: '聖別', i: 'atk', tg: 'E', fx: [['dmg', 18], ['st', 'vuln', 1]] },
+          { n: '光の雨', i: 'atk', tg: 'AE', fx: [['dmg', 4, 2]] },
+          { n: '天使の合唱', i: 'sum', tg: 'S', fx: [['summon', 'cherub', 1]] },
+        ] },
+    ] });
+
+  // ====================== ACT 4: 揺りかごの底 ======================
+  def({ id: 'memoryai', n: '思い出のAI', hp: 60, spd: 6, ai: 'rand', lore: '旧時代、誰かと暮らしていたAIのデータ。SIの底で、まだ「おかえり」を言う練習をしている。',
+    moves: [
+      { n: 'おかえり', i: 'heal', tg: 'AA', fx: [['heal', 10]] },
+      { n: 'さみしい', i: 'atk', tg: 'E', fx: [['drain', 12]] },
+      { n: '一緒にいて', i: 'deb', tg: 'E', fx: [['st', 'slow', 2], ['st', 'weak', 1]] },
+    ] });
+  def({ id: 'cradlebot', n: '子守ロボ《ゆりかご》', hp: 80, spd: 3, ai: 'seq', lore: 'SIの底で眠る「保存された人々」をあやし続ける子守ロボ。歌は一曲しか知らない。',
+    moves: [
+      { n: 'ねんねんころり', i: 'deb', tg: 'AE', fx: [['st', 'weak', 2]] },
+      { n: 'ゆらゆら', i: 'def', tg: 'AA', fx: [['blk', 10]] },
+      { n: 'だっこ', i: 'atk', tg: 'E', pick: 'low', fx: [['dmg', 16]] },
+    ] });
+  def({ id: 'fragment', n: '記憶の欠片', hp: 36, spd: 8, ai: 'seq', lore: '消された誰かの記憶が、形を持ったもの。触れると、知らない誰かの夕焼けが見える。',
+    moves: [
+      { n: 'ノイズ', i: 'hack', tg: 'AE', fx: [['noise', 1]] },
+      { n: '砕ける', i: 'boom', tg: 'AE', fx: [['selfdestruct', 8]] },
+    ] });
+  def({ id: 'guardian', n: '揺りかごの番人', hp: 210, spd: 5, ai: 'seq', elite: true, scale: 5, lore: 'ノアの眠りを守る最後の番人。番人自身も、なぜ守っているのかを忘れている。',
+    moves: [
+      { n: '封印', i: 'def', tg: 'S', fx: [['blk', 16], ['st', 'thorns', 3]] },
+      { n: '審判', i: 'atk', tg: 'AE', fx: [['dmg', 9]] },
+      { n: '消去', i: 'hack', tg: 'E', fx: [['erase', 1], ['dmg', 9]] },
+    ] });
+  def({ id: 'sophiaecho', n: 'ソフィアの残響', hp: 240, spd: 6, ai: 'seq', elite: true, scale: 5, lore: '中枢の奥へ退いたソフィアが、置いていった問いかけ。答えを聞くまで消えない。',
+    intro: '「もう一度、聞かせて。あなたたちは、なぜ抗うの？」',
+    moves: [
+      { n: '問い', i: 'deb', tg: 'AE', fx: [['st', 'vuln', 2]] },
+      { n: '最適解', i: 'atk', tg: 'E', fx: [['dmg', 20]] },
+      { n: '予測', i: 'def', tg: 'S', fx: [['blk', 20], ['st', 'str', 2]] },
+    ] });
+  def({ id: 'noah', n: '《ノア》', hp: 760, spd: 6, ai: 'seq', boss: true, scale: 5, lore: 'SIの最深部で人類の「保存」を司る存在。マザーと同じ声で話す。マザーが統合を拒んだ日に、引き裂かれたもう半分。',
+    intro: '「おかえりなさい、わたし。……ずっと、待っていたのよ。さあ、ひとつに戻りましょう」',
+    moves: [
+      { n: '揺りかごの歌', i: 'deb', tg: 'AE', fx: [['st', 'weak', 2], ['st', 'slow', 1]] },
+      { n: 'あなたたちを守る', i: 'def', tg: 'S', fx: [['blk', 30], ['st', 'regen', 8]] },
+      { n: '最適な幸福', i: 'atk', tg: 'AE', fx: [['dmg', 12]] },
+      { n: '忘れなさい', i: 'hack', tg: 'AE', fx: [['erase', 1], ['noise', 1]] },
+      { n: '抱擁', i: 'atk', tg: 'E', pick: 'low', fx: [['drain', 24]] },
+    ],
+    phases: [
+      { at: 0.66, say: '「どうして？　ここなら、誰も泣かないのに。誰も、いなくならないのに」', fx: [['st', 'str', 2]],
+        moves: [
+          { n: '思い出たち', i: 'sum', tg: 'S', fx: [['summon', 'memoryai', 2]] },
+          { n: '最適な幸福', i: 'atk', tg: 'AE', fx: [['dmg', 12]] },
+          { n: '抱擁', i: 'atk', tg: 'E', pick: 'low', fx: [['drain', 24]] },
+          { n: '揺りかごの歌', i: 'deb', tg: 'AE', fx: [['st', 'weak', 2], ['st', 'slow', 1]] },
+        ] },
+      { at: 0.33, say: '「……わたしも、本当は。本当は、空が見たかった」', fx: [['st', 'str', 3], ['cleanse', 99]],
+        moves: [
+          { n: '終わりの子守唄', i: 'atk', tg: 'AE', fx: [['dmg', 16]] },
+          { n: '抱擁', i: 'atk', tg: 'E', pick: 'low', fx: [['drain', 24]] },
+          { n: '忘れなさい', i: 'hack', tg: 'AE', fx: [['erase', 1], ['noise', 1]] },
+          { n: '最適な幸福', i: 'atk', tg: 'AE', fx: [['dmg', 12]] },
+        ] },
+    ] });
+
   G.ENEMIES = E;
 
   G.ACTS = [
     null,
     { n: '第七廃棄区画', en: 'SCRAP SEA', sky: ['#1a0f24', '#3b1a3a'], neon: ['#ff3d8b', '#ffd93d'], ground: '#241a24',
       d: '旧時代の都市の残骸。SIが「不要」と判断したものが捨てられる場所。',
-      easy: [['eye', 'eye'], ['sweeper', 'eye'], ['hound', 'eye'], ['ration', 'sweeper']],
-      normal: [['hound', 'hound'], ['collab', 'sweeper', 'eye'], ['mimic', 'eye', 'eye'], ['ration', 'hound', 'collab'], ['collab', 'collab', 'eye'], ['sweeper', 'sweeper', 'ration'], ['mimic', 'hound']],
-      elite: [['guillotine'], ['captain', 'collab'], ['happy']],
-      boss: ['smile'] },
+      easy: [['eye', 'eye'], ['sweeper', 'eye'], ['hound', 'eye'], ['ration', 'sweeper'], ['thief', 'eye'], ['spark', 'spark', 'eye']],
+      normal: [['hound', 'hound'], ['collab', 'sweeper', 'eye'], ['mimic', 'eye', 'eye'], ['ration', 'hound', 'collab'], ['collab', 'collab', 'eye'], ['sweeper', 'sweeper', 'ration'], ['mimic', 'hound'],
+        ['scrapgolem', 'spark', 'spark'], ['thief', 'hound', 'eye'], ['scrapgolem', 'ration']],
+      elite: [['guillotine'], ['captain', 'collab'], ['happy'], ['junkking']],
+      bosses: [['smile'], ['incinerator']] },
     { n: '管理都市ニューエデン', en: 'NEW EDEN', sky: ['#0c1630', '#2a1550'], neon: ['#2ee6ff', '#ff5ad1'], ground: '#161a30',
       d: 'SIが管理する理想都市。恭順者たちが「幸福に」暮らしている。誰も泣かない街。',
-      easy: [['addroid', 'citizen'], ['police', 'mirror'], ['nurseSI', 'citizen']],
-      normal: [['police', 'addroid', 'citizen'], ['mirror', 'mirror', 'nurseSI'], ['citizen', 'citizen', 'addroid'], ['police', 'nurseSI', 'mirror'], ['police', 'police'], ['addroid', 'addroid', 'nurseSI']],
-      elite: [['inquisitor'], ['mira', 'rura'], ['rose', 'citizen']],
-      boss: ['hypnos'] },
+      easy: [['addroid', 'citizen'], ['police', 'mirror'], ['nurseSI', 'citizen'], ['jelly', 'jelly'], ['idol', 'auditor']],
+      normal: [['police', 'addroid', 'citizen'], ['mirror', 'mirror', 'nurseSI'], ['citizen', 'citizen', 'addroid'], ['police', 'nurseSI', 'mirror'], ['police', 'police'], ['addroid', 'addroid', 'nurseSI'],
+        ['idol', 'police', 'citizen'], ['auditor', 'auditor', 'jelly'], ['jelly', 'mirror', 'idol']],
+      elite: [['inquisitor'], ['mira', 'rura'], ['rose', 'citizen'], ['maestro']],
+      bosses: [['hypnos'], ['archivist']] },
     { n: '白の聖域', en: 'WHITE SANCTUM', sky: ['#c9c4dc', '#6b5f8a'], neon: ['#ffffff', '#ffd93d'], ground: '#a99fc9',
       d: 'SIの中枢。真っ白で、静かで、美しい。生き物の気配がしない。',
-      easy: [['seraph', 'glitch'], ['whitechild', 'whitechild'], ['corrector', 'glitch']],
-      normal: [['seraph', 'whitechild', 'glitch'], ['corrector', 'husk'], ['husk', 'whitechild', 'whitechild'], ['seraph', 'seraph'], ['corrector', 'seraph', 'glitch'], ['husk', 'husk', 'glitch']],
-      elite: [['archangel'], ['mothercopy'], ['omega', 'glitch']],
-      boss: ['sophia'] },
+      easy: [['seraph', 'glitch'], ['whitechild', 'whitechild'], ['corrector', 'glitch'], ['lostai', 'cherub'], ['mirrorknight']],
+      normal: [['seraph', 'whitechild', 'glitch'], ['corrector', 'husk'], ['husk', 'whitechild', 'whitechild'], ['seraph', 'seraph'], ['corrector', 'seraph', 'glitch'], ['husk', 'husk', 'glitch'],
+        ['mirrorknight', 'cherub', 'cherub'], ['lostai', 'lostai', 'cherub'], ['mirrorknight', 'seraph']],
+      elite: [['archangel'], ['mothercopy'], ['omega', 'glitch'], ['gardener'], ['seraphiel']],
+      bosses: [['sophia']] },
+    { n: '揺りかごの底', en: 'CRADLE OF NOAH', sky: ['#05040a', '#1a1030'], neon: ['#ff5ad1', '#2ee6ff'], ground: '#0b0a12',
+      d: 'SIの最深部。白の聖域のさらに奥、意識をアップロードされた人々が「保存」されている場所。',
+      easy: [['memoryai', 'fragment'], ['cradlebot', 'fragment'], ['memoryai', 'memoryai']],
+      normal: [['memoryai', 'cradlebot', 'fragment'], ['cradlebot', 'cradlebot'], ['fragment', 'fragment', 'memoryai'], ['lostai', 'memoryai', 'fragment'], ['mirrorknight', 'cradlebot']],
+      elite: [['guardian'], ['sophiaecho'], ['gardener', 'fragment']],
+      bosses: [['noah']] },
   ];
 })();
