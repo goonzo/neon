@@ -456,3 +456,19 @@ body.bigui .choice .cd { font-size: 13.5px; }
 .shopitem { font-size: 12px; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; min-width: 0; }
 .shopitem .row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shopitem .price { margin-top: auto; }
+
+/* map roads: dark casing + light core so they read on dark and white acts */
+.mapsvg .edge line { stroke-linecap: round; }
+.mapsvg .edge .sh { stroke: #0b0a12; stroke-width: 6; opacity: 0.6; }
+.mapsvg .edge .core { stroke: #d7d0f0; stroke-width: 2.5; stroke-dasharray: 6 5; }
+.mapsvg .edge.live .core { stroke: #e8e4ff; }
+.mapsvg .edge.dim { opacity: 0.22; }
+.mapsvg .edge.next .core { stroke: #ffffff; stroke-width: 3.5; stroke-dasharray: none; }
+.mapsvg .edge.next .sh { stroke-width: 8; opacity: 0.75; }
+.mapsvg .edge.onpath .core { stroke: #b8ff3d; stroke-width: 3.5; stroke-dasharray: none; }
+.mapsvg .edge.onpath .sh { stroke-width: 8; opacity: 0.75; }
+.mapsvg .edge.hl .core { stroke: #ffd93d; stroke-width: 4; stroke-dasharray: none; }
+.mapsvg .edge.hl .sh { stroke-width: 9; opacity: 0.85; }
+.mapsvg .edge.hl2 .core { stroke: #ffe98a; stroke-width: 3; stroke-dasharray: 4 3; }
+.mapsvg .edge.hl, .mapsvg .edge.hl2 { opacity: 1; }
+.mnode.gone { opacity: 0.4; filter: grayscale(0.7); }

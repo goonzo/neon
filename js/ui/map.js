@@ -99,26 +99,44 @@
     svg.setAttribute('class', 'mapsvg');
     svg.setAttribute('width', UI.W); svg.setAttribute('height', 400);
     const visitedPath = new Set(run.path || []);
+    // nodes still reachable from where the party stands; other roads are dimmed
+    const reach = new Set();
+    const stack = run.pos ? [run.pos] : cols[0].map((n) => n.id);
+    while (stack.length) { const id = stack.pop(); if (reach.has(id)) continue; reach.add(id); const nd = G.mapNode(run, id); if (nd) stack.push(...nd.to); }
+    const edges = [];
     for (const col of cols) for (const n of col) for (const tid of n.to) {
       const t = G.mapNode(run, tid);
-      const ln = document.createElementNS(NS, 'line');
-      ln.setAttribute('x1', X(n.c)); ln.setAttribute('y1', Y(n.y)); ln.setAttribute('x2', X(t.c)); ln.setAttribute('y2', Y(t.y));
       const onPath = visitedPath.has(n.id) && visitedPath.has(t.id);
       const fromCur = run.pos === n.id;
-      ln.setAttribute('stroke', onPath ? '#b8ff3d' : fromCur ? '#ffffff' : 'rgba(169,159,201,0.35)');
-      ln.setAttribute('stroke-width', onPath || fromCur ? 3 : 2);
-      ln.setAttribute('stroke-dasharray', onPath ? '' : '4 4');
-      svg.appendChild(ln);
+      const live = reach.has(n.id) && reach.has(t.id);
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'edge' + (onPath ? ' onpath' : fromCur ? ' next' : live ? ' live' : ' dim'));
+      for (const part of ['sh', 'core']) {
+        const ln = document.createElementNS(NS, 'line');
+        ln.setAttribute('class', part);
+        ln.setAttribute('x1', X(n.c)); ln.setAttribute('y1', Y(n.y)); ln.setAttribute('x2', X(t.c)); ln.setAttribute('y2', Y(t.y));
+        g.appendChild(ln);
+      }
+      edges.push({ g, from: n.id, to: tid });
+      svg.appendChild(g);
     }
+    // hovering a node lights up the roads leading on from it (two steps ahead)
+    const lightFrom = (id) => {
+      const first = edges.filter((e) => e.from === id);
+      const second = edges.filter((e) => first.some((f) => f.to === e.from));
+      edges.forEach((e) => { e.g.classList.toggle('hl', first.includes(e)); e.g.classList.toggle('hl2', second.includes(e)); });
+    };
     wrap.appendChild(svg);
     for (const col of cols) for (const n of col) {
       const nd = G.NODE[n.t];
       const isAvail = avail.includes(n.id);
       const el = h('div', {
-        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : ''),
+        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : '') + (!n.done && !reach.has(n.id) ? ' gone' : ''),
         style: { left: X(n.c) + 'px', top: Y(n.y) + 'px', borderColor: isAvail ? nd.c : null },
         'data-tip': `<div class="tn">${nd.n}</div>${nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
         onclick: () => { if (!isAvail) return; A.sfx('click'); enterNode(n); },
+        onmouseenter: () => lightFrom(n.id),
+        onmouseleave: () => lightFrom(null),
       }, G.sprImg(nd.spr, n.t === 'boss' ? 4 : 3));
       wrap.appendChild(el);
     }
