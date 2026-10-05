@@ -618,8 +618,8 @@
       if (v > 0) T.forEach((t) => E.heal(C, u, t, v));
     },
     // snatch one random (non-permanent) buff from each target; the thief pockets shiny for it
-    pilfer(C, u, T) {
-      T.forEach((t) => {
+    pilfer(C, u, T, [n = 1]) {
+      for (let i = 0; i < n; i++) T.forEach((t) => {
         if (t.dead) return;
         const ks = Object.keys(t.st).filter((k) => G.ST[k] && G.ST[k].k === 'buff' && !G.ST[k].pw);
         if (ks.length) {
@@ -754,6 +754,7 @@
       T = [E.unit(C, tuid)];
     } else if (d.tg === 'S') T = [u];
     else if (d.tg === 'AA') T = E.allies(C, u);
+    else if (d.tg === 'AO') T = E.allies(C, u).filter((x) => x !== u);
     else if (d.tg === 'AE') T = E.foes(C, u);
     else if (d.tg === 'RE') { const f = E.foes(C, u); T = f.length ? [G.pick(f)] : []; }
     u.energy -= d.c;
@@ -870,7 +871,7 @@
 
   // ---------- card text ----------
   const W = { blk: 'シールド値', shiny: '光りもの', charge: '充電', drone: 'ドローン数', lost: '失ったHP', cred: '所持クレジット', tvirus: '対象のウイルス' };
-  const PRE = { AE: '敵全体に', AA: '味方全体に', RE: 'ランダムな敵に', S: '', E: '', A: '', D: '', N: '', LA: 'HP最低の味方に' };
+  const PRE = { AE: '敵全体に', AA: '味方全体に', AO: '自分以外の味方全員に', RE: 'ランダムな敵に', S: '', E: '', A: '', D: '', N: '', LA: 'HP最低の味方に' };
   const PRE_O = { S: '自分に', AA: '味方全体に', AE: '敵全体に', RE: 'ランダムな敵に', LA: 'HP最低の味方に' };
 
   E.cardText = (card, u, C) => {
@@ -887,6 +888,8 @@
       return { v: x, mod: x > v ? 1 : x < v ? -1 : 0 };
     };
     const num = (o) => (o.mod ? `<b class="${o.mod > 0 ? 'up' : 'dn'}">${o.v}</b>` : `<b>${o.v}</b>`);
+    const kw = (label, tip) => `<b class="lk" data-tip="&lt;div class=&quot;tn&quot;&gt;${label}&lt;/div&gt;${tip}">${label}</b>`;
+    let lastSt = -1, lastStPre = null; // last status text in parts, to merge 'X1・Y1' on the same target
     const handle = (fx) => {
       const args = fx.slice(1);
       let to = null;
@@ -914,7 +917,13 @@
         case 'blk': parts.push(`${pre}シールド<b>${a}</b>`); break;
         case 'blkX': parts.push(`${pre}${c ? c + '+' : ''}${W[a]}×${b}のシールド`); break;
         case 'heal': parts.push(`${pre}HP<b>${a}</b>回復`); break;
-        case 'st': parts.push(`${pre}${stn(a)}<b>${b}</b>`); break;
+        case 'st': {
+          if (lastSt === parts.length - 1 && lastStPre === pre) { parts[lastSt] += `・${stn(a)}<b>${b}</b>`; break; }
+          parts.push(`${pre}${stn(a)}<b>${b}</b>`);
+          lastSt = parts.length - 1;
+          lastStPre = pre;
+          break;
+        }
         case 'stX': parts.push(`${pre}${W[b]}${c === 1 ? '' : '×' + c}の${stn(a)}`); break;
         case 'mul': parts.push(`${pre}${stn(a)}を<b>${b}</b>倍にする`); break;
         case 'det': parts.push(`${pre}${stn(a)}を消費し、その<b>${b}</b>倍のダメージ`); break;
@@ -933,7 +942,7 @@
         case 'steal': parts.push(`対象の${stn(a)}をすべて奪う`); break;
         case 'dismiss': parts.push('通常敵1体を戦闘から離脱させる（エリート・ボス不可）'); break;
         case 'spendHeal': parts.push(`${pre}${stn(a)}×${b}のHPを回復し、${stn(a)}をすべて消費${u && u.st && u.st[a] ? `（現在${Math.floor(u.st[a] * b)}）` : ''}`); break;
-        case 'pilfer': parts.push(`対象のバフを1つ盗む（盗めたら${stn('shiny')}+2、なければ+1）`); break;
+        case 'pilfer': parts.push(`バフを<b>${a || 1}</b>つ盗む（1つにつき${stn('shiny')}+2）`); break;
         case 'linked': {
           const before = parts.length;
           args.forEach(handle);
@@ -941,10 +950,10 @@
           parts.push(`<b class="lk" data-tip="&lt;div class=&quot;tn&quot;&gt;連携&lt;/div&gt;直前に使ったカードとタイプ（アタック／スキル）が違うときに発動">連携</b>：${sub}`);
           break;
         }
-        case 'purify': parts.push(`味方全員のノイズをすべて消し、消した枚数×<b>${a}</b>だけ味方全員のHPを回復`); break;
+        case 'purify': parts.push(`味方のノイズをすべて消す。1枚につき味方全員HP<b>${a}</b>回復`); break;
         case 'reroll': parts.push(`${pre}敵の行動を再計算させる`); break;
-        case 'rush': parts.push(`${pre || '対象の'}味方をこのラウンドの次の行動に割り込ませる（行動済みなら加速1）`); break;
-        case 'delay': parts.push(`${pre}このラウンドの行動を最後に後回しにする（行動済みなら鈍足1）`); break;
+        case 'rush': parts.push(`味方を${kw('割り込ませる', 'このラウンドの次の行動に割り込ませる。すでに行動済みなら加速1。')}`); break;
+        case 'delay': parts.push(`${pre.replace(/に$/, 'の')}行動を${kw('後回し', 'このラウンドの行動を最後に回す。すでに行動済みなら鈍足1。')}にする`); break;
         case 'chargeHeal': parts.push(`${stn('charge')}×${a}のHPを回復し、充電を消費`); break;
         default: break;
       }

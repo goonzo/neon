@@ -205,7 +205,7 @@
     { id: 'luk_vigil', n: '夜通しの祈り', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'nurse', 5]], u: [['st', 'nurse', 7]] },
     { id: 'luk_miracle', n: '小さな奇跡', c: 2, t: 'S', tg: 'A', r: 2, fx: [['heal', 13]], u: [['heal', 18]] },
     { id: 'luk_exorcise', n: '悪魔祓い', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 6], ['st', 'weak', 1]], u: [['dmg', 9], ['st', 'weak', 1]] },
-    { id: 'luk_absolve', n: '赦し', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['cleanse', 99], ['purify', 1]], u: [['cleanse', 99], ['purify', 2], ['blk', 3]] },
+    { id: 'luk_absolve', n: '赦し', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['cleanse', 99], ['purify', 1]], u: [['cleanse', 99], ['purify', 2]] },
     { id: 'luk_resurrect', n: '復活の祈り', c: 2, t: 'S', tg: 'D', r: 3, x: 1, fx: [['revive', 40]], uc: 1 },
     { id: 'luk_saint', n: '聖女の微笑み', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 8]], u: [['heal', 11]] },
     { id: 'luk_ashes', n: '灰の中から', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['purify', 4], ['st', 'str', 1]], uc: 0 },
@@ -248,7 +248,7 @@
   }, [
     { id: 'yom_gushi', n: '祓串', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 5]], u: [['dmg', 8]] },
     { id: 'yom_pray', n: '祈祷', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 5]], u: [['heal', 8]] },
-    { id: 'yom_blood', n: '血の供物', c: 0, t: 'S', tg: 'AA', r: 0, fx: [['lose', 4], ['heal', 4]], u: [['lose', 3], ['heal', 6]] },
+    { id: 'yom_blood', n: '血の供物', c: 0, t: 'S', tg: 'AO', r: 0, fx: [['lose', 4], ['heal', 5]], u: [['lose', 3], ['heal', 7]] },
     { id: 'yom_kekkai', n: '結界', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 5]], u: [['blk', 8]] },
     { id: 'yom_fuda', n: '呪符', c: 1, t: 'S', tg: 'E', r: 0, fx: [['st', 'vuln', 2]], u: [['st', 'vuln', 3]] },
     { id: 'yom_soul', n: '魂寄せ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['st', 'regen', 3]], u: [['st', 'regen', 5]] },
@@ -260,7 +260,7 @@
     { id: 'yom_parade', n: '百鬼夜行', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['lose', 5], ['dmg', 9]], u: [['lose', 5], ['dmg', 12]] },
     { id: 'yom_bind', n: '呪縛', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'slow', 2], ['st', 'vuln', 2]], u: [['st', 'slow', 3], ['st', 'vuln', 3]] },
     { id: 'yom_possess', n: '神降ろし', c: 2, t: 'P', tg: 'S', r: 2, fx: [['st', 'possess', 3]], u: [['st', 'possess', 4]] },
-    { id: 'yom_rite', n: '生贄の儀', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['lose', 10], ['heal', 15]], u: [['lose', 6], ['heal', 15]] },
+    { id: 'yom_rite', n: '生贄の儀', c: 1, t: 'S', tg: 'AO', r: 3, x: 1, fx: [['lose', 10], ['heal', 16]], u: [['lose', 6], ['heal', 16]] },
     { id: 'yom_prayer', n: '千年の祈り', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'regen', 5]], u: [['st', 'regen', 7]] },
     { id: 'yom_onryo', n: '怨霊', c: 2, t: 'A', tg: 'E', r: 3, fx: [['dmgX', 'lost', 0.5, 4]], u: [['dmgX', 'lost', 0.7, 4]] },
   ]);
@@ -286,7 +286,7 @@
     { id: 'crw_coin', n: '小銭拾い', c: 0, t: 'S', tg: 'S', r: 1, fx: [['cred', 4], ['st', 'shiny', 1]], u: [['cred', 6], ['st', 'shiny', 2]] },
     { id: 'crw_nest', n: '光の巣', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'hoard', 1]], u: [['st', 'hoard', 2]] },
     { id: 'crw_spoils', n: '戦利品の分配', c: 1, t: 'S', tg: 'AA', r: 2, fx: [['spendHeal', 'shiny', 1]], u: [['spendHeal', 'shiny', 1], ['blk', 3]] },
-    { id: 'crw_rob', n: '根こそぎ', c: 1, t: 'S', tg: 'E', r: 2, fx: [['pilfer'], ['pilfer']], uc: 0 },
+    { id: 'crw_rob', n: '根こそぎ', c: 1, t: 'S', tg: 'E', r: 2, fx: [['pilfer', 2]], uc: 0 },
     { id: 'crw_omen', n: '凶兆', c: 1, t: 'S', tg: 'E', r: 2, fx: [['st', 'vuln', 2], ['st', 'weak', 1]], u: [['st', 'vuln', 3], ['st', 'weak', 1]] },
     { id: 'crw_return', n: 'カラスの恩返し', c: 1, t: 'S', tg: 'A', r: 3, fx: [['heal', 8], ['cleanse', 99]], u: [['heal', 12], ['cleanse', 99]] },
     { id: 'crw_flock', n: 'カラスの大群', c: 2, t: 'A', tg: 'RE', r: 3, fx: [['dmg', 3, 6]], u: [['dmg', 4, 6]] },
@@ -657,7 +657,7 @@
   ]);
   addCards('yomi', [
     { id: 'yom_bell', n: '鈴の音', c: 0, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['draw', 1]] },
-    { id: 'yom_lantern', n: '灯籠流し', c: 1, t: 'S', tg: 'AA', r: 2, x: 1, fx: [['lose', 3], ['heal', 7]], u: [['lose', 2], ['heal', 9]] },
+    { id: 'yom_lantern', n: '灯籠流し', c: 1, t: 'S', tg: 'AO', r: 2, x: 1, fx: [['lose', 3], ['heal', 8]], u: [['lose', 2], ['heal', 10]] },
   ]);
   addCards('rei', [
     { id: 'rei_sheath', n: '納刀', c: 1, t: 'S', tg: 'S', r: 1, fx: [['blk', 6], ['st', 'focus', 1]], u: [['blk', 9], ['st', 'focus', 1]] },
