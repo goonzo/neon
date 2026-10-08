@@ -489,3 +489,22 @@ body.bigui .choice .cd { font-size: 13.5px; }
 .card.bugged { animation: cardglitch 1.4s steps(1) infinite; }
 .card.bugged .cost { background: #b8ff3d; color: #0b0a12; }
 @keyframes cardglitch { 0%, 82%, 100% { filter: none; } 85% { filter: drop-shadow(-2px 0 0 #ff5ad1) drop-shadow(2px 0 0 #2ee6ff); } 90% { filter: hue-rotate(70deg); } }
+
+/* ---- 支給品 / 指名手配 / 加護 / コンビ ---- */
+.itemrow { display: inline-flex; gap: 3px; align-items: center; }
+.itemchip { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; background: #100e1e; border: 1px solid var(--line2); }
+.itemchip img { width: 16px; height: 16px; }
+.itemchip.empty { opacity: 0.35; }
+.itemchip.use { cursor: pointer; border-color: #ffd93d; }
+.itemchip.use:hover { background: #2b2440; transform: translateY(-2px); }
+.hud .hitems { position: absolute; right: 14px; bottom: 92px; pointer-events: auto; }
+.hud .hitems .itemchip { width: 30px; height: 30px; }
+.hud .hitems .itemchip img { width: 22px; height: 22px; }
+.mnode.wanted { border-color: #ff5a5a; box-shadow: 0 0 0 2px #0b0a12, 0 0 10px #ff3d3d; }
+.mnode.wanted::after { content: '賞'; position: absolute; right: -8px; top: -8px; background: #e8352e; color: #fff; font-size: 10px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #0b0a12; }
+.unit .uname { }
+.boon { width: 200px; cursor: pointer; text-align: center; }
+.boon:hover { border-color: #2ee6ff; transform: translateY(-3px); }
+.boon.risk:hover { border-color: #ff5a5a; }
+.duos { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; font-size: 11px; }
+.chip.duo { color: #ff9ec4; border-color: #ff9ec4; }

@@ -34,7 +34,7 @@
     const run = G.run;
     const n = run.node;
     if (!n) { UI.map(); return; }
-    if (n.t === 'fight') UI.combat(n.group, n.kind, n.bonus);
+    if (n.t === 'fight') UI.combat(n.group, n.kind, n.bonus, n.extra);
     else if (n.t === 'reward') UI.reward(n.rw, n.kind);
     else if (n.t === 'event') UI.event(n.id);
     else if (n.t === 'shop') UI.shop();
@@ -58,6 +58,7 @@
       UI.cred(run.credits),
       h('span', { class: 'sub' }, '回収：'),
       UI.resRow(run.res),
+      UI.itemRow(run),
       UI.btn('デッキ', () => UI.deckView(run.heroes), 'sm'),
       UI.btn('装備' + ((run.bag || []).length ? `(${run.bag.length})` : ''), () => UI.gearView(run, () => { const sc = document.querySelector('.screen'); if (sc && sc.classList.contains('map')) UI.map(); }), 'sm'),
       UI.btn('≡', () => runMenu(), 'sm')));
@@ -135,9 +136,9 @@
       const nd = hid ? G.NODE.bug : G.NODE[n.t];
       const isAvail = avail.includes(n.id);
       const el = h('div', {
-        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : '') + (!n.done && !reach.has(n.id) ? ' gone' : '') + (hid ? ' bugnode' : ''),
+        class: 'mnode' + (isAvail ? ' avail' : '') + (n.done ? ' done' : '') + (run.pos === n.id ? ' cur' : '') + (n.t === 'boss' ? ' boss' : '') + (!n.done && !reach.has(n.id) ? ' gone' : '') + (hid ? ' bugnode' : '') + (n.wanted && !hid ? ' wanted' : ''),
         style: { left: X(n.c) + 'px', top: Y(n.y) + 'px', borderColor: isAvail ? nd.c : null },
-        'data-tip': `<div class="tn">${nd.n}</div>${hid ? 'データが壊れていて、何のマスか読み取れない。入ってみるまでわからない。' : nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
+        'data-tip': `<div class="tn">${nd.n}</div>${hid ? 'データが壊れていて、何のマスか読み取れない。入ってみるまでわからない。' : n.wanted ? `<span style="color:#ff5a5a">【指名手配】</span>改造された強敵。改造：${G.WANTED[n.wanted].n}（${G.WANTED[n.wanted].d}）<div class="tf">懸賞金：60クレジット・支給品・装備、カード報酬はボス並み</div>` : nodeDesc(n.t)}${n.t === 'boss' && run.map.boss ? `<div class="tf">待ち受ける者：${run.map.boss.map((id) => G.ENEMIES[id].n).join('、')}</div>` : ''}`,
         onclick: () => { if (!isAvail) return; A.sfx('click'); enterNode(n); },
         onmouseenter: () => lightFrom(n.id),
         onmouseleave: () => lightFrom(null),
@@ -156,7 +157,7 @@
       fight: 'SIの部隊との戦闘。勝利するとカードとクレジット、資源を得る。',
       elite: '強力な敵との戦闘。パーツと、高確率で装備を入手できる。',
       event: '何かが起こる。',
-      shop: 'カードや装備、パーツを購入できる。カードの削除も可能。',
+      shop: 'カードや装備、パーツ、支給品を購入できる。カードの削除も可能。',
       rest: 'HPを回復するか、カードを強化・削除できる。仲間と語らうこともできる。',
       treasure: 'パーツや装備、クレジットが入ったコンテナ。',
       res: '拠点に持ち帰る資源を回収できる。',
@@ -173,9 +174,12 @@
     if (n.t === 'fight' || n.t === 'elite' || n.t === 'boss') {
       const kind = n.t === 'fight' ? 'normal' : n.t;
       const group = G.pickEncounter(run, kind);
-      run.node = { t: 'fight', group, kind };
+      const extra = {};
+      if (n.wanted) extra.wanted = n.wanted;
+      if (run.jam > 0 && kind !== 'boss') { extra.jam = 1; run.jam--; }
+      run.node = { t: 'fight', group, kind, extra };
       G.saveRun();
-      UI.combat(group, kind);
+      UI.combat(group, kind, null, extra);
     } else if (n.t === 'event') {
       const ev = G.pick(G.availableEvents(run));
       run.seenEvents = (run.seenEvents || []).concat([ev.id]);
@@ -280,6 +284,18 @@
                 UI.gearView(run);
               } }, h('div', { class: 'row' }, UI.gearChip(it.id), h('span', { style: { fontSize: '13px', color: G.GEAR_RC[g.r] } }, g.n)), h('div', { style: { marginTop: '3px' } }, g.d),
                 h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : `装備 ${it.price}cr`));
+            }),
+            (shop.items || []).map((it) => {
+              const can = run.credits >= it.price && !it.sold && (run.items || []).length < G.ITEM_SLOTS;
+              const d = G.ITEMS[it.id];
+              return h('div', { class: 'panel shopitem', 'data-tip': G.itemTip(it.id), style: { opacity: it.sold ? 0.3 : 1, cursor: can ? 'pointer' : 'default' }, onclick: () => {
+                if (!can) return;
+                A.sfx('coin');
+                run.credits -= it.price; it.sold = true;
+                G.gainItem(run, it.id);
+                G.saveRun(); draw();
+              } }, h('div', { class: 'row' }, UI.itemChip(it.id), h('span', { style: { fontSize: '13px' } }, d.n)), h('div', { style: { marginTop: '3px' } }, d.d),
+                h('div', { class: 'price', style: { color: can ? '#ffd93d' : '#6b5f8a' } }, it.sold ? '売約済' : (run.items || []).length >= G.ITEM_SLOTS ? '支給品がいっぱい' : `支給品 ${it.price}cr`));
             }),
             !shop.relics.length && !G.partsOK(run) ? h('div', { class: 'panel shopitem sub' }, 'パーツは品切れ。「安全区には、まだ流してないのさ」') : null,
             shop.relics.map((it) => {
@@ -397,7 +413,7 @@
     runTopbar(s, '補給コンテナ');
     if (!run.node.loot) {
       const id = G.partsOK(run) ? G.randomRelic(run, 1) : null;
-      run.node.loot = { relic: id, cred: G.rint(20, 40) + (id ? 0 : 25), gear: G.chance(id ? 0.45 : 0.9) ? G.gainGear(run, G.randomGear(run, 1)) : null };
+      run.node.loot = { relic: id, cred: G.rint(20, 40) + (id ? 0 : 25), gear: G.chance(id ? 0.45 : 0.9) ? G.gainGear(run, G.randomGear(run, 1)) : null, item: G.chance(0.5) ? G.gainItem(run, G.randomItem(1)) : null };
       if (id) G.addRelic(run, id);
       run.credits += run.node.loot.cred;
       G.saveRun();
@@ -407,6 +423,7 @@
       G.sprImg('chest', 8),
       h('div', { class: 'ttl' }, 'コンテナを開けた！'),
       h('div', { class: 'row', style: { gap: '12px', alignItems: 'stretch' } }, L.relic ? UI.relicPanel(L.relic) : null, L.gear ? UI.gearPanel(L.gear, null, UI.btn('装備する', () => UI.gearView(run), 'sm')) : null),
+      L.item && L.item !== 'full' ? h('div', { class: 'row' }, '支給品：', UI.itemChip(L.item), G.ITEMS[L.item].n) : null,
       h('div', null, UI.cred('+' + L.cred)),
       UI.btn('続ける', () => finishNode(), 'pink'))));
     A.sfx('coin');
@@ -477,6 +494,8 @@
         h('span', { class: 'ttl', style: { fontSize: '18px' } }, kind === 'boss' ? 'ボス撃破！' : kind === 'elite' ? 'エリート撃破！' : '勝利'),
         UI.cred('+' + rw.credits), UI.resRow(rw.res, { plus: true, nonzero: true }),
         rw.bugs ? h('span', { style: { color: '#b8ff3d' } }, `バグった敵から壊れたデータを回収（データ+${3 * rw.bugs}）`) : null,
+        rw.bounty ? h('span', { style: { color: '#ff5a5a' } }, `懸賞金 +${rw.bounty}cr`) : null,
+        [rw.item, rw.item2].filter(Boolean).map((it) => it === 'full' ? h('span', { class: 'sub' }, '支給品がいっぱい（15crに換金）') : h('span', { class: 'row' }, '支給品：', UI.itemChip(it), G.ITEMS[it].n)),
         rw.relic ? h('span', { class: 'row' }, 'パーツ入手：', UI.relicChip(rw.relic), G.RELICS[rw.relic].n) : null,
         rw.gear ? h('span', { class: 'row' }, '装備入手：', UI.gearChip(rw.gear), G.GEAR[rw.gear].n, UI.btn('装備する', () => UI.gearView(run), 'sm')) : null);
       body.appendChild(gains);

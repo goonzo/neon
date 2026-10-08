@@ -5,7 +5,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const files = ['js/core.js', 'js/data/heroes.js', 'js/data/gear.js', 'js/data/enemies.js', 'js/data/areas.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/data/bonds.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
+const files = ['js/core.js', 'js/data/heroes.js', 'js/data/gear.js', 'js/data/enemies.js', 'js/data/areas.js', 'js/data/items.js', 'js/data/relics.js', 'js/data/events.js', 'js/data/story.js', 'js/data/bonds.js', 'js/sprites.js', 'js/engine.js', 'js/run.js'];
 const ctx = { console, Math, JSON, setTimeout, Promise };
 ctx.globalThis = ctx;
 vm.createContext(ctx);

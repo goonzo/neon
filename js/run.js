@@ -168,6 +168,7 @@
         return { id, hp: maxHp, maxHp, deck, gear: sig };
       }),
       bag: [],
+      items: [],
       route: G.makeRoute(diff, G.meta),
       credits: 70 + [0, 40, 40, 100][f.market],
       relics: [],
@@ -186,6 +187,7 @@
       }
     }
     run.map = G.genMap(run, 1);
+    G.gainItem(run, G.randomItem(1));
     const mid = run.route[1];
     if (!G.meta.seenAreas.includes(mid)) G.meta.seenAreas.push(mid);
     G.meta.lastMid = mid;
@@ -318,6 +320,11 @@
         }
       });
     }
+    // 指名手配: one elite per area carries a bounty (a mid fight becomes one if the map has no elite)
+    const elites = cols.slice(2, COLS - 2).flat().filter((n) => n.t === 'elite');
+    let wn = elites.length ? G.pick(elites) : null;
+    if (!wn) { const f = cols.slice(3, COLS - 2).flat().filter((n) => n.t === 'fight'); if (f.length) { wn = G.pick(f); wn.t = 'elite'; } }
+    if (wn) wn.wanted = G.pick(Object.keys(G.WANTED));
     // 深淵: some nodes are corrupted and hide what they are until entered
     if (run.diff >= 3) {
       for (let c = 1; c < COLS - 1; c++) for (const n of cols[c]) if (n.t !== 'boss' && G.chance(0.22)) n.q = true;
@@ -433,9 +440,22 @@
     if (bonus) for (const k in bonus) addRes(k, bonus[k]);
     // bugged enemies drop corrupted data
     if (C && C.bugs) { addRes('data', 3 * C.bugs); rw.bugs = C.bugs; }
+    // 支給品
+    const itemChance = kind === 'boss' ? 1 : kind === 'elite' ? 0.5 : 0.22;
+    if (!rw.final && G.chance(itemChance)) rw.item = G.gainItem(run, G.randomItem(kind === 'boss' ? 2 : 1));
+    // 指名手配: the bounty
+    if (C && C.wanted) {
+      rw.bounty = 60;
+      rw.credits += 60;
+      rw.item2 = G.gainItem(run, G.randomItem(2));
+      if (!rw.gear) rw.gear = G.gainGear(run, G.randomGear(run, 2));
+      addRes(G.randomResKey(), 6 + run.act * 2);
+      run.stats.bounties = (run.stats.bounties || 0) + 1;
+    }
+    if (C && C.duoCred) rw.credits += C.duoCred;
     run.credits += rw.credits;
     if (!rw.final) run.heroes.forEach((h) => {
-      if (h.hp > 0) rw.cards.push({ hero: h.id, choices: G.rollCardChoices(run, h.id, kind) });
+      if (h.hp > 0) rw.cards.push({ hero: h.id, choices: G.rollCardChoices(run, h.id, C && C.wanted ? 'boss' : kind) });
     });
     return rw;
   };
@@ -491,7 +511,12 @@
       const id = G.randomGear({ heroes: run.heroes, bag: (run.bag || []).concat(gear.map((g) => g.id)) }, 1);
       if (id) gear.push({ id, price: Math.round((G.gearPrice(G.GEAR[id]) + G.rint(-8, 8)) * pm), sold: false });
     }
-    return { cards, relics, gear, removePrice: Math.round(run.removeCost * pm), healPrice: Math.round(45 * pm), healed: false, removed: false };
+    const items = [];
+    for (let i = 0; i < 3; i++) {
+      const id = G.randomItem(1);
+      items.push({ id, price: Math.round((G.itemPrice(G.ITEMS[id]) + G.rint(-4, 6)) * pm), sold: false });
+    }
+    return { cards, relics, gear, items, removePrice: Math.round(run.removeCost * pm), healPrice: Math.round(45 * pm), healed: false, removed: false };
   };
 
   // ---------------- run end ----------------
@@ -509,6 +534,7 @@
     conv.scrap += run.relics.length * 3;
     const gearN = G.ownedGear(run).filter((id) => !G.GEAR[id].hero).length;
     conv.scrap += gearN * 2;
+    conv.food += (run.items || []).length * 2;
     const exchange = { credits: run.credits, relics: run.relics.length, gear: gearN, res: {} };
     G.RES_KEYS.forEach((k) => {
       const got = Math.floor(run.res[k] * keep);
@@ -518,6 +544,8 @@
       m.res[k] += brought[k];
     });
     m.bestAct = Math.max(m.bestAct, run.act);
+    m.lastStage = run.act;
+    m.lastWin = cleared;
     let unlockedDiff = null;
     if (result === 'win' && run.diff >= 3) G.setFlag('abyssclear');
     if (result === 'win' && route[route.length - 1] === 'rim') G.setFlag('rimclear');

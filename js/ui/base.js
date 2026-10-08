@@ -59,7 +59,7 @@
   };
   const motherLine = () => {
     if (G.meta.lastResult) { const r = G.meta.lastResult; G.meta.lastResult = null; G.saveMeta(); return G.pick(RESULT_LINES[r]); }
-    const pool = G.MOTHER_LINES.filter((l) => !l.c || (l.c === 'loop3' ? G.meta.wins >= 3 : G.meta.flags[l.c]));
+    const pool = G.MOTHER_LINES.filter((l) => (!l.h || G.meta.unlocked.includes(l.h)) && (!l.c || (l.c === 'loop3' ? G.meta.wins >= 3 : G.meta.flags[l.c])));
     // prefer newest unlocked lines a bit
     const special = pool.filter((l) => l.c);
     if (special.length && G.chance(0.45)) return G.pick(special).s;
@@ -310,6 +310,10 @@
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【ルート】第一区画はいつも同じ。第二区画はランダム（ニューエデン／沈んだ旧市街／壊れたデータ区画）。終点は難易度で変わる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【★伝説カード】危険以上の第三区画から、報酬にまれに出るキャラ専用の最強カード。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【バグ】深淵では、中身の読めない「？？？」マスや、HPが高く奇妙な能力をもつ「バグった敵」が出る。倒すとデータを落とす。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【支給品】戦闘中、仲間のターンにいつでも使える消耗品。最大3つ。戦闘報酬・闇市・補給コンテナで手に入る。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【指名手配】各区画にひとつ、改造されたエリートがいる。強いが、懸賞金・支給品・装備と、ボス並みのカード報酬がもらえる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【マザーの加護】2回目以降の出撃前に、マザーが加護を1つくれる。赤い加護は代償つき。前回早くに撤退していると、敵を弱らせるジャミングを申し出てくれる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【コンビ】特定の2人を同じパーティーに入れると、毎戦闘の開始時にボーナス。出撃準備画面で確認できる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【バグったカード】そのターンのあいだコスト0になったカード。ターン終了で元に戻る。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【状態の見かた】明るく塗られたアイコン＝バフ（有利）、黒地に色枠のアイコン＝デバフ（不利）。右下の数字はスタック数または残りターン。'),
         head('buff', '　有利な効果'), of('buff').map(item),
@@ -318,6 +322,26 @@
   };
 
   // ================= SORTIE =================
+  function boonPick(run, next) {
+    const s = UI.screen('boonpick');
+    UI.bg(s, 'bunker', { seed: 14 });
+    A.bgm('base');
+    const ids = G.boonChoices(G.meta, run.diff);
+    const rough = ids.includes('jam');
+    s.appendChild(h('div', { class: 'topbar' }, h('span', { class: 'ttl' }, 'マザーの加護')));
+    s.appendChild(h('div', { class: 'center layer col', style: { position: 'absolute', inset: 'auto', left: '50%', top: '50%', alignItems: 'center', gap: '16px' } },
+      h('div', { class: 'row', style: { gap: '10px' } }, G.sprImg('mother', 2), h('div', { class: 'panel', style: { fontSize: '14px', maxWidth: '520px' } },
+        rough ? '「前の出撃、つらかったわね。……今回は、少しだけSIの目をごまかしてあげる」' : '「出撃の前に、ひとつだけ。わたしにできることを選んで」')),
+      h('div', { class: 'row', style: { gap: '14px', alignItems: 'stretch' } }, ids.map((id) => {
+        const b = G.BOONS[id];
+        return h('div', { class: 'panel boon' + (b.risk ? ' risk' : ''), onclick: () => { A.sfx('buff'); b.go(run); G.saveRun(); next(); } },
+          h('div', { class: 'ttl', style: { fontSize: '16px', color: b.risk ? '#ff5a5a' : '#2ee6ff' } }, b.n),
+          b.risk ? h('div', { class: 'sub', style: { color: '#ff9e9e' } }, '代償あり') : null,
+          h('div', { style: { fontSize: '13px', marginTop: '6px' } }, b.d));
+      })),
+      UI.btn('何もいらない', () => next(), 'sm')));
+  }
+
   UI.sortie = () => {
     const m = G.meta;
     let diff = Math.min(m.lastDiff || 0, m.diffMax);
@@ -383,6 +407,11 @@
         const has = party.some((id) => G.HEROES[id].role === r);
         return h('span', { class: 'rolebadge', style: { background: has ? G.ROLES[r].c : '#2b2440', color: has ? '#fff' : '#6b5f8a' } }, G.ROLES[r].n);
       })));
+      // 人とAIのコンビ
+      const duos = G.duosFor(party);
+      right.appendChild(h('div', { class: 'duos' }, duos.length
+        ? duos.map((d) => h('span', { class: 'chip duo', 'data-tip': `<div class="tn">コンビ「${d.n}」</div>${d.d}` }, `♥ ${G.HEROES[d.a].n}×${G.HEROES[d.b].n}`))
+        : h('span', { class: 'sub' }, 'コンビなし（特定の2人を組ませるとボーナス）')));
       // detail
       if (focus) {
         const d = G.HEROES[focus];
@@ -411,7 +440,9 @@
       G.run = G.newRun(diff, party);
       if (relic) G.addRelic(G.run, relic);
       G.saveRun();
-      UI.actIntro(1);
+      // マザーの加護: from the second sortie on, Mother offers one blessing (some with a price)
+      if (G.meta.runs > 1) boonPick(G.run, () => UI.actIntro(1));
+      else UI.actIntro(1);
     };
     const choices = G.startRelicChoices();
     if (!choices.length) { begin(null); return; }

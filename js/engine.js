@@ -79,6 +79,19 @@
     };
     run.heroes.forEach((h, i) => C.units.push(mkHero(C, h, i)));
     group.forEach((id) => C.units.push(mkEnemy(C, id)));
+    // 指名手配: the marked elite comes with a dangerous modification
+    if (opts.wanted && G.WANTED[opts.wanted]) {
+      const w = G.WANTED[opts.wanted];
+      C.wanted = opts.wanted;
+      C.units.filter((u) => u.side === 'E').forEach((u) => {
+        if (w.st) for (const k in w.st) u.st[k] = (u.st[k] || 0) + w.st[k];
+        if (w.blk) u.blk += w.blk;
+        if (w.spd) u.spd += w.spd;
+        u.wanted = true;
+      });
+    }
+    // マザーの加護「監視網ジャミング」: the first few fights start with the enemies at half HP
+    if (opts.jam) C.units.filter((u) => u.side === 'E').forEach((u) => { u.hp = Math.max(1, Math.ceil(u.hp / 2)); });
     // 深淵: now and then one regular enemy is corrupted by bugs (tougher, odd passive, extra loot)
     if (run.diff >= 3 && C.kind === 'normal' && !opts.noBug && G.chance(0.35)) {
       const cand = C.units.filter((u) => u.side === 'E' && !u.boss && !u.elite);
@@ -125,6 +138,15 @@
     for (const rid of C.run.relics) {
       const r = G.RELICS[rid];
       if (r && r.start) r.start(C, E);
+    }
+    // 人とAIのコンビ
+    if (G.duosFor) {
+      const hs = E.alive(C, 'H');
+      for (const d of G.duosFor(hs.map((u) => u.id))) {
+        const a = hs.find((u) => u.id === d.a), b = hs.find((u) => u.id === d.b);
+        push(C, { k: 'txt', uid: a.uid, s: `コンビ「${d.n}」`, c: '#ff9ec4', small: 1 });
+        d.go(C, E, a, b);
+      }
     }
     for (const e of E.alive(C, 'E')) pickIntent(C, e);
   };
@@ -773,6 +795,37 @@
     if (op) op(C, u, targets, args, ctx);
     checkEnd(C);
   }
+
+  // ---------- 支給品 ----------
+  E.itemTargets = (C, u, it) => {
+    switch (it.tg) {
+      case 'S': return [u];
+      case 'AA': return E.alive(C, 'H');
+      case 'AE': return E.alive(C, 'E');
+      case 'LA': { const a = E.lowestAlly(C, 'H'); return a ? [a] : []; }
+      case 'HE': { const f = E.alive(C, 'E').sort((a, b) => b.hp - a.hp)[0]; return f ? [f] : []; }
+      case 'D': { const d = C.units.find((x) => x.side === 'H' && x.dead); return d ? [d] : []; }
+      default: return [];
+    }
+  };
+  E.canUseItem = (C, u, id) => {
+    const it = G.ITEMS[id];
+    if (!it || !u || C.over || C.cur !== u || u.side !== 'H') return false;
+    return E.itemTargets(C, u, it).length > 0;
+  };
+  E.useItem = (C, u, idx) => {
+    const run = C.run;
+    const id = (run.items || [])[idx];
+    if (!E.canUseItem(C, u, id)) return false;
+    const it = G.ITEMS[id];
+    const T = E.itemTargets(C, u, it);
+    run.items.splice(idx, 1);
+    push(C, { k: 'play', uid: u.uid, name: it.n, t: 'S' });
+    const ctx = { mul: 1, tg: it.tg === 'AE' ? 'AE' : 'S', item: true };
+    for (const fx of it.fx) { runFx(C, u, fx, T, ctx); if (C.over) break; }
+    checkEnd(C);
+    return true;
+  };
 
   // ---------- player actions ----------
   E.cardCost = (u, card) => { const c = E.cardDef(card).c; return c == null ? c : card.free ? 0 : c; };

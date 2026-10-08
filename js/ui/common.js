@@ -412,6 +412,16 @@
     parent.appendChild(cv);
     return cv;
   };
+  // 支給品: a capsule icon tinted per item
+  UI.itemChip = (id, onclick) => {
+    const it = G.ITEMS[id];
+    const el = h('span', { class: 'itemchip' + (onclick ? ' use' : ''), 'data-tip': G.itemTip(id) + (onclick ? '<div class="tf">クリックで使用</div>' : '') }, G.sprImg('i_item', 2, { swap: { x: it.c } }));
+    if (onclick) el.addEventListener('click', (e) => { e.stopPropagation(); onclick(); });
+    return el;
+  };
+  UI.itemRow = (run, onUse) => h('span', { class: 'itemrow', 'data-tip': '<div class="tn">支給品</div>戦闘中、仲間のターンにいつでも使える消耗品（最大3つ）。' },
+    [0, 1, 2].map((i) => { const id = (run.items || [])[i]; return id ? UI.itemChip(id, onUse ? () => onUse(i) : null) : h('span', { class: 'itemchip empty' }); }));
+
   UI.actBg = (parent, run) => {
     if (typeof run === 'number' || !run) run = G.run;
     const ar = G.area(run);
@@ -526,7 +536,10 @@
   // plays one episode; onDone() after the last line
   UI.talkScene = (heroId, epIdx, onDone, opts) => {
     opts = opts || {};
-    const ep = G.BONDS[heroId][epIdx];
+    // only the people who are here can speak or be talked about: in a run that is the party, when replaying it is the crew
+    const here = opts.replay || !G.run ? G.meta.unlocked : G.run.heroes.map((x) => x.id);
+    const lines = G.talkLines(heroId, epIdx, here);
+    const ep = { t: G.BONDS[heroId][epIdx].t, lines };
     let i = 0;
     const portrait = h('div', { class: 'talkport' });
     const name = h('div', { class: 'talkname' });

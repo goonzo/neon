@@ -43,9 +43,10 @@
     return parts.join('。');
   }
 
-  UI.combat = (group, kind, bonus) => {
+  UI.combat = (group, kind, bonus, extra) => {
     const run = G.run;
-    const C = E.create(run, group, { kind });
+    extra = extra || {};
+    const C = E.create(run, group, { kind, wanted: extra.wanted, jam: extra.jam });
     C.viz = true;
     const snap0 = E.snap(C);
     E.begin(C, { startBlock: G.meta.fac.core >= 2 ? 3 : 0 });
@@ -61,7 +62,8 @@
     const whoBox = h('div', { class: 'who' });
     const handEl = h('div', { class: 'hand' });
     const endBtn = UI.btn('ターン終了', () => { if (!busy && inputHero) { endHeroTurn(); } }, 'big endbtn');
-    const hud = h('div', { class: 'hud layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, bottom: 0, height: '206px' } }, whoBox, handEl, endBtn);
+    const itemBox = h('div', { class: 'hitems' });
+    const hud = h('div', { class: 'hud layer', style: { position: 'absolute', inset: 'auto', left: 0, right: 0, bottom: 0, height: '206px' } }, whoBox, handEl, itemBox, endBtn);
     const hint = h('div', { class: 'hint' });
     const zoom = h('div', { class: 'cardzoom hidden' });
     s.appendChild(field); s.appendChild(hud); s.appendChild(turnbar); s.appendChild(hint); s.appendChild(zoom);
@@ -232,6 +234,27 @@
       });
       endBtn.disabled = busy;
       endBtn.classList.toggle('glow', !anyPlayable && !busy);
+      renderItems();
+    }
+    // 支給品 pouch: usable on any hero's turn
+    function renderItems() {
+      itemBox.innerHTML = '';
+      if (!(run.items || []).length) return;
+      itemBox.appendChild(UI.itemRow(run, (i) => useItem(i)));
+    }
+    async function useItem(i) {
+      if (busy || !inputHero) return;
+      const id = run.items[i];
+      if (!E.canUseItem(C, inputHero, id)) { UI.float(480, 300, '今は使えない', '#9a9cb2'); return; }
+      busy = true;
+      sel = -1;
+      A.sfx('buff');
+      E.useItem(C, inputHero, i);
+      G.saveRun();
+      await flush();
+      busy = false;
+      if (C.over || (inputHero && inputHero.dead)) { endHeroTurn(); return; }
+      render();
     }
 
     function renderHint() {
@@ -588,7 +611,8 @@
       renderChrome();
       await flush();
       if (!G.meta.flags.tut) { await tutorial(); G.meta.flags.tut = true; G.saveMeta(); }
-      UI.banner(kind === 'boss' ? 'BOSS BATTLE' : kind === 'elite' ? 'ELITE' : 'BATTLE START', kind === 'boss' ? '#e8352e' : null);
+      UI.banner(kind === 'boss' ? 'BOSS BATTLE' : C.wanted ? 'WANTED' : kind === 'elite' ? 'ELITE' : 'BATTLE START', kind === 'boss' || C.wanted ? '#e8352e' : null);
+      if (C.wanted) UI.float(480, 200, `指名手配：${G.WANTED[C.wanted].n}`, '#ff5a5a');
       await G.sleep(700);
       while (!stopped) {
         const u = E.advance(C);
