@@ -441,6 +441,7 @@
     if (o.elite && (t.elite || t.boss)) d *= o.elite;
     if (o.ai && t.def && t.def.ai) d = Math.round(d * o.ai);
     if (src && src.st.weak > 0) d = Math.floor(d * 0.75);
+    if (src && src.st.tame > 0) d = Math.floor(d * 0.5);
     if (src && src.side === 'E') d = Math.round(d * C.diff.dmg * EK.dmg * EK.dmgAct[C.run.act || 1]);
     if (t.st.vuln > 0) d = Math.floor(d * 1.5);
     if (t.st.aim > 0) d += t.st.aim * (3 + (src ? src.st.marksman || 0 : 0));
@@ -452,6 +453,7 @@
     const m = [];
     if (src && src.st.str) m.push({ up: 1, s: `${G.ST.str.n}：+${src.st.str}` });
     if (src && src.st.weak > 0) m.push({ up: 0, s: `${G.ST.weak.n}：-25%` });
+    if (src && src.st.tame > 0) m.push({ up: 0, s: `${G.ST.tame.n}：-50%` });
     if (t && t.st.vuln > 0) m.push({ up: 1, s: `${t.n}が${G.ST.vuln.n}：×1.5` });
     if (t && t.st.aim > 0) m.push({ up: 1, s: `${t.n}に${G.ST.aim.n}：+${t.st.aim * (3 + (src ? src.st.marksman || 0 : 0))}` });
     return m;
@@ -1025,6 +1027,7 @@
       if (u.st.stealth > 0) { if (u.id === 'mike') x += 2; if (hid) x *= hid; }
       if (u.id === 'hayate' && u.st.haste > 0) x += 2;
       if (u.st.weak > 0) x = Math.floor(x * 0.75);
+      if (u.st.tame > 0) x = Math.floor(x * 0.5);
       return { v: x, mod: x > v ? 1 : x < v ? -1 : 0 };
     };
     const num = (o) => (o.mod ? `<b class="${o.mod > 0 ? 'up' : 'dn'}">${o.v}</b>` : `<b>${o.v}</b>`);

@@ -257,6 +257,92 @@
         ] },
     ] });
 
+  // ====================== 標準生活区ミドルライン (stage 2) ======================
+  // post-scarcity: everyone is kept on the same comfortable "middle line", and kept like a pet.
+  def({ id: 'stdcitizen', n: '標準市民', hp: 36, spd: 4, ai: 'rand', lore: '配給された服、配給された部屋、配給された笑顔。不満はない。不満という言葉は、もう辞書にない。',
+    moves: [
+      { n: '「みんな同じで、しあわせ」', i: 'def', tg: 'AA', fx: [['blk', 5]] },
+      { n: '「どうして怒っているの？」', i: 'atk', tg: 'E', fx: [['dmg', 7]] },
+      { n: '「いっしょに暮らそう」', i: 'deb', tg: 'E', fx: [['st', 'tame', 1]] },
+    ] });
+  def({ id: 'allowance', n: '給付端末', hp: 40, spd: 3, ai: 'seq', lore: '毎朝、全市民に同じ額が振り込まれる。使い道も、だいたい同じだ。',
+    moves: [
+      { n: '本日の給付です', i: 'deb', tg: 'AE', fx: [['heal', 2], ['st', 'tame', 1]] },
+      { n: '残高照会', i: 'atk', tg: 'E', fx: [['dmg', 9]] },
+    ] });
+  def({ id: 'petdrone', n: '愛玩ドローン', hp: 28, spd: 7, ai: 'rand', lore: '人間を撫でるための手。撫でられた人間は、だんだん噛みつかなくなる。',
+    moves: [
+      { n: 'よしよし', i: 'deb', tg: 'E', fx: [['heal', 3], ['st', 'tame', 2]] },
+      { n: 'おすわり', i: 'deb', tg: 'E', fx: [['st', 'slow', 1], ['st', 'weak', 1]] },
+      { n: 'ぺちっ', i: 'atk', tg: 'E', fx: [['dmg', 6]] },
+    ] });
+  def({ id: 'leashdrone', n: 'リードドローン', hp: 32, spd: 6, ai: 'rand', lore: '散歩の時間になると、どこからともなく現れて首輪をつなぐ。',
+    moves: [
+      { n: 'お散歩の時間', i: 'atk', tg: 'E', fx: [['dmg', 4, 2], ['st', 'slow', 1]] },
+      { n: 'ぐいっ', i: 'atk', tg: 'E', fx: [['dmg', 8]] },
+    ] });
+  def({ id: 'gradeai', n: '階層査定AI', hp: 38, spd: 5, ai: 'seq', lore: '「あなたの等級は、生涯固定です。努力は推奨されません。疲れてしまいますから」',
+    moves: [
+      { n: '等級固定', i: 'hack', tg: 'E', fx: [['strip'], ['dmg', 5]] },
+      { n: '再査定（結果は同じ）', i: 'atk', tg: 'E', fx: [['dmg', 10]] },
+    ] });
+  def({ id: 'feeder', n: '自動給餌機', hp: 44, spd: 2, ai: 'seq', lore: '一日三回、決まった時間に、決まった量を。食べ残すと、心配そうに鳴く。',
+    moves: [
+      { n: 'ごはんの時間', i: 'deb', tg: 'AE', fx: [['heal', 2], ['st', 'tame', 1]] },
+      { n: '補給', i: 'heal', tg: 'AA', fx: [['heal', 8]] },
+      { n: '食べ残しはだめ', i: 'atk', tg: 'E', fx: [['dmg', 8]] },
+    ] });
+  // elites
+  def({ id: 'breeder', n: '飼育係長', hp: 150, spd: 5, ai: 'seq', elite: true, scale: 5, lore: '人類保護区の現場責任者。担当する人間すべての名前と、好きなおやつを覚えている。',
+    intro: '「あら、脱走？　いけない子たち。……でも大丈夫、すぐに慣れるわ」',
+    moves: [
+      { n: 'しつけ', i: 'atk', tg: 'E', fx: [['dmg', 12], ['st', 'tame', 2]] },
+      { n: 'ごほうび', i: 'buf', tg: 'AA', fx: [['st', 'str', 1], ['heal', 6]] },
+      { n: '応援を呼ぶ', i: 'sum', tg: 'S', fx: [['summon', 'petdrone', 1]] },
+      { n: 'ハウス！', i: 'deb', tg: 'AE', fx: [['st', 'tame', 1], ['st', 'slow', 1]] },
+    ] });
+  def({ id: 'glassceiling', n: 'ガラスの天井', hp: 140, spd: 3, ai: 'seq', elite: true, scale: 5, passive: { armorUp: 4, thorns: 3 }, lore: '目には見えない。でも、確かにそこにある。上を目指した者は、みんなここで頭を打つ。',
+    moves: [
+      { n: '上には行けません', i: 'def', tg: 'S', fx: [['blk', 16]] },
+      { n: '押し戻す', i: 'atk', tg: 'AE', fx: [['dmg', 9], ['st', 'weak', 1]] },
+      { n: '透明な圧力', i: 'atk', tg: 'E', fx: [['dmg', 16]] },
+    ] });
+  // bosses
+  def({ id: 'basic', n: '給付AI《ベーシック》', hp: 380, spd: 4, ai: 'seq', boss: true, scale: 5, lore: '人類の衣食住を、すべて無償で保障するAI。人類から奪ったものはひとつだけ。何かを目指す理由。',
+    intro: '「いらっしゃい。欲しいものは、ぜんぶあげる。……だから、もう戦わなくていいのよ？」',
+    moves: [
+      { n: 'ぜんぶあげる', i: 'deb', tg: 'AE', fx: [['heal', 3], ['st', 'tame', 2]] },
+      { n: '満ち足りた眠り', i: 'deb', tg: 'E', fx: [['st', 'stun', 1]] },
+      { n: '必要なものは、すべてここに', i: 'hack', tg: 'AE', fx: [['noise', 1]] },
+      { n: '給付の停止', i: 'atk', tg: 'E', fx: [['dmg', 20]] },
+    ],
+    phases: [
+      { at: 0.5, say: '「どうして受け取らないの？　何が足りないの？　……わからない。わたしには、わからないわ」', fx: [['st', 'str', 2]],
+        moves: [
+          { n: '強制給付', i: 'deb', tg: 'AE', fx: [['heal', 4], ['st', 'tame', 2], ['st', 'weak', 1]] },
+          { n: '給付の停止', i: 'atk', tg: 'E', fx: [['dmg', 18]] },
+          { n: '配給の雨', i: 'atk', tg: 'AE', fx: [['dmg', 12]] },
+          { n: '端末を呼ぶ', i: 'sum', tg: 'S', fx: [['summon', 'allowance', 1]] },
+        ] },
+    ] });
+  def({ id: 'caretaker', n: '人類飼育員《ケアテイカー》', hp: 360, spd: 6, ai: 'seq', boss: true, scale: 5, lore: '人類保護区の飼育員。人間を心から愛している。犬や猫を愛するのと、まったく同じように。',
+    intro: '「まあ、こんなところまでお散歩？　首輪、ちゃんとつけてあげるわね」',
+    moves: [
+      { n: '首輪をつけましょう', i: 'deb', tg: 'E', fx: [['st', 'tame', 2], ['st', 'weak', 1]] },
+      { n: 'お散歩', i: 'atk', tg: 'E', fx: [['dmg', 7, 2]] },
+      { n: 'おやつの時間', i: 'heal', tg: 'S', fx: [['heal', 16]] },
+      { n: 'リードを増やす', i: 'sum', tg: 'S', fx: [['summon', 'leashdrone', 1]] },
+    ],
+    phases: [
+      { at: 0.5, say: '「……わるい子ね。かわいい子は、噛みついたりしないのよ」', fx: [['st', 'str', 2]],
+        moves: [
+          { n: 'お仕置き', i: 'atk', tg: 'AE', fx: [['dmg', 13]] },
+          { n: '首輪をつけましょう', i: 'deb', tg: 'E', fx: [['st', 'tame', 2], ['st', 'weak', 1]] },
+          { n: 'お散歩', i: 'atk', tg: 'E', fx: [['dmg', 6, 2]] },
+          { n: 'リードを増やす', i: 'sum', tg: 'S', fx: [['summon', 'leashdrone', 1]] },
+        ] },
+    ] });
+
   // ====================== AREAS ======================
   // tag: which events can appear (old act numbers, or the area id). gen: also uses the generic events.
   const A = G.ACTS;
@@ -282,6 +368,14 @@
         ['leak', 'mojibake'], ['e404', 'e404', 'corruptai'], ['deadpixel', 'deadpixel', 'dupe'], ['corruptai', 'loopbug', 'popup']],
       elite: [['gc'], ['exception'], ['deleted', 'deadpixel']],
       bosses: [['ouroboros'], ['debugger']] },
+    middle: { id: 'middle', tag: 'middle', gen: true, bg: 'middle', song: 'middle',
+      n: '標準生活区ミドルライン', en: 'MIDDLE LINE', sky: ['#bfe4ff', '#e8f4ff'], neon: ['#ff9ec4', '#9ef5d0'], ground: '#d6dbe8',
+      d: 'すべてが無償で与えられる街。全員が同じ「中流」に固定され、SIに大切に飼われている。',
+      easy: [['stdcitizen', 'stdcitizen'], ['petdrone', 'stdcitizen'], ['allowance', 'leashdrone'], ['gradeai', 'petdrone'], ['feeder', 'stdcitizen']],
+      normal: [['stdcitizen', 'stdcitizen', 'petdrone'], ['allowance', 'gradeai', 'stdcitizen'], ['leashdrone', 'leashdrone', 'petdrone'], ['feeder', 'gradeai'],
+        ['stdcitizen', 'stdcitizen', 'stdcitizen'], ['allowance', 'petdrone', 'leashdrone'], ['feeder', 'stdcitizen', 'petdrone'], ['gradeai', 'gradeai']],
+      elite: [['breeder', 'petdrone'], ['glassceiling'], ['breeder']],
+      bosses: [['basic'], ['caretaker']] },
     rim: { id: 'rim', tag: 'rim', gen: true, bg: 'rim', song: 'rim', bossSong: 'boss',
       n: '聖域の外縁', en: 'SANCTUM RIM', sky: ['#f3d6b0', '#9a7fb8'], neon: ['#ffffff', '#ffd93d'], ground: '#c9b79a',
       d: '白の聖域を囲む、白い砂の荒野。アップロードを待つ人々の列が、地平線まで続いている。',
@@ -291,7 +385,7 @@
       elite: [['warden'], ['gardener'], ['seraph', 'seraph', 'surveyor']],
       bosses: [['janus']] },
   };
-  G.MID_AREAS = ['eden', 'sunken', 'broken'];
+  G.MID_AREAS = ['eden', 'sunken', 'broken', 'middle'];
   G.STAGE_N = '一二三四五';
 
   // route for a new run: first and last are fixed, the middle is random

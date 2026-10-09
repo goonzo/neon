@@ -134,6 +134,12 @@
       { t: 'sine', v: 0.26, d: 0.9, echo: 4, n: P('a4*2 d5 e5 f5*3 e5 | d5*2 c5 a4 g4*4 | f4*2 g4 a4 d5*2 c5 bb4 | a4*6 . .') },
       { t: 'triangle', v: 0.05, d: 0.6, n: P('d5 . a5 . d6 . a5 .') },
     ] },
+    // ミドルライン: pleasant, hollow elevator music
+    middle: { bpm: 96, dr: { k: 'k.......', h: '..h...h.' }, ch: [
+      { t: 'triangle', v: 0.42, d: 0.9, n: P('c3 . . g2 c3 . . . | a2 . . e2 a2 . . . | d3 . . a2 d3 . . . | g2 . . d3 g2 . b2 .') },
+      { t: 'sine', v: 0.24, d: 0.85, echo: 3, n: P('e5 . g5 b5*2 a5 g5 . | e5*2 c5 . a4*3 . | f5 . a5 c6*2 b5 a5 . | g5*3 f5 d5*3 .') },
+      { t: 'triangle', v: 0.05, d: 0.6, n: P('c4 e4 g4 b4 c4 e4 g4 b4 | a3 c4 e4 g4 a3 c4 e4 g4 | d4 f4 a4 c5 d4 f4 a4 c5 | g3 b3 d4 f4 g3 b3 d4 f4') },
+    ] },
     cradle: { bpm: 64, ch: [
       { t: 'triangle', v: 0.4, d: 0.9, n: P('g2 . d3 . g3 . d3 . | c3 . g3 . c4 . g3 . | b2 . d3 . g3 . d3 . | d3 . a3 . d4 . f#3 .') },
       { t: 'sine', v: 0.24, d: 0.9, echo: 3, n: P('b5 . d6 . b5 a5 g5*2 | a5 . b5 . a5 g5 e5*2 | d5 . g5 . b5 . a5 g5 | f#5*3 a5 g5*4') },

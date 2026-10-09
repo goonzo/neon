@@ -303,6 +303,27 @@
       x.fillStyle = '#ff00ff'; x.globalAlpha = 0.18; x.fillRect(300, 60, 60, 40); x.globalAlpha = 1;
       x.fillStyle = '#000'; x.fillRect(306, 66, 48, 28);
       x.fillStyle = '#b8ff3d'; x.font = '8px monospace'; x.fillText('NULL', 318, 84);
+    } else if (kind === 'middle') {
+      // the middle line: a too-perfect sky, a smiling sun, identical housing blocks to the horizon
+      grad('#9fd4ff', '#e8f6ff');
+      const sun = x.createRadialGradient(240, 50, 4, 240, 50, 70); sun.addColorStop(0, 'rgba(255,240,180,0.9)'); sun.addColorStop(1, 'rgba(255,240,180,0)');
+      x.fillStyle = sun; x.fillRect(150, 0, 180, 130);
+      x.fillStyle = '#fff4c0'; x.beginPath(); x.arc(240, 50, 20, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#5a5868'; x.fillRect(232, 45, 3, 3); x.fillRect(245, 45, 3, 3);
+      x.strokeStyle = '#5a5868'; x.lineWidth = 2; x.beginPath(); x.arc(240, 52, 8, 0.15 * Math.PI, 0.85 * Math.PI); x.stroke();
+      for (let row = 0; row < 3; row++) {
+        const base = 140 + row * 30, bh = 60 - row * 10, bw = 34 - row * 4, gap = 10;
+        for (let bx = -10 + row * 12; bx < W; bx += bw + gap) {
+          x.fillStyle = row === 2 ? '#ffffff' : row === 1 ? '#eef2fa' : '#dde4f2';
+          x.fillRect(bx, base - bh, bw, bh + 40);
+          x.fillStyle = row === 2 ? '#c8d4ea' : '#c0cce4';
+          for (let wy = base - bh + 5; wy < base + 30; wy += 7) for (let wx = bx + 4; wx < bx + bw - 3; wx += 7) x.fillRect(wx, wy, 3, 3);
+          x.fillStyle = 'rgba(255,158,196,0.6)'; x.fillRect(bx + bw / 2 - 2, base - bh + 2, 4, 2);
+        }
+      }
+      for (let i = 0; i < 7; i++) { const dx = 30 + R() * 420, dy = 80 + R() * 60; x.fillStyle = '#ffffff'; x.fillRect(dx, dy, 6, 3); x.fillStyle = '#ff9ec4'; x.fillRect(dx + 2, dy + 3, 2, 1); }
+      x.fillStyle = '#d6dbe8'; x.fillRect(0, 222, W, 48);
+      x.fillStyle = 'rgba(255,255,255,0.6)'; for (let i = 0; i < W; i += 24) x.fillRect(i, 236, 16, 2);
     } else if (kind === 'rim') {
       // the white wasteland around the sanctum: dusk sky, white sand, a line of pilgrims, the gate far away
       grad('#f3d6b0', '#9a7fb8');
