@@ -57,7 +57,7 @@
   def({ id: 'sig_yomi', hero: 'yomi', n: '鈴の髪飾り', r: 4, hp: 4, st: { regen: 3 }, d: '最大HP+4、戦闘開始時に再生3', f: '鳴らすと、誰かが返事をする。' });
   def({ id: 'sig_crow', hero: 'crow', n: 'ガラクタの王冠', r: 4, st: { shiny: 3 }, winCred: 10, d: '戦闘開始時に光りもの+3、勝利時クレジット+10', f: 'ビール瓶のふたでできている。本人はとても気に入っている。' });
   def({ id: 'sig_rei', hero: 'rei', n: 'ネオン刀・紅月', r: 4, atk: 1, onHit: ['bleed', 1], d: '攻撃ダメージ+1、攻撃ヒット時に裂傷1', f: '刀身の赤は、ネオンの色。……ということにしている。' });
-  def({ id: 'sig_gen', hero: 'gen', n: '相棒の照準器', r: 4, atk: 1, foe: ['aim', 4, 'high'], d: '攻撃ダメージ+1、戦闘開始時にHPが最も高い敵に照準4', f: '照準器のAIは「ゲンさん、右に2ミリ」としか言わない。' });
+  def({ id: 'sig_gen', hero: 'gen', n: '相棒の照準器', r: 4, atk: 1, foe: ['aim', 4, 'high'], d: '攻撃ダメージ+1、戦闘開始時にHPが最も高い敵に照準4', f: '照準器のAIは「ゲンじい、右に2ミリ」としか言わない。' });
   def({ id: 'sig_kagura', hero: 'kagura', n: 'ガスマスク・改', r: 4, hp: 4, onHit: ['burn', 1], d: '最大HP+4、攻撃ヒット時に焼損1', f: 'マスクの内側に、小さな花の絵が描いてある。' });
   def({ id: 'sig_mike', hero: 'mike', n: '鈴つき首輪', r: 4, spd: 2, atk: 1, d: '速度+2、攻撃ダメージ+1', f: '鳴らないように、中に綿が詰めてある。' });
   def({ id: 'sig_chip', hero: 'chip', n: 'ステッカーだらけのノートPC', r: 4, draw: 2, foe: ['virus', 2, 'all'], d: '最初のターン2枚多くドロー、戦闘開始時に全敵にウイルス2', f: '一番大きいステッカーは「ばあちゃん」。' });
@@ -72,6 +72,10 @@
   def({ id: 'sig_luka', hero: 'luka', n: '折れたロザリオ', r: 4, heal: 2, st: { barrier: 1 }, d: '回復量+2、戦闘開始時に障壁1', f: '祈る相手はいなくなった。祈る理由は増えた。' });
   def({ id: 'sig_haru', hero: 'haru', n: 'ソラの腕時計', r: 4, atk: 1, draw: 1, d: '攻撃ダメージ+1、最初のターン1枚多くドロー', f: '時刻表示はずっと狂っている。ソラいわく「わざと」。' });
   def({ id: 'sig_amane', hero: 'amane', n: '手書きの設計図', r: 4, draw: 2, foe: ['vuln', 1, 'all'], d: '最初のターン2枚多くドロー、戦闘開始時に全敵に脆弱1', f: '余白に「ごめんね」と、何度も書いては消した跡。' });
+  def({ id: 'sig_viktor', hero: 'viktor', n: '外した治安バッジ', r: 4, hp: 8, st: { taunt: 1, thorns: 2 }, d: '最大HP+8、戦闘開始時に挑発1と反射2', f: '裏に、彼が守れなかった市民の名前が刻んである。' });
+  def({ id: 'sig_hayate', hero: 'hayate', n: '親父の配達車のキー', r: 4, spd: 3, atk: 1, d: '速度+3、攻撃ダメージ+1', f: '鍵穴の合う車は、もうない。でも、毎朝エンジンをかける真似をする。' });
+  def({ id: 'sig_kurosaki', hero: 'kurosaki', n: '古いシェイカー', r: 4, heal: 2, draw: 1, d: '回復量+2、最初のターン1枚多くドロー', f: '内側に、二人分のイニシャル。' });
+  def({ id: 'sig_canaria', hero: 'canaria', n: '窓辺のハーモニカ', r: 4, nrg: 1, draw: 1, st: { regen: 2 }, d: '最初のターンにエナジー+1・1枚多くドロー、戦闘開始時に再生2', f: 'ある朝、あの窓の下に置いてあった。' });
   def({ id: 'sig_nul', hero: 'nul', n: '欠けた星のヘアピン', r: 4, draw: 1, st: { barrier: 1, bugnest: 1 }, d: '最初のターン1枚多くドロー、戦闘開始時に障壁1とバグ増殖1', f: '拾いものの髪飾り。欠けた星が、ずっと点滅している。' });
   G.GEAR = GEAR;
   G.GEAR_RC = ['', '#e8e8f0', '#2ee6ff', '#ff5ad1', '#ffd93d'];

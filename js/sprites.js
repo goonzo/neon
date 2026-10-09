@@ -1271,8 +1271,16 @@
     return rows;
   }
 
+  // per-sprite palettes (the HD heroes bring their own soft colours)
+  function palOf(d) {
+    if (d._pal) return d._pal;
+    const own = d.pal || (d.base && S[d.base] && S[d.base].pal);
+    return (d._pal = own ? Object.assign({}, PAL, own) : PAL);
+  }
   G.SPR = S;
   G.PAL = PAL;
+  // HD sprites have about twice the pixels, so they are drawn at about half the scale
+  G.sprScale = (name, scale) => { const d = S[name]; if (!d || !d.hd || scale < 2) return scale; return d.hdk ? scale * d.hdk : Math.max(1, Math.round(scale * 0.55)); };
   G.sprSize = (name) => {
     const d = S[name];
     if (!d) return { w: 16, h: 16 };
@@ -1289,6 +1297,7 @@
     const d = S[name];
     if (!d || typeof document === 'undefined') return '';
     const rows = expand(d);
+    const P = palOf(d);
     const h = rows.length, w = rows[0].length;
     const cv = document.createElement('canvas');
     cv.width = w; cv.height = h;
@@ -1298,7 +1307,7 @@
         let ch = rows[y][opts.flip ? w - 1 - x : x];
         if (ch === '.' || ch === ' ') continue;
         if (opts.swap && opts.swap[ch] !== undefined) ch = opts.swap[ch];
-        ctx.fillStyle = opts.sil || PAL[ch] || '#f0f';
+        ctx.fillStyle = opts.sil || P[ch] || '#f0f';
         ctx.fillRect(x, y, 1, 1);
       }
     }
@@ -1308,6 +1317,7 @@
   // 1x offscreen canvas of a sprite (for drawing onto other canvases)
   const cvCache = {};
   G.sprCanvas = (name, flip) => {
+    if (S[name + '_mini']) name += '_mini';
     const key = name + (flip ? '|f' : '');
     if (cvCache[key]) return cvCache[key];
     const d = S[name];
@@ -1320,7 +1330,7 @@
       for (let x = 0; x < cv.width; x++) {
         const ch = rows[y][flip ? cv.width - 1 - x : x];
         if (ch === '.' || ch === ' ') continue;
-        ctx.fillStyle = PAL[ch] || '#f0f';
+        ctx.fillStyle = palOf(d)[ch] || '#f0f';
         ctx.fillRect(x, y, 1, 1);
       }
     }
@@ -1333,6 +1343,7 @@
     const img = document.createElement('img');
     img.src = G.sprURL(name, opts);
     img.className = 'px';
+    scale = G.sprScale(name, scale);
     img.width = sz.w * scale;
     img.height = sz.h * scale;
     img.draggable = false;

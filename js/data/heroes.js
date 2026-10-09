@@ -350,7 +350,7 @@
   ]);
 
   hero({
-    id: 'gen', n: 'ゲン', role: 'attacker', hp: 38, spd: 3, col: '#c9a85a',
+    id: 'gen', n: 'ゲンじい', role: 'attacker', hp: 38, spd: 3, col: '#c9a85a',
     title: '自称・伝説の老狙撃手',
     trait: { n: '老兵の眼', d: 'ターン開始時、HPが最も高い敵に照準3。' },
     desc: '旧時代の軍人だったと言い張る老人。片目は義眼。SIの「天使」を37機落とした伝説を持つ……らしい。動きは遅い。',
@@ -516,7 +516,7 @@
   ]);
 
   hero({
-    id: 'nezu', n: 'ネズ', role: 'special', hp: 34, spd: 7, col: '#9a9cb2',
+    id: 'nezu', n: 'ハイネ', role: 'special', hp: 34, spd: 7, col: '#9a9cb2',
     title: 'ネズミドローン使い',
     trait: { n: '群れの主', d: '戦闘開始時、ドローン2。ドローンはターン終了時に敵を攻撃する。' },
     desc: 'ネズミ型ドローンの群れと下水道で暮らす少女。ドローン全部に名前をつけている。全部「チュウ」だけど。',
@@ -624,6 +624,114 @@
     { id: 'ech_promise', n: '再会の約束', c: 3, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'inspire', 1], ['st', 'regen', 3], ['st', 'barrier', 1]], uc: 2 },
     { id: 'ech_false', n: '存在しない記憶', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['copy', 2]], u: [['copy', 3]] },
     { id: 'ech_vanish', n: '消失', c: 2, t: 'S', tg: 'E', r: 3, x: 1, fx: [['st', 'stun', 2]], uc: 1 },
+  ]);
+
+  // ======================= NEW CREW (young men) =======================
+  hero({
+    id: 'viktor', n: 'ヴィクトル', role: 'tank', hp: 64, spd: 4, col: '#8fb8ff',
+    title: '命令に背いた元治安部隊',
+    trait: { n: '盾の誓い', d: '戦闘開始時、挑発1。挑発中に攻撃を受けるたび、攻撃してきた敵に3ダメージで反撃する。' },
+    desc: 'ニューエデンの治安維持部隊にいた青年。人間で、唯一の盾持ちだった。「不幸な市民」の処理命令が出た夜、盾を市民の側に向けた。それ以来、命令ではなく誓いで動いている。',
+    quote: '「下がっていろ。……ここから先は、俺の仕事だ」',
+    deck: [['vik_bash', 2], ['vik_riot', 3], ['vik_hold', 1], ['vik_baton', 2], ['vik_cover', 1], ['vik_badge', 1]],
+  }, [
+    { id: 'vik_bash', n: 'シールドバッシュ', c: 1, t: 'A', tg: 'E', r: 0, fx: [['blk', 4, '@S'], ['dmg', 5]], u: [['blk', 6, '@S'], ['dmg', 7]] },
+    { id: 'vik_riot', n: '暴徒鎮圧盾', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 7]], u: [['blk', 10]] },
+    { id: 'vik_hold', n: 'その場を動くな', c: 1, t: 'S', tg: 'S', r: 0, fx: [['st', 'taunt', 2], ['blk', 4]], u: [['st', 'taunt', 2], ['blk', 7]] },
+    { id: 'vik_baton', n: '警棒', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'vik_cover', n: '盾になる', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 6], ['st', 'taunt', 1, '@S']], u: [['blk', 9], ['st', 'taunt', 1, '@S']] },
+    { id: 'vik_badge', n: '外したバッジ', c: 0, t: 'S', tg: 'S', r: 0, fx: [['blk', 3], ['draw', 1]], u: [['blk', 5], ['draw', 1]] },
+    { id: 'vik_breach', n: '突入', c: 2, t: 'A', tg: 'E', r: 1, fx: [['dmg', 10], ['st', 'vuln', 1]], u: [['dmg', 14], ['st', 'vuln', 1]] },
+    { id: 'vik_wall', n: '盾の壁', c: 2, t: 'S', tg: 'AA', r: 1, fx: [['blk', 5]], u: [['blk', 8]] },
+    { id: 'vik_stance', n: '迎撃の構え', c: 1, t: 'S', tg: 'S', r: 1, fx: [['st', 'taunt', 1], ['st', 'thorns', 3]], u: [['st', 'taunt', 1], ['st', 'thorns', 5]] },
+    { id: 'vik_warn', n: '最終警告', c: 1, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['st', 'vuln', 1]] },
+    { id: 'vik_suppress', n: '制圧前進', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 5], ['st', 'slow', 1]], u: [['dmg', 7], ['st', 'slow', 1]] },
+    { id: 'vik_fortress', n: '不落', c: 2, t: 'S', tg: 'S', r: 2, fx: [['st', 'fortify', 2], ['blk', 10]], u: [['st', 'fortify', 2], ['blk', 14]] },
+    { id: 'vik_vow', n: '誓約', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'plating', 3]], u: [['st', 'plating', 4]] },
+    { id: 'vik_arrest', n: '確保', c: 1, t: 'S', tg: 'E', r: 2, x: 1, fx: [['st', 'stun', 1]], uc: 0 },
+    { id: 'vik_last', n: '最後の砦は、俺だ', c: 2, t: 'S', tg: 'S', r: 3, x: 1, fx: [['st', 'taunt', 3], ['blk', 20], ['st', 'thorns', 3]], u: [['st', 'taunt', 3], ['blk', 26], ['st', 'thorns', 3]] },
+    { id: 'vik_mutiny', n: '反逆の一撃', c: 1, t: 'A', tg: 'E', r: 3, fx: [['dmgX', 'blk', 1, 0], ['st', 'taunt', 1, '@S']], uc: 0 },
+    { id: 'vik_phalanx', n: 'ファランクス', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'guardian', 2], ['st', 'taunt', 1]], u: [['st', 'guardian', 3], ['st', 'taunt', 1]] },
+  ]);
+
+  hero({
+    id: 'hayate', n: 'ハヤテ', role: 'attacker', hp: 36, spd: 10, col: '#ff7a4a',
+    title: '命知らずの運び屋',
+    trait: { n: 'スリップストリーム', d: '戦闘開始時、加速2。加速中、攻撃ダメージ+2。' },
+    desc: '地上と地下を改造バイクで往復する運び屋。SIの監視網の穴を、誰よりも知っている。軽口ばかりだが、受けた依頼は一度も落としたことがない。',
+    quote: '「お届けものでーす！　……サインは、生きて帰ってからでいいぜ」',
+    deck: [['hay_kick', 3], ['hay_dodge', 2], ['hay_nitro', 2], ['hay_drift', 1], ['hay_run', 2]],
+  }, [
+    { id: 'hay_kick', n: '回し蹴り', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'hay_dodge', n: 'すり抜け', c: 1, t: 'S', tg: 'S', r: 0, fx: [['blk', 5], ['st', 'haste', 1]], u: [['blk', 8], ['st', 'haste', 1]] },
+    { id: 'hay_nitro', n: 'ニトロ', c: 0, t: 'S', tg: 'S', r: 0, fx: [['st', 'haste', 1], ['draw', 1]], u: [['st', 'haste', 2], ['draw', 1]] },
+    { id: 'hay_drift', n: 'ドリフト', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 4], ['delay']], u: [['dmg', 7], ['delay']] },
+    { id: 'hay_run', n: 'ひとっ走り', c: 1, t: 'A', tg: 'RE', r: 0, fx: [['dmg', 3, 2]], u: [['dmg', 4, 2]] },
+    { id: 'hay_wheelie', n: 'ウィリー', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 8]], u: [['dmg', 11]] },
+    { id: 'hay_pass', n: 'すれ違いざま', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 5], ['st', 'haste', 1, '@S']], u: [['dmg', 7], ['st', 'haste', 1, '@S']] },
+    { id: 'hay_deliver', n: 'お届けもの', c: 1, t: 'S', tg: 'A', r: 1, fx: [['rush'], ['blk', 4]], u: [['rush'], ['blk', 7]] },
+    { id: 'hay_horn', n: 'クラクション', c: 0, t: 'S', tg: 'AE', r: 1, fx: [['st', 'weak', 1]], u: [['st', 'weak', 1], ['draw', 1]] },
+    { id: 'hay_slip', n: '風を切る', c: 2, t: 'A', tg: 'RE', r: 2, fx: [['dmg', 3, 4]], u: [['dmg', 4, 4]] },
+    { id: 'hay_turbo', n: 'ターボ', c: 1, t: 'S', tg: 'S', r: 2, x: 1, fx: [['st', 'haste', 3], ['st', 'str', 1]], u: [['st', 'haste', 3], ['st', 'str', 2]] },
+    { id: 'hay_spin', n: '連続ドリフト', c: 2, t: 'A', tg: 'AE', r: 2, fx: [['dmg', 5], ['delay']], u: [['dmg', 7], ['delay']] },
+    { id: 'hay_tandem', n: '相乗り', c: 1, t: 'S', tg: 'A', r: 2, fx: [['rush'], ['st', 'inspire', 1]], uc: 0 },
+    { id: 'hay_full', n: 'フルスロットル', c: 2, t: 'A', tg: 'E', r: 3, fx: [['dmg', 6, 3]], u: [['dmg', 8, 3]] },
+    { id: 'hay_jump', n: '大ジャンプ', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['st', 'stealth', 1], ['st', 'haste', 2], ['draw', 2]], uc: 0 },
+    { id: 'hay_final', n: '最後の配達', c: 3, t: 'A', tg: 'E', r: 3, x: 1, fx: [['dmg', 24]], u: [['dmg', 32]] },
+  ]);
+
+  hero({
+    id: 'kurosaki', n: 'クロサキ', role: 'healer', hp: 40, spd: 5, col: '#c8a0ff',
+    title: '看板のないバーのマスター',
+    trait: { n: 'おかわり', d: '戦闘ごとに一度、支給品を使うと、その効果がもう一度発動する。' },
+    desc: '第七区画の地下で、看板のないバーを営む男。無口で、客の話を聞くのがうまい。どんな傷にも効く一杯を出すと言われているが、レシピは誰にも教えない。',
+    quote: '「……今夜は、何にする？　ツケでいい。生きて、払いに来い」',
+    deck: [['kur_shake', 3], ['kur_rock', 2], ['kur_shot', 2], ['kur_brew', 1], ['kur_toast', 1], ['kur_glass', 1]],
+  }, [
+    { id: 'kur_shake', n: 'シェイク', c: 1, t: 'S', tg: 'A', r: 0, fx: [['heal', 6]], u: [['heal', 9]] },
+    { id: 'kur_rock', n: 'オン・ザ・ロック', c: 1, t: 'S', tg: 'A', r: 0, fx: [['blk', 5], ['heal', 2]], u: [['blk', 7], ['heal', 3]] },
+    { id: 'kur_shot', n: 'ショットグラス', c: 1, t: 'A', tg: 'E', r: 0, fx: [['dmg', 6]], u: [['dmg', 9]] },
+    { id: 'kur_brew', n: '仕込み', c: 1, t: 'S', tg: 'S', r: 0, x: 1, fx: [['brew', 1]], uc: 0 },
+    { id: 'kur_toast', n: '乾杯', c: 2, t: 'S', tg: 'AA', r: 0, fx: [['heal', 4]], u: [['heal', 6]] },
+    { id: 'kur_glass', n: 'グラス磨き', c: 0, t: 'S', tg: 'S', r: 0, fx: [['draw', 1], ['blk', 2]], u: [['draw', 1], ['blk', 4]] },
+    { id: 'kur_blue', n: 'ブルー・ムーン', c: 1, t: 'S', tg: 'A', r: 1, fx: [['heal', 5], ['cleanse', 1]], u: [['heal', 8], ['cleanse', 1]] },
+    { id: 'kur_red', n: 'ブラッディ・メアリー', c: 1, t: 'S', tg: 'A', r: 1, fx: [['st', 'str', 1], ['heal', 3]], u: [['st', 'str', 2], ['heal', 3]] },
+    { id: 'kur_bottle', n: 'ボトルで一撃', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 8], ['st', 'weak', 1]], u: [['dmg', 11], ['st', 'weak', 1]] },
+    { id: 'kur_chaser', n: 'チェイサー', c: 0, t: 'S', tg: 'A', r: 1, fx: [['heal', 3]], u: [['heal', 5]] },
+    { id: 'kur_house', n: 'ハウスカクテル', c: 2, t: 'S', tg: 'AA', r: 2, fx: [['heal', 5], ['st', 'regen', 1]], u: [['heal', 7], ['st', 'regen', 1]] },
+    { id: 'kur_flambe', n: 'フランベ', c: 1, t: 'S', tg: 'AE', r: 2, fx: [['st', 'burn', 3]], u: [['st', 'burn', 4]] },
+    { id: 'kur_stock', n: '在庫補充', c: 1, t: 'S', tg: 'S', r: 2, x: 1, fx: [['brew', 2]], uc: 0 },
+    { id: 'kur_regular', n: '常連さん', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'medic', 1]], u: [['st', 'medic', 2]] },
+    { id: 'kur_last', n: 'ラストオーダー', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['heal', 10], ['cleanse', 99]], u: [['heal', 14], ['cleanse', 99]] },
+    { id: 'kur_treat', n: 'マスターの奢り', c: 1, t: 'S', tg: 'S', r: 3, x: 1, fx: [['brew', 3], ['nrg', 1]], uc: 0 },
+    { id: 'kur_recipe', n: '秘伝のレシピ', c: 2, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['st', 'str', 2], ['st', 'regen', 2]], u: [['st', 'str', 3], ['st', 'regen', 2]] },
+  ]);
+
+  hero({
+    id: 'canaria', n: 'カナリア', role: 'special', hp: 34, spd: 6, col: '#ffe066',
+    title: '禁じられた歌の歌い手',
+    trait: { n: 'アンコール', d: 'パワーカード（歌）を使うたび、エナジー+1、1枚ドロー。' },
+    desc: 'SIに「不要」とされた歌を、路地裏で歌い続ける青年。本名は誰も知らない。炭鉱のカナリアのように、危険の前ではいつもより高く歌う。',
+    quote: '「歌っていいかな。……大丈夫、聴いてくれる人がいれば、それでいいんだ」',
+    deck: [['can_hum', 2], ['can_note', 3], ['can_call', 2], ['can_whistle', 1], ['can_march', 1], ['can_lull', 1]],
+  }, [
+    { id: 'can_hum', n: 'ハミング', c: 1, t: 'S', tg: 'AA', r: 0, fx: [['blk', 3]], u: [['blk', 5]] },
+    { id: 'can_note', n: '高音', c: 1, t: 'A', tg: 'AE', r: 0, fx: [['dmg', 3]], u: [['dmg', 5]] },
+    { id: 'can_call', n: '呼びかけ', c: 1, t: 'S', tg: 'A', r: 0, fx: [['st', 'inspire', 1], ['blk', 3]], u: [['st', 'inspire', 1], ['blk', 5]] },
+    { id: 'can_whistle', n: '口笛', c: 0, t: 'S', tg: 'E', r: 0, fx: [['st', 'vuln', 1]], u: [['st', 'vuln', 2]] },
+    { id: 'can_march', n: '行進曲', c: 1, t: 'P', tg: 'S', r: 0, fx: [['st', 'guardian', 1]], u: [['st', 'guardian', 2]] },
+    { id: 'can_lull', n: '子守唄', c: 1, t: 'S', tg: 'AE', r: 0, fx: [['st', 'slow', 1], ['st', 'weak', 1]], u: [['st', 'slow', 1], ['st', 'weak', 2]] },
+    { id: 'can_high', n: 'ハイトーン', c: 1, t: 'A', tg: 'E', r: 1, fx: [['dmg', 8]], u: [['dmg', 11]] },
+    { id: 'can_echo', n: '反響', c: 1, t: 'A', tg: 'AE', r: 1, fx: [['dmg', 2, 2]], u: [['dmg', 3, 2]] },
+    { id: 'can_clap', n: '手拍子', c: 2, t: 'S', tg: 'AA', r: 1, fx: [['st', 'str', 1]], uc: 1 },
+    { id: 'can_breath', n: 'ブレス', c: 0, t: 'S', tg: 'S', r: 1, x: 1, fx: [['draw', 2]], u: [['draw', 3]] },
+    { id: 'can_ballad', n: 'バラード', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'medic', 2]], u: [['st', 'medic', 3]] },
+    { id: 'can_rock', n: 'ロック', c: 1, t: 'P', tg: 'S', r: 2, fx: [['st', 'extraDraw', 1]], uc: 0 },
+    { id: 'can_anthem', n: '応援歌', c: 2, t: 'P', tg: 'AA', r: 2, fx: [['st', 'str', 1]], u: [['st', 'str', 2]] },
+    { id: 'can_session', n: 'セッション', c: 1, t: 'S', tg: 'AO', r: 2, fx: [['st', 'inspire', 1]], u: [['st', 'inspire', 1], ['draw', 1, '@S']] },
+    { id: 'can_requiem', n: '鎮魂歌', c: 2, t: 'A', tg: 'AE', r: 3, x: 1, fx: [['dmg', 10], ['st', 'weak', 2]], u: [['dmg', 14], ['st', 'weak', 2]] },
+    { id: 'can_dawn', n: '夜明けの歌', c: 2, t: 'P', tg: 'S', r: 3, fx: [['st', 'medic', 3], ['st', 'guardian', 2]], uc: 1 },
+    { id: 'can_free', n: '自由の歌', c: 1, t: 'S', tg: 'AA', r: 3, x: 1, fx: [['cleanse', 99], ['st', 'barrier', 1]], uc: 0 },
   ]);
 
   // ======================= HIDDEN =======================
@@ -747,6 +855,10 @@
     pyon: { id: 'pyo_leg', n: '速達便', c: 1, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['rush'], ['st', 'haste', 2], ['draw', 2]], uc: 0 },
     madame: { id: 'mad_leg', n: '大盤振る舞い', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['pay', 50], ['st', 'str', 2], ['blk', 10]], u: [['pay', 30], ['st', 'str', 2], ['blk', 12]] },
     echo: { id: 'ech_leg', n: '残響の合唱', c: 2, t: 'S', tg: 'AO', r: 4, x: 1, fx: [['st', 'inspire', 2], ['draw', 2, '@S']], uc: 1 },
+    viktor: { id: 'vik_leg', n: '俺が、盾だ', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['blk', 12], ['st', 'taunt', 3, '@S'], ['st', 'fortify', 2, '@S']], uc: 1 },
+    hayate: { id: 'hay_leg', n: '光速便', c: 1, t: 'A', tg: 'RE', r: 4, x: 1, fx: [['dmg', 2, 10]], u: [['dmg', 3, 10]] },
+    kurosaki: { id: 'kur_leg', n: '最高の一杯', c: 2, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['heal', 15], ['st', 'str', 2], ['st', 'inspire', 1]], uc: 1 },
+    canaria: { id: 'can_leg', n: '空に届く歌', c: 3, t: 'S', tg: 'AA', r: 4, x: 1, fx: [['st', 'str', 3], ['st', 'regen', 4], ['st', 'inspire', 1]], uc: 2 },
     nul: { id: 'nul_leg', n: 'ゼロ・デイ', c: 1, t: 'A', tg: 'E', r: 4, fx: [['glitch', 2], ['dmgX', 'free', 6, 8]], u: [['glitch', 2], ['dmgX', 'free', 8, 10]] },
   };
   for (const hid in LEGEND) { const c = LEGEND[hid]; c.hero = hid; CARDS[c.id] = c; H[hid].legend = c.id; }
@@ -789,13 +901,17 @@
     pyon: { q: 1, cost: { energy: 25, data: 15 }, cond: null, hint: '拠点の郵便受けに、毎朝誰かが手紙を届けている。差出人は不明。' },
     octo: { q: 2, cost: { food: 30, scrap: 30, data: 15 }, cond: 'a2reach', hint: 'ニューエデンの沈んだ水族館から、八本足の影が手を振っている。' },
     echo: { q: 3, cost: { data: 60, energy: 50 }, cond: 'a3reach', hint: '白の聖域の手前で、ノイズ混じりの声が誰かを呼んでいる。' },
+    viktor: { q: 2, cost: { scrap: 40, energy: 30 }, cond: 'a2reach', hint: '治安維持ユニットの中に、命令を拒んで消えた人間の隊員がいたらしい。' },
+    hayate: { q: 1, cost: { energy: 25, scrap: 20 }, cond: null, hint: '地上と地下を往復する、命知らずの運び屋がいるという。' },
+    kurosaki: { q: 1, cost: { food: 30, energy: 15 }, cond: 'a1boss', hint: '第七区画の地下に、看板のないバーがある。' },
+    canaria: { q: 2, cost: { data: 30, food: 25 }, cond: 'a2reach', hint: '管理都市の路地裏で、禁じられた歌を歌う声がする。' },
     nul: { q: 0, cost: { data: 30 }, cond: 'abyssclear', hidden: true, hint: '深淵の果てで、名前のないバグが待っている。' },
   };
 
   G.HEROES = H;
   G.CARDS = CARDS;
   G.UNLOCK = UNLOCK;
-  G.HERO_ORDER = ['gallon', 'jin', 'pixe', 'goura', 'doll', 'mina', 'luka', 'nono', 'yomi', 'crow', 'rei', 'haru', 'gen', 'kagura', 'mike', 'octo', 'chip', 'amane', 'nezu', 'pyon', 'madame', 'echo', 'nul'];
+  G.HERO_ORDER = ['gallon', 'viktor', 'jin', 'pixe', 'goura', 'doll', 'mina', 'kurosaki', 'luka', 'nono', 'yomi', 'crow', 'rei', 'hayate', 'haru', 'gen', 'kagura', 'mike', 'octo', 'chip', 'amane', 'nezu', 'pyon', 'madame', 'echo', 'canaria', 'nul'];
   G.START_HEROES = ['gallon', 'mina', 'rei', 'chip'];
   G.COND_TEXT = {
     a1boss: '第一区画のボスを撃破',

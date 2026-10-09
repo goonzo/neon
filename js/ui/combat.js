@@ -107,7 +107,7 @@
       const root = h('div', { class: 'unit idle' + (u.summoned ? ' spawn' : '') + (u.bug ? ' bugged' : '') }, intent, spr, nm, bar, hpt, sts);
       const pos = assignSlot(u);
       root.style.left = pos.x + 'px';
-      root.style.top = pos.y - sz.h * sc + 'px';
+      root.style.top = pos.y - sz.h * G.sprScale(spriteName, sc) + 'px';
       root.dataset.uid = String(u.uid);
       root.addEventListener('click', (e) => { e.stopPropagation(); onUnitClick(u); });
       root.addEventListener('mouseenter', () => { hoverUid = u.uid; if (selTargets().includes(u.uid)) kcur = u.uid; markTargets(); });

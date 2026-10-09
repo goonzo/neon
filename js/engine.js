@@ -122,6 +122,8 @@
       if (u.id === 'goura') E.alive(C, 'H').forEach((a) => E.addSt(C, a, 'regen', 1, u));
       if (u.id === 'pyon') E.addSt(C, u, 'haste', 2, u);
       if (u.id === 'jin') E.addSt(C, u, 'barrier', 1, u);
+      if (u.id === 'viktor') E.addSt(C, u, 'taunt', 1, u);
+      if (u.id === 'hayate') E.addSt(C, u, 'haste', 2, u);
       if (opts.startBlock) E.gainBlock(C, u, opts.startBlock);
       const g = u.gear;
       if (g) {
@@ -433,6 +435,7 @@
     let d = base + (src ? src.st.str || 0 : 0) + (src && src.gear ? src.gear.atk || 0 : 0);
     if (src && src.id === 'kagura' && t.st.burn > 0) d += 3;
     if (src && src.id === 'mike' && src.st.stealth > 0) d += 2;
+    if (src && src.id === 'hayate' && src.st.haste > 0) d += 2;
     if (o.hid && src && src.st.stealth > 0) d *= o.hid;
     if (o.aim && t.st.aim > 0) d += o.aim;
     if (o.elite && (t.elite || t.boss)) d *= o.elite;
@@ -493,6 +496,11 @@
     }
     if (src && src.id === 'doll' && !src.dead) E.heal(C, src, src, 1, { noBonus: true });
     if (src && src.id === 'crow' && !src.dead && !nullified) E.addSt(C, src, 'shiny', 1, src);
+    // ヴィクトル: hit while taunting → shield counter
+    if (t.id === 'viktor' && !t.dead && t.st.taunt > 0 && src && src.side === 'E' && !src.dead && !o.counter) {
+      push(C, { k: 'txt', uid: t.uid, s: '反撃', c: '#8fb8ff', small: 1 });
+      attack(C, t, src, 3, { counter: true });
+    }
     if (t.st.thorns > 0 && src && !src.dead) {
       push(C, { k: 'txt', uid: src.uid, s: '反射', c: '#c9a85a', small: 1 });
       E.dealDamage(C, src, t.st.thorns, { thorns: true });
@@ -753,6 +761,17 @@
       });
     },
     chargeHeal(C, u, T, [k]) { const v = (u.st.charge || 0) * k; delete u.st.charge; E.heal(C, u, u, v); },
+    // クロサキ: mix 支給品 into the pouch (a full pouch heals him a little instead)
+    brew(C, u, T, [n]) {
+      const run = C.run;
+      let made = 0;
+      for (let i = 0; i < n; i++) {
+        if (!G.ITEMS || (run.items || []).length >= G.ITEM_SLOTS) { E.heal(C, u, u, 3); continue; }
+        G.gainItem(run, G.randomItem(1));
+        made++;
+      }
+      if (made) push(C, { k: 'txt', uid: u.uid, s: `支給品+${made}`, c: '#c8a0ff', small: 1 });
+    },
     // enemy: wipe every (non-permanent) buff from the targets
     strip(C, u, T) {
       T.forEach((t) => {
@@ -823,6 +842,14 @@
     push(C, { k: 'play', uid: u.uid, name: it.n, t: 'S' });
     const ctx = { mul: 1, tg: it.tg === 'AE' ? 'AE' : 'S', item: true };
     for (const fx of it.fx) { runFx(C, u, fx, T, ctx); if (C.over) break; }
+    // クロサキ: once per battle, a supply works twice
+    const kuro = E.alive(C, 'H').find((x) => x.id === 'kurosaki');
+    if (kuro && !C.kuroRefill && !C.over) {
+      C.kuroRefill = true;
+      push(C, { k: 'txt', uid: kuro.uid, s: 'おかわり', c: '#c8a0ff' });
+      const T2 = E.itemTargets(C, u, it);
+      for (const fx of it.fx) { runFx(C, u, fx, T2, ctx); if (C.over) break; }
+    }
     checkEnd(C);
     return true;
   };
@@ -885,6 +912,7 @@
     if (!C.over && ctx.link) poke(C, u, G.pick(E.foes(C, u)), 4 + (u.st.sync || 0));
     if (d.t === 'A' || d.t === 'S') u.lastT = d.t;
     if (!C.over && u.id === 'pyon' && u.played >= 2) E.draw(C, u, 1);
+    if (!C.over && u.id === 'canaria' && d.t === 'P') { u.energy += 1; E.draw(C, u, 1); push(C, { k: 'txt', uid: u.uid, s: 'アンコール', c: '#ffe066', small: 1 }); }
     u.played++;
     checkEnd(C);
     return true;
@@ -995,6 +1023,7 @@
       if (!u || !u.st) return { v, mod: 0 };
       let x = v * mul + (u.st.str || 0) + (u.gear ? u.gear.atk || 0 : 0);
       if (u.st.stealth > 0) { if (u.id === 'mike') x += 2; if (hid) x *= hid; }
+      if (u.id === 'hayate' && u.st.haste > 0) x += 2;
       if (u.st.weak > 0) x = Math.floor(x * 0.75);
       return { v: x, mod: x > v ? 1 : x < v ? -1 : 0 };
     };
@@ -1076,6 +1105,7 @@
         case 'glitch': parts.push(`手札のカード<b>${a}</b>枚を${kw('バグらせる', 'このターンのあいだ、コスト0になる')}`); break;
         case 'sample': parts.push(`仲間のカードをランダムに<b>${a}</b>枚生成（${kw('バグ', 'このターンのあいだ、コスト0')}）`); break;
         case 'strip': parts.push(`${pre}バフをすべて消す`); break;
+        case 'brew': parts.push(`支給品をランダムに<b>${a}</b>個作る（いっぱいならHP3回復）`); break;
         default: break;
       }
     };
