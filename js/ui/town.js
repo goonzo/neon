@@ -9,7 +9,10 @@
   const SLOTS = {
     quarters: { x: 6, w: 58 }, farm: { x: 68, w: 46 }, clinic: { x: 118, w: 46 },
     core: { x: 168, w: 40 }, workshop: { x: 212, w: 54 }, market: { x: 270, w: 62 },
+    recycle: { x: 157, w: 13, small: true }, // a capsule machine standing in front of the street
   };
+  const ANIMALS = new Set(['pixe', 'goura', 'crow', 'mike', 'octo', 'pyon']);
+  const FG = 4; // the crew is drawn on a finer overlay so the new sprites keep their detail
   const OUT = '#0b0a12';
 
   function lcg(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
@@ -54,7 +57,7 @@
     for (let X = 0; X < W; X += 12) r(X, GY + 1, 1, H - GY, '#1a1630');
     r(0, GY + 10, W, 1, '#1a1630');
 
-    for (const k of G.FAC_ORDER) DRAW[k](env, SLOTS[k], fac[k] || 0);
+    for (const k of G.FAC_ORDER) if (DRAW[k]) DRAW[k](env, SLOTS[k], fac[k] || 0);
   }
 
   // a little "planned site" signboard for level-0 facilities
@@ -273,6 +276,25 @@
     },
   };
 
+  // the recycling plant shows up as a junk capsule machine on the street
+  DRAW.recycle = (env, s, lv) => {
+    if (lv === 0) return;
+    const { r, box, A } = env;
+    const X = s.x, B = GY + 6; // feet
+    box(X, B - 9, 12, 9, '#c0392b');
+    r(X + 2, B - 6, 8, 3, OUT); r(X + 3, B - 5, 6, 1, '#1b1630'); // prize slot
+    r(X + 9, B - 8, 2, 2, '#ffd93d'); // the handle
+    // glass dome full of capsules
+    r(X + 1, B - 19, 10, 10, OUT);
+    r(X + 2, B - 18, 8, 8, '#9ef2ff');
+    const caps = ['#ff3d8b', '#ffd93d', '#2ee6ff', '#7dffb0', '#ffffff', '#ff8a2b'];
+    [[3, -12], [6, -12], [4, -14], [7, -15], [3, -16], [6, -17]].forEach(([dx, dy], i) => { r(X + dx, B + dy, 2, 2, caps[i]); });
+    r(X + 3, B - 18, 1, 3, '#e8fdff');
+    r(X + 3, B - 20, 6, 1, OUT); r(X + 4, B - 21, 4, 1, '#c0392b');
+    if (lv >= 2) { r(X - 1, B - 26, 14, 5, OUT); A.push({ t: 'gsign', x: X, y: B - 25 }); }
+    if (lv >= 3) A.push({ t: 'gsparkle', x: X + 6, y: B - 22 });
+  };
+
   // ---------------- animated layer ----------------
   function drawAnim(x, A, f) {
     const r = (X, Y, w, hh, c) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), Math.round(w), Math.round(hh)); };
@@ -364,44 +386,95 @@
           if (on) { x.fillStyle = 'rgba(255,217,61,0.12)'; x.fillRect(a.x - 5, a.y - 4, 13, 12); }
           break;
         }
+        case 'gsign': {
+          const on = Math.floor(f / 6) % 4 !== 3;
+          r(a.x, a.y, 12, 3, on ? '#ff3d8b' : '#5a1a3a');
+          if (on) { for (let i = 0; i < 3; i++) r(a.x + 2 + i * 4, a.y + 1, 2, 1, '#ffe6f3'); }
+          break;
+        }
+        case 'gsparkle': {
+          const k = f % 24;
+          if (k < 8) { const c = ['#ffffff', '#ffd93d', '#2ee6ff'][Math.floor(f / 24) % 3]; r(a.x + (k % 2 ? 3 : -4), a.y - (k >> 1), 1, 1, c); r(a.x - 1 + (f % 3), a.y - 2 - (k >> 2), 1, 1, '#ffffff'); }
+          break;
+        }
         case 'bulb': r(a.x, a.y, 1, 1, ['#ff3d8b', '#ffd93d', '#2ee6ff', '#7dffb0'][(Math.floor(f / 5) + a.i) % 4]); break;
         default: break;
       }
     }
   }
 
-  // ---------------- walkers (the crew strolling around) ----------------
+  // ---------------- walkers (a few of the crew strolling around) ----------------
+  const sprW = (id) => (ANIMALS.has(id) ? 2 : 3); // overlay pixels per sprite pixel
   function mkWalkers(ids, R) {
-    const ws = ids.map((id, i) => ({
-      id, x: 10 + R() * (W - 36), y: GY + 1 + Math.floor(R() * 13), dir: R() < 0.5 ? -1 : 1,
-      spd: 0.25 + R() * 0.3, rest: Math.floor(R() * 40), seed: i,
+    // only a handful come out at a time; who is out changes every visit
+    const pool = ids.slice();
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const n = Math.min(pool.length, 3 + Math.floor(R() * 3));
+    const picked = pool.slice(0, n);
+    // Pixe and Mike like to come out together (Mike would never admit it)
+    if (picked.includes('pixe') && !picked.includes('mike') && ids.includes('mike') && R() < 0.6) picked[picked[0] === 'pixe' ? picked.length - 1 : 0] = 'mike';
+    const ws = picked.map((id, i) => ({
+      id, x: 10 + R() * (W - 40), y: GY + 2 + Math.floor(R() * 12), dir: R() < 0.5 ? -1 : 1,
+      spd: 0.25 + R() * 0.3, rest: Math.floor(R() * 40), seed: i, w: (29 * sprW(id)) / FG, talk: 0,
     }));
     const pixe = ws.find((w) => w.id === 'pixe'), mike = ws.find((w) => w.id === 'mike');
-    if (pixe && mike) { mike.x = Math.min(W - 18, pixe.x + 14); mike.y = Math.min(GY + 13, pixe.y + 2); }
+    if (pixe && mike) { mike.x = Math.min(W - 24, pixe.x + 16); mike.y = Math.min(GY + 13, pixe.y + 2); }
     return ws;
   }
   function stepWalkers(ws, f, R) {
     const pixe = ws.find((w) => w.id === 'pixe');
     for (const w of ws) {
+      if (w.talk > 0) { w.talk--; continue; }
       if (w.rest > 0) { w.rest--; continue; }
       // Mike never strays far from Pixe (and pretends not to care)
-      if (w.id === 'mike' && pixe && Math.abs(w.x - pixe.x) > 26) w.dir = pixe.x > w.x ? 1 : -1;
+      if (w.id === 'mike' && pixe && Math.abs(w.x - pixe.x) > 30) w.dir = pixe.x > w.x ? 1 : -1;
       w.x += w.dir * w.spd;
       if (w.x < 2) { w.x = 2; w.dir = 1; }
-      if (w.x > W - 18) { w.x = W - 18; w.dir = -1; }
+      if (w.x > W - w.w - 2) { w.x = W - w.w - 2; w.dir = -1; }
       if (R() < 0.012) { w.rest = 20 + Math.floor(R() * 60); if (R() < 0.5) w.dir *= -1; }
     }
   }
+  const spriteH = (w) => { const cv = G.sprCanvas(w.id, false, true); return cv ? (cv.height * sprW(w.id)) / FG : 20; };
   function drawWalkers(x, ws, f) {
+    x.clearRect(0, 0, W * FG, H * FG);
+    x.imageSmoothingEnabled = false;
     for (const w of ws.slice().sort((a, b) => a.y - b.y)) {
-      const cv = G.sprCanvas(w.id, w.dir < 0);
+      const cv = G.sprCanvas(w.id, w.dir < 0, true);
       if (!cv) continue;
-      const walking = w.rest <= 0;
-      const bob = walking && Math.floor(f / 3 + w.seed) % 2 ? 1 : 0;
+      const k = sprW(w.id);
+      const walking = w.rest <= 0 && !(w.talk > 0);
+      const bob = walking && Math.floor(f / 3 + w.seed) % 2 ? 2 : 0;
+      const X = Math.round(w.x * FG), Y = Math.round(w.y * FG);
       x.fillStyle = 'rgba(0,0,0,0.35)';
-      x.fillRect(Math.round(w.x + 3), Math.round(w.y), cv.width - 6, 1);
-      x.drawImage(cv, Math.round(w.x), Math.round(w.y - cv.height - bob));
+      x.fillRect(X + 4 * k, Y - 1, cv.width * k - 8 * k, 3);
+      x.drawImage(cv, X, Y - cv.height * k - bob, cv.width * k, cv.height * k);
     }
+  }
+  // speech bubbles above the walkers
+  function say(wrap, w, text, ms) {
+    const el = h('div', { class: 'town-say' }, text);
+    wrap.appendChild(el);
+    w.talk = Math.ceil(ms / 100) + 4;
+    const place = () => { el.style.left = (w.x + w.w / 2) * SC + 'px'; el.style.top = (w.y - spriteH(w)) * SC - 4 + 'px'; };
+    place();
+    const iv = setInterval(() => { if (!el.isConnected) { clearInterval(iv); return; } place(); }, 100);
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); clearInterval(iv); }, 300); }, ms);
+  }
+  function chatter(wrap, ws, R) {
+    if (!ws.length || wrap.querySelector('.town-say')) return;
+    const here = (id) => ws.find((w) => w.id === id);
+    const pairs = (G.TOWN_PAIRS || []).filter((p) => here(p[0]) && here(p[2]));
+    if (pairs.length && R() < 0.4) {
+      const p = pairs[Math.floor(R() * pairs.length)];
+      const a = here(p[0]), b = here(p[2]);
+      say(wrap, a, p[1], 2600);
+      b.talk = 60;
+      setTimeout(() => { if (wrap.isConnected) say(wrap, b, p[3], 2800); }, 2700);
+      return;
+    }
+    const w = ws[Math.floor(R() * ws.length)];
+    const lines = (G.TOWN_LINES || {})[w.id];
+    if (lines) say(wrap, w, lines[Math.floor(R() * lines.length)], 3000);
   }
 
   // ---------------- level-up sparkles ----------------
@@ -433,7 +506,9 @@
 
     const cv = h('canvas', { class: 'town-cv px', width: W, height: H });
     const x = cv.getContext('2d');
-    const wrap = h('div', { class: 'town' }, cv);
+    const fg = h('canvas', { class: 'town-fg px', width: W * FG, height: H * FG });
+    const xf = fg.getContext('2d');
+    const wrap = h('div', { class: 'town' }, cv, fg);
     wrap.appendChild(h('div', { class: 'town-ttl' }, 'クレイドルの街', h('span', null, ` 発展度 ${total}/${maxTotal}`)));
 
     // hover / click hotspots for each facility
@@ -441,13 +516,16 @@
     const seen = m.townSeen;
     for (const k of G.FAC_ORDER) {
       const s = SLOTS[k], lv = fac[k] || 0, f = G.FAC[k];
+      if (!s || (s.small && lv === 0)) continue;
       const nx = lv < f.lv.length ? `<div class="tf">次：${f.lv[lv].e}</div>` : '<div class="tf">MAX</div>';
+      const box = s.small ? { left: s.x * SC + 'px', width: s.w * SC + 'px', top: (GY - 22) * SC + 'px', height: 28 * SC + 'px', zIndex: 2 }
+        : { left: s.x * SC + 'px', width: s.w * SC + 'px', top: '24px', bottom: '24px' };
       wrap.appendChild(h('div', {
-        class: 'town-hot', style: { left: s.x * SC + 'px', width: s.w * SC + 'px', top: '24px', bottom: '24px' },
-        'data-tip': `<div class="tn">${f.n} Lv${lv}${lv === 0 ? '（建設予定地）' : ''}</div>${f.d}${nx}`,
-        onclick: () => { G.A.sfx('click'); UI.base('fac'); },
+        class: 'town-hot', style: box,
+        'data-tip': `<div class="tn">${f.n} Lv${lv}${lv === 0 ? '（建設予定地）' : ''}</div>${f.d}${nx}${s.small ? '<div class="tf">クリックでカプセル機へ</div>' : ''}`,
+        onclick: () => { G.A.sfx('click'); UI.base(s.small ? 'gacha' : 'fac'); },
       }));
-      if (seen && lv > (seen[k] || 0)) ups.push(k);
+      if (seen && lv > (seen[k] || 0) && !s.small) ups.push(k);
     }
     m.townSeen = Object.assign({}, fac);
     G.saveMeta();
@@ -455,6 +533,18 @@
     const R = lcg(Date.now() & 0xffff);
     const walkers = mkWalkers(m.unlocked.filter((id) => G.SPR[id]), R);
     let frame = 0;
+    let nextTalk = 25 + Math.floor(R() * 30);
+    // tap someone to hear what they have to say
+    wrap.addEventListener('click', (e) => {
+      const rc = wrap.getBoundingClientRect();
+      const px = ((e.clientX - rc.left) / rc.width) * W, py = ((e.clientY - rc.top) / rc.height) * H;
+      const hit = walkers.slice().sort((a, b) => b.y - a.y).find((w) => px >= w.x - 2 && px <= w.x + w.w + 2 && py <= w.y + 3 && py >= w.y - spriteH(w) - 2);
+      if (!hit) return;
+      e.stopPropagation();
+      wrap.querySelectorAll('.town-say').forEach((el) => el.remove());
+      const lines = (G.TOWN_LINES || {})[hit.id];
+      if (lines) { G.A.sfx('click'); say(wrap, hit, lines[Math.floor(Math.random() * lines.length)], 3000); }
+    }, true);
     const sparkles = ups.map((k) => ({ x: SLOTS[k].x + 2, w: SLOTS[k].w - 4, until: 70 }));
     ups.forEach((k, i) => setTimeout(() => {
       if (!wrap.isConnected) return;
@@ -470,7 +560,8 @@
       x.drawImage(stat, 0, 0);
       drawAnim(x, A, frame);
       stepWalkers(walkers, frame, R);
-      drawWalkers(x, walkers, frame);
+      drawWalkers(xf, walkers, frame);
+      if (--nextTalk <= 0) { chatter(wrap, walkers, R); nextTalk = 45 + Math.floor(R() * 50); }
       drawSparkles(x, sparkles, frame);
       frame++;
       setTimeout(tick, 100);

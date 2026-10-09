@@ -181,7 +181,7 @@
       G.saveRun();
       UI.combat(group, kind, null, extra);
     } else if (n.t === 'event') {
-      const ev = G.pick(G.availableEvents(run));
+      const ev = G.pickEvent(run);
       run.seenEvents = (run.seenEvents || []).concat([ev.id]);
       run.node = { t: 'event', id: ev.id };
       G.saveRun();
@@ -205,7 +205,9 @@
     const txt = h('div', { class: 'evtext' });
     const choices = h('div', { class: 'col', style: { gap: '6px', marginTop: '10px' } });
     s.appendChild(h('div', { class: 'layer', style: { position: 'absolute', inset: 'auto', left: '40px', top: '64px', right: '40px', display: 'flex', gap: '22px' } },
-      h('div', { class: 'col', style: { alignItems: 'center' } }, art, h('div', { class: 'ttl', style: { marginTop: '8px' } }, ev.t)),
+      h('div', { class: 'col', style: { alignItems: 'center' } },
+        G.eventBadge(ev) ? h('div', { class: 'evbadge' + (ev.rare ? ' rare' : ''), style: { color: G.eventBadge(ev).c } }, G.eventBadge(ev).t) : null,
+        art, h('div', { class: 'ttl', style: { marginTop: '8px' } }, ev.t)),
       h('div', { class: 'panel grow', style: { minHeight: '380px' } }, txt, choices)));
     const tw = UI.typewrite(txt, ev.text, 60);
     txt.addEventListener('click', () => tw.finish());
@@ -230,6 +232,7 @@
       if (dc) gains.appendChild(h('span', { style: { color: dc > 0 ? '#ffd93d' : '#e8352e' } }, `クレジット${dc > 0 ? '+' : ''}${dc}`));
       G.RES_KEYS.forEach((k) => { const d = run.res[k] - res0[k]; if (d) gains.appendChild(h('span', { class: 'res' }, UI.resIcon(k), `${d > 0 ? '+' : ''}${d}`)); });
       out.relics.forEach((r) => gains.appendChild(h('span', { class: 'row' }, UI.relicChip(r), G.RELICS[r].n)));
+      (out.items || []).forEach((it) => gains.appendChild(h('span', { class: 'row' }, '支給品：', G.ITEMS[it].n)));
       (out.gear || []).forEach((g) => gains.appendChild(h('span', { class: 'row' }, '装備入手：', UI.gearChip(g), G.GEAR[g].n, UI.btn('装備する', () => UI.gearView(run), 'sm'))));
       choices.appendChild(gains);
       choices.appendChild(UI.btn(out.next && out.next.type === 'fight' ? '戦闘開始' : '続ける', () => {

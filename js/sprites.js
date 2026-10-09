@@ -1292,6 +1292,7 @@
   // returns dataURL of sprite at 1x (scale with CSS)
   G.sprURL = (name, opts) => {
     opts = opts || {};
+    if (G.skinned && !opts.sil) name = G.skinned(name);
     const key = name + '|' + (opts.swap ? JSON.stringify(opts.swap) : '') + '|' + (opts.flip ? 1 : 0) + '|' + (opts.sil || '');
     if (cache[key]) return cache[key];
     const d = S[name];
@@ -1316,8 +1317,9 @@
 
   // 1x offscreen canvas of a sprite (for drawing onto other canvases)
   const cvCache = {};
-  G.sprCanvas = (name, flip) => {
-    if (S[name + '_mini']) name += '_mini';
+  G.sprCanvas = (name, flip, hd) => {
+    if (hd) name = G.skinned ? G.skinned(name) : name;
+    else if (S[name + '_mini']) name += '_mini';
     const key = name + (flip ? '|f' : '');
     if (cvCache[key]) return cvCache[key];
     const d = S[name];

@@ -75,6 +75,7 @@
     s.appendChild(h('div', { class: 'topbar' },
       h('span', { class: 'ttl' }, '地下拠点〈クレイドル〉'),
       h('span', { class: 'sub' }, `出撃 ${m.runs}回 ／ 制圧 ${m.wins}回`),
+      m.title && G.TITLES.find((t) => t.id === m.title) ? h('span', { class: 'chip', style: { color: '#ffd93d' } }, `〈${G.TITLES.find((t) => t.id === m.title).n}〉`) : null,
       h('span', { class: 'grow' }),
       UI.resRow(m.res)));
     // mother
@@ -86,7 +87,10 @@
       h('div', { style: { display: 'flex', justifyContent: 'center' } }, mimg),
       h('div', { style: { textAlign: 'center', color: '#2ee6ff', fontSize: '13px', marginTop: '2px' } }, 'マザー'), bub));
 
-    const tabs = [['sortie', '出撃'], ['roster', '仲間'], ['fac', '施設'], ['log', '記録'], ['opt', '設定']];
+    const tabs = [['sortie', '出撃'], ['roster', '仲間'], ['fac', '施設']];
+    if (m.fac.recycle >= 1) tabs.push(['gacha', 'カプセル']);
+    tabs.push(['log', '記録'], ['opt', '設定']);
+    if (tab === 'gacha' && !(m.fac.recycle >= 1)) tab = 'fac';
     const newLore = m.newLore.length > 0;
     const recruitable = G.HERO_ORDER.some((id) => !m.unlocked.includes(id) && G.recruitInfo(id) && G.recruitInfo(id).ok);
     const upg = G.FAC_ORDER.some((k) => { const n = G.facNext(k); return n && G.affordable(n.cost); });
@@ -97,7 +101,7 @@
     })));
     const main = h('div', { class: 'base-main layer', style: { position: 'absolute', inset: 'auto', left: '270px', top: '88px', right: '16px', bottom: '16px', width: '674px', height: '436px' } });
     s.appendChild(main);
-    ({ sortie: tabSortie, roster: tabRoster, fac: tabFac, log: tabLog, opt: tabOpt })[tab](main);
+    ({ sortie: tabSortie, roster: tabRoster, fac: tabFac, gacha: UI.gachaTab, log: tabLog, opt: tabOpt })[tab](main);
   };
 
   function tabSortie(main) {
@@ -232,7 +236,7 @@
         h('div', { class: 'sub' }, f.d),
         f.lv.map((x, i) => h('div', { class: 'fe' + (i < lv ? ' on' : i === lv ? ' next' : '') }, `Lv${i + 1}：${x.e}`)),
         nx ? h('div', { class: 'row', style: { justifyContent: 'space-between', marginTop: '3px' } }, UI.costRow(nx.cost),
-          UI.btn('強化', () => { if (G.upgradeFac(k)) { A.sfx('buff'); UI.base('fac'); } }, 'sm', { disabled: !G.affordable(nx.cost) }))
+          UI.btn('強化', () => { if (G.upgradeFac(k)) { A.sfx('buff'); UI.base(k === 'recycle' && m.fac.recycle === 1 ? 'gacha' : 'fac'); } }, 'sm', { disabled: !G.affordable(nx.cost) }))
           : h('div', { style: { color: '#b8ff3d', fontSize: '12px' } }, 'MAX')));
     }
     main.appendChild(h('div', { class: 'scroll', style: { maxHeight: '430px' } }, grid));
@@ -314,6 +318,8 @@
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【指名手配】各区画にひとつ、改造されたエリートがいる。強いが、懸賞金・支給品・装備と、ボス並みのカード報酬がもらえる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【マザーの加護】2回目以降の出撃前に、マザーが加護を1つくれる。赤い加護は代償つき。前回早くに撤退していると、敵を弱らせるジャミングを申し出てくれる。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【コンビ】特定の2人を同じパーティーに入れると、毎戦闘の開始時にボーナス。出撃準備画面で確認できる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【ジャンクカプセル機】施設「リサイクル炉」で使える。余った素材を入れてまわすと、思い出・記録・フィギュア・色違い・称号が出る。入れる素材で中身の出やすさが変わる。'),
+        h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【イベントの種類】「〇〇の物語」はパーティーの仲間のお話。「つづきの物語」は出撃をまたいで続く。「★レアイベント」はめったに起きない。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【バグったカード】そのターンのあいだコスト0になったカード。ターン終了で元に戻る。'),
         h('div', { style: { fontSize: '12.5px', marginBottom: '6px' } }, '【状態の見かた】明るく塗られたアイコン＝バフ（有利）、黒地に色枠のアイコン＝デバフ（不利）。右下の数字はスタック数または残りターン。'),
         head('buff', '　有利な効果'), of('buff').map(item),

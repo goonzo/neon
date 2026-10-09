@@ -15,7 +15,7 @@
     return {
       v: 1,
       res: { energy: 0, scrap: 0, food: 0, data: 0 },
-      fac: { quarters: 0, clinic: 0, workshop: 0, farm: 0, core: 0, market: 0 },
+      fac: { quarters: 0, clinic: 0, workshop: 0, farm: 0, core: 0, market: 0, recycle: 0 },
       unlocked: G.START_HEROES.slice(),
       diffMax: 1,
       clears: [0, 0, 0, 0],
@@ -32,6 +32,9 @@
       bonds: {}, // hero id -> bond level 0..3 (talks at safehouses)
       seenAreas: [], // middle areas visited at least once (unseen ones come up first)
       lastMid: null,
+      gacha: { own: {}, parts: 0, pity: 0, pulls: 0 }, // junk capsule machine
+      skin: {}, // hero id -> colour variant
+      title: '', // chosen title id
     };
   }
   G.loadMeta = () => {
@@ -93,8 +96,13 @@
       { cost: { scrap: 35, data: 25, food: 15 }, e: '闇市の価格-15%' },
       { cost: { scrap: 55, data: 40, food: 30 }, e: '初期クレジット+100（合計）' },
     ] },
+    recycle: { n: 'リサイクル炉', spr: 'i_scrap', d: '余った素材を溶かして、ガラクタのカプセルに詰め直す施設。カプセル機が置かれる。', lv: [
+      { cost: { scrap: 30, energy: 20 }, e: 'ジャンクカプセル機が稼働（素材20個で1回）' },
+      { cost: { scrap: 50, energy: 35, data: 20 }, e: '1回の素材が15個に・10連でおまけ+1回' },
+      { cost: { scrap: 80, energy: 50, data: 40, food: 30 }, e: 'レア以上の出現率アップ' },
+    ] },
   };
-  G.FAC_ORDER = ['quarters', 'clinic', 'workshop', 'farm', 'core', 'market'];
+  G.FAC_ORDER = ['quarters', 'clinic', 'workshop', 'farm', 'core', 'market', 'recycle'];
 
   G.affordable = (cost) => Object.keys(cost).every((k) => (G.meta.res[k] || 0) >= cost[k]);
   G.pay = (cost) => { for (const k in cost) G.meta.res[k] -= cost[k]; };
@@ -360,7 +368,8 @@
   // ---------------- rewards ----------------
   G.resGain = (run, key, v) => {
     const mult = G.DIFF[run.diff].res;
-    const n = Math.max(v > 0 ? 1 : 0, Math.round(v * mult));
+    // gains scale with the difficulty; costs (negative) are paid as written
+    const n = v > 0 ? Math.max(1, Math.round(v * mult)) : v;
     run.res[key] = Math.max(0, run.res[key] + n);
     return n;
   };
@@ -631,6 +640,22 @@
       maxHpHero: (id, d) => { const h = run.heroes.find((x) => x.id === id); if (h) { h.maxHp = Math.max(10, h.maxHp + d); h.hp = Math.min(h.maxHp, Math.max(1, h.hp + Math.max(0, d))); } },
       addCard: (heroId, cardId) => { const h = heroId === 'rand' ? randHero() : run.heroes.find((x) => x.id === heroId); if (h) { h.deck.push({ id: cardId, up: false }); return heroName(h); } return ''; },
       fight: (group, bonus) => { out.next = { type: 'fight', group, bonus }; },
+      item: (id) => {
+        const got = G.gainItem(run, id === 'random' ? G.randomItem(1) : id);
+        if (got === 'full') out.notes.push('（支給品がいっぱいだったので、15クレジットに換えた）');
+        else if (got) (out.items = out.items || []).push(got);
+      },
+      // a capsule prize (R or better) straight into the collection
+      prize: () => {
+        const st = G.gachaState();
+        const pool = G.gachaItems().filter((x) => x.r !== 'N');
+        const fresh = pool.filter((x) => !st.own[x.key]);
+        const it = G.pick(fresh.length ? fresh : pool);
+        if (st.own[it.key]) { st.parts += G.PARTS_FOR_DUPE[it.r]; out.notes.push(`（もう持っていたので、部品+${G.PARTS_FOR_DUPE[it.r]}になった）`); }
+        st.own[it.key] = (st.own[it.key] || 0) + 1;
+        G.saveMeta();
+        return it.n;
+      },
       removePick: () => { out.next = { type: 'remove' }; },
       upgradePick: () => { out.next = { type: 'upgrade' }; },
     };
@@ -640,9 +665,21 @@
   G.availableEvents = (run) => {
     const seen = run.seenEvents || [];
     const ar = G.area(run);
-    const ok = (e) => (e.acts.includes(ar.tag) || (ar.gen && e.acts.length >= 3 && e.acts.every((a) => typeof a === 'number' && a <= 3))) && (!e.need || run.heroes.some((h) => h.id === e.need)) && (!e.cond || e.cond(G.meta, run));
+    const ok = (e) => (e.acts.includes(ar.tag) || (ar.gen && e.acts.length >= 3 && e.acts.every((a) => typeof a === 'number' && a <= 3)))
+      && (!e.need || run.heroes.some((h) => h.id === e.need)) && (!e.need2 || run.heroes.some((h) => h.id === e.need2)) && (!e.cond || e.cond(G.meta, run));
     let ev = G.EVENTS.filter((e) => ok(e) && !seen.includes(e.id));
     if (!ev.length) ev = G.EVENTS.filter(ok);
     return ev;
+  };
+  // crew stories and continuing stories come up more often; rare finds seldom
+  G.eventWeight = (e) => (e.rare ? 0.25 : e.chain ? 2.5 : e.need2 ? 2.2 : e.need ? 1.6 : 1);
+  G.pickEvent = (run) => G.wpick(G.availableEvents(run), G.eventWeight);
+  // a little label shown above the event title
+  G.eventBadge = (e) => {
+    if (e.rare) return { t: '★ レアイベント', c: '#ffd93d' };
+    if (e.chain) return { t: e.chain > 1 ? 'つづきの物語' : 'はじまりの物語', c: '#7dffb0' };
+    if (e.need2) return { t: `${G.HEROES[e.need].n}と${G.HEROES[e.need2].n}`, c: '#ff9ec4' };
+    if (e.need) return { t: `${G.HEROES[e.need].n}の物語`, c: '#ff9ec4' };
+    return null;
   };
 })();
