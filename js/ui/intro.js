@@ -258,22 +258,39 @@
   };
 
   UI.introScenes = SCENES;
+  UI.sceneKit = kit;
+  UI.sceneHash = hash;
+  UI.SCENE = { W, H, GROUND };
 
-  UI.intro = (onEnd) => {
-    const s = UI.screen('intro');
-    A.bgm('base');
-    const lines = G.INTRO;
-    // two canvases so a new scene can fade in over the old one
+  // Plays a list of lines over animated scenes.
+  // opts: lines, scenes (name -> draw fn), scene(i) -> name, art(i) -> sprite id / { id, sc } / null,
+  //       who(i) -> speaker or null, skip (show a skip button), cls, onEnd, cps
+  UI.playScenes = (opts) => {
+    const s = UI.screen(opts.cls || 'scenes');
+    const lines = opts.lines;
     const mk = () => h('canvas', { class: 'bgcv px introcv', width: W, height: H });
     const cvs = [mk(), mk()];
     cvs.forEach((c) => s.appendChild(c));
     let cur = 0, scene = null, frame = 0;
     const scan = h('div', { class: 'introscan' });
     s.appendChild(scan);
-    const img = G.sprImg('mother', 7);
-    img.className = 'px portrait-big intro-mother';
+    const img = h('img', { class: 'px portrait-big intro-mother away', draggable: 'false' });
     s.appendChild(img);
-    const draw = () => { const c = cvs[cur].getContext('2d'); c.save(); SCENES[scene](c, frame); c.restore(); };
+    let artKey = null;
+    const setArt = (a) => {
+      const id = a ? (typeof a === 'string' ? a : a.id) : null;
+      const key = id ? id + '|' + (a.cls || '') : null;
+      if (key === artKey) return;
+      artKey = key;
+      if (!id) { img.classList.add('away'); return; }
+      img.className = 'px portrait-big intro-mother' + (a.cls ? ' ' + a.cls : '');
+      const sz = G.sprSize(id);
+      const sc = (a && a.sc) || Math.max(1, Math.floor(Math.min(380 / sz.w, 236 / sz.h)));
+      img.src = G.sprURL(id);
+      img.width = sz.w * sc; img.height = sz.h * sc;
+      img.classList.remove('away');
+    };
+    const draw = () => { const c = cvs[cur].getContext('2d'); c.save(); opts.scenes[scene](c, frame); c.restore(); };
     const show = (key) => {
       if (key === scene) return;
       scene = key;
@@ -283,7 +300,6 @@
       cvs[cur].classList.add('on');
       cvs[1 - cur].classList.remove('on');
       scan.classList.remove('go'); void scan.offsetWidth; scan.classList.add('go');
-      img.classList.toggle('away', !MOTHER_ON[key]);
     };
     let alive = true;
     const tick = () => {
@@ -292,27 +308,48 @@
       frame++;
       setTimeout(tick, 83);
     };
+    const who = h('div', { class: 'who' });
     const txt = h('div');
-    const box = h('div', { class: 'dlg panel' }, h('div', { class: 'who' }, 'マザー'), txt, h('div', { class: 'more' }, '▼'));
+    const box = h('div', { class: 'dlg panel' }, who, txt, h('div', { class: 'more' }, '▼'));
     s.appendChild(box);
     const end = () => {
+      if (!alive) return;
       alive = false;
-      G.meta.seenIntro = true; G.saveMeta();
-      if (onEnd) onEnd(); else UI.base();
+      opts.onEnd();
     };
-    // the first time it plays all the way through; after that it can be skipped
-    if (G.meta.seenIntro) s.appendChild(h('div', { style: { position: 'absolute', right: '14px', top: '10px', zIndex: 5 } }, UI.btn('スキップ', end, 'sm')));
-    let i = 0;
-    show(SCENE_OF[0] || 'bunker');
+    if (opts.skip) s.appendChild(h('div', { style: { position: 'absolute', right: '14px', top: '10px', zIndex: 5 } }, UI.btn('スキップ', end, 'sm')));
+    let i = 0, tw = null;
+    const step = () => {
+      show(opts.scene(i));
+      setArt(opts.art ? opts.art(i) : null);
+      const w = opts.who ? opts.who(i) : null;
+      who.textContent = w || '';
+      who.style.display = w ? '' : 'none';
+      tw = UI.typewrite(txt, lines[i], opts.cps || 40);
+    };
+    step();
     tick();
-    let tw = UI.typewrite(txt, lines[0], 40);
     box.addEventListener('click', () => {
       if (!tw.done) { tw.finish(); return; }
       i++;
       A.sfx('click');
       if (i >= lines.length) { end(); return; }
-      show(SCENE_OF[i] || 'bunker');
-      tw = UI.typewrite(txt, lines[i], 40);
+      step();
+    });
+    return s;
+  };
+
+  UI.intro = (onEnd) => {
+    A.bgm('base');
+    const first = !G.meta.seenIntro;
+    UI.playScenes({
+      cls: 'intro', lines: G.INTRO, scenes: SCENES,
+      scene: (i) => SCENE_OF[i] || 'bunker',
+      art: (i) => (MOTHER_ON[SCENE_OF[i] || 'bunker'] ? { id: 'mother', sc: 7 } : null),
+      who: () => 'マザー',
+      // the first time it plays all the way through; after that it can be skipped
+      skip: !first,
+      onEnd: () => { G.meta.seenIntro = true; G.saveMeta(); if (onEnd) onEnd(); else UI.base(); },
     });
   };
 })();

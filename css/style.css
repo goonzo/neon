@@ -583,3 +583,11 @@ body.bigui .choice .cd { font-size: 13.5px; }
 .bossimg.reveal { animation: breveal 0.9s steps(9) both; filter: drop-shadow(0 0 12px rgba(255,90,140,0.6)); }
 @keyframes breveal { 0% { transform: translate(-50%, 60px); filter: brightness(4); } 30% { transform: translate(calc(-50% - 6px), 0); } 45% { transform: translate(calc(-50% + 6px), 0); filter: brightness(1.6); } 60% { transform: translate(calc(-50% - 3px), 0); } 100% { transform: translate(-50%, 0); filter: drop-shadow(0 0 12px rgba(255,90,140,0.6)); } }
 .bosscut .bosscard { z-index: 3; }
+/* picture moods in the story scenes */
+.intro-mother.fading { animation: bob 3s steps(4) infinite, artfade 1.6s steps(8) infinite; }
+@keyframes artfade { 50% { opacity: 0.55; filter: brightness(1.6) drop-shadow(0 0 18px #ffd93d); } }
+.intro-mother.soft { filter: drop-shadow(0 0 22px rgba(255,138,216,0.8)); }
+.intro-mother.ghost { opacity: 0.4; }
+.intro-mother.right { left: 62%; top: auto; bottom: 200px; }
+.intro-mother.glitchy { animation: bob 3s steps(4) infinite, artglitch 0.5s steps(2) infinite; }
+@keyframes artglitch { 25% { transform: translate(calc(-50% + 4px), 0); filter: hue-rotate(90deg); } 50% { opacity: 0.6; } 75% { transform: translate(calc(-50% - 3px), 2px); } }

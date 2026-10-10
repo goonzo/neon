@@ -547,7 +547,7 @@
     const run = G.run;
     const here = G.area(run).id;
     if (run.act >= G.finalAct(run)) { UI.ending(here === 'cradle' ? 'truth' : here === 'rim' ? 'survey' : 'part1'); return; }
-    if (here === 'sanctum') { UI.cutscene(G.ACT3_TO_4, 'sophia', () => goNextAct()); return; }
+    if (here === 'sanctum') { UI.fallScene(() => goNextAct()); return; }
     const s = UI.screen('actclear');
     UI.actBg(s, run);
     A.sfx('win');
@@ -574,56 +574,8 @@
     }
   }
 
-  // ================= CUTSCENE (between acts) =================
-  UI.cutscene = (lines, spr, onEnd) => {
-    const s = UI.screen('cutscene');
-    UI.bg(s, 'sanctum');
-    A.bgm('sanctum');
-    let i = 0;
-    s.appendChild(h('div', { style: { position: 'absolute', left: '50%', top: '40px', transform: 'translateX(-50%)' } }, G.sprImg(spr, 6)));
-    const txt = h('div');
-    const box = h('div', { class: 'dlg panel' }, txt, h('div', { class: 'more' }, '▼'));
-    s.appendChild(box);
-    let tw = UI.typewrite(txt, lines[0], 30);
-    box.addEventListener('click', () => {
-      if (!tw.done) { tw.finish(); return; }
-      i++;
-      A.sfx('click');
-      if (i >= lines.length) { if (!box.dataset.done) { box.dataset.done = '1'; onEnd(); } return; }
-      tw = UI.typewrite(txt, lines[i], 30);
-    });
-  };
-
   // ================= ENDING =================
-  UI.ending = (kind) => {
-    const truth = kind === 'truth';
-    const survey = kind === 'survey';
-    const s = UI.screen('ending');
-    UI.bg(s, survey ? 'rim' : 'sanctum', survey ? { area: G.AREAS.rim } : null);
-    A.bgm(truth ? 'cradle' : survey ? 'rim' : 'sanctum');
-    let i = 0;
-    const lines = truth ? G.TRUE_ENDING : survey ? G.SURVEY_ENDING : G.ENDING;
-    const art = h('div', { style: { position: 'absolute', left: '50%', top: '30px', transform: 'translateX(-50%)' } });
-    s.appendChild(art);
-    const txt = h('div');
-    const box = h('div', { class: 'dlg panel' }, txt, h('div', { class: 'more' }, '▼'));
-    s.appendChild(box);
-    const show = () => {
-      art.innerHTML = '';
-      const spr = survey ? (i <= 1 ? 'janus' : i === 4 ? 'mother' : null) : truth ? (i <= 1 ? 'noah' : i === 2 || i === 6 ? 'mother' : i === 4 ? 'pixe' : null) : i <= 2 ? 'sophia' : i >= 5 && i <= 5 ? 'mother' : null;
-      if (spr) art.appendChild(G.sprImg(spr, spr === 'pixe' ? 8 : 6));
-      else if (survey ? false : truth ? i === 7 : i === 4) art.appendChild(h('div', { style: { width: '300px', height: '180px', background: 'linear-gradient(#3a8ff0, #9fd4ff)', border: '4px solid #0b0a12', boxShadow: '0 0 40px #9fd4ff' } }));
-      return UI.typewrite(txt, lines[i], 30);
-    };
-    let tw = show();
-    box.addEventListener('click', () => {
-      if (!tw.done) { tw.finish(); return; }
-      i++;
-      A.sfx('click');
-      if (i >= lines.length) { if (!box.dataset.done) { box.dataset.done = '1'; UI.runEnd('win'); } return; }
-      tw = show();
-    });
-  };
+  // (the endings live in ui/endings.js)
 
   // ================= RUN END =================
   UI.runEnd = (result, abandoned) => {
