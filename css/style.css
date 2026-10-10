@@ -561,3 +561,12 @@ body.bigui .choice .cd { font-size: 13.5px; }
 /* event labels */
 .evbadge { font-size: 12px; padding: 2px 8px; margin-bottom: 6px; border: 2px solid currentColor; background: rgba(11,10,18,0.8); white-space: nowrap; }
 .evbadge.rare { animation: gshine2 0.9s steps(4) infinite; box-shadow: 0 0 10px #ffd93d; }
+
+/* opening narration scenes */
+.introcv { opacity: 0; transition: opacity 0.8s steps(8); }
+.introcv.on { opacity: 1; }
+.introscan { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; background: linear-gradient(180deg, rgba(46,230,255,0) 0%, rgba(46,230,255,0.35) 48%, rgba(255,255,255,0.6) 50%, rgba(46,230,255,0.35) 52%, rgba(46,230,255,0) 100%); background-size: 100% 60px; background-repeat: no-repeat; }
+.introscan.go { animation: introscan 0.7s steps(10); }
+@keyframes introscan { from { opacity: 1; background-position: 0 -60px; } to { opacity: 0.2; background-position: 0 540px; } }
+.intro-mother { transition: opacity 0.6s steps(6); z-index: 2; }
+.intro-mother.away { opacity: 0; }

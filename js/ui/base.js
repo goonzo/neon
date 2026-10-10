@@ -23,33 +23,7 @@
     s.appendChild(h('div', { class: 'title-foot layer', style: { position: 'absolute', inset: 'auto 0 10px 0' } }, 'クリック／タップで操作　・　セーブは自動'));
   };
 
-  // ================= INTRO =================
-  UI.intro = (onEnd) => {
-    const s = UI.screen('intro');
-    UI.bg(s, 'bunker', { seed: 11 });
-    A.bgm('base');
-    const lines = G.INTRO;
-    let i = 0;
-    const img = G.sprImg('mother', 7);
-    img.className = 'px portrait-big';
-    s.appendChild(img);
-    const txt = h('div');
-    const box = h('div', { class: 'dlg panel' }, h('div', { class: 'who' }, 'マザー'), txt, h('div', { class: 'more' }, '▼'));
-    s.appendChild(box);
-    const end = () => {
-      G.meta.seenIntro = true; G.saveMeta();
-      if (onEnd) onEnd(); else UI.base();
-    };
-    s.appendChild(h('div', { style: { position: 'absolute', right: '14px', top: '10px', zIndex: 5 } }, UI.btn('スキップ', end, 'sm')));
-    let tw = UI.typewrite(txt, lines[0], 40);
-    box.addEventListener('click', () => {
-      if (!tw.done) { tw.finish(); return; }
-      i++;
-      A.sfx('click');
-      if (i >= lines.length) { end(); return; }
-      tw = UI.typewrite(txt, lines[i], 40);
-    });
-  };
+  // (the opening narration lives in ui/intro.js)
 
   // ================= BASE =================
   const RESULT_LINES = {
