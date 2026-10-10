@@ -570,3 +570,16 @@ body.bigui .choice .cd { font-size: 13.5px; }
 @keyframes introscan { from { opacity: 1; background-position: 0 -60px; } to { opacity: 0.2; background-position: 0 540px; } }
 .intro-mother { transition: opacity 0.6s steps(6); z-index: 2; }
 .intro-mother.away { opacity: 0; }
+
+/* boss cutscene */
+.bosscard { position: absolute; left: 0; right: 0; top: 18px; text-align: center; z-index: 2; pointer-events: none; opacity: 0; transform: translateX(-40px); }
+.bosscard.on { opacity: 1; transform: none; transition: opacity 0.3s steps(3), transform 0.3s steps(3); }
+.bosscard .bc1 { display: inline-block; font-size: 13px; letter-spacing: 6px; color: #fff; background: #e8352e; padding: 1px 10px; box-shadow: 3px 3px 0 #000; }
+.bosscard .bc2 { font-size: 28px; color: #fff; margin-top: 4px; text-shadow: 3px 3px 0 #e8352e, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; }
+.dlg .who.boss { border-color: #e8352e; color: #ff9e9e; }
+.bossimg { position: absolute; left: 50%; bottom: 196px; transform: translateX(-50%); z-index: 1; pointer-events: none; image-rendering: pixelated; }
+.bossimg.shadow { filter: brightness(0); opacity: 0.4; animation: bshadow 2.4s steps(6) infinite; }
+@keyframes bshadow { 50% { opacity: 0.25; transform: translate(-50%, 4px); } }
+.bossimg.reveal { animation: breveal 0.9s steps(9) both; filter: drop-shadow(0 0 12px rgba(255,90,140,0.6)); }
+@keyframes breveal { 0% { transform: translate(-50%, 60px); filter: brightness(4); } 30% { transform: translate(calc(-50% - 6px), 0); } 45% { transform: translate(calc(-50% + 6px), 0); filter: brightness(1.6); } 60% { transform: translate(calc(-50% - 3px), 0); } 100% { transform: translate(-50%, 0); filter: drop-shadow(0 0 12px rgba(255,90,140,0.6)); } }
+.bosscut .bosscard { z-index: 3; }

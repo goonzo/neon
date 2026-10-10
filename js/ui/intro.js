@@ -300,7 +300,8 @@
       G.meta.seenIntro = true; G.saveMeta();
       if (onEnd) onEnd(); else UI.base();
     };
-    s.appendChild(h('div', { style: { position: 'absolute', right: '14px', top: '10px', zIndex: 5 } }, UI.btn('スキップ', end, 'sm')));
+    // the first time it plays all the way through; after that it can be skipped
+    if (G.meta.seenIntro) s.appendChild(h('div', { style: { position: 'absolute', right: '14px', top: '10px', zIndex: 5 } }, UI.btn('スキップ', end, 'sm')));
     let i = 0;
     show(SCENE_OF[0] || 'bunker');
     tick();

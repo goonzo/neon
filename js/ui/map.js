@@ -179,7 +179,9 @@
       if (run.jam > 0 && kind !== 'boss') { extra.jam = 1; run.jam--; }
       run.node = { t: 'fight', group, kind, extra };
       G.saveRun();
-      UI.combat(group, kind, null, extra);
+      // bosses get a short cutscene first (it shows their opening line, so combat skips it)
+      if (kind === 'boss') UI.bossCut(group, (shown) => { if (shown) extra.cut = 1; UI.combat(group, kind, null, extra); });
+      else UI.combat(group, kind, null, extra);
     } else if (n.t === 'event') {
       const ev = G.pickEvent(run);
       run.seenEvents = (run.seenEvents || []).concat([ev.id]);

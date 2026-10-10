@@ -77,6 +77,7 @@ const RUNS = +process.argv[2] || 1, DIFF = +(process.argv[3] || 0);
           case 'resnode': return click(btnText('続ける')) || click(btnText('戦闘開始')) || click([...document.querySelectorAll('.choice')][Math.floor(Math.random() * 2)]);
           case 'actclear': return click(btnText('区画へ'));
           case 'ending': return click(q('.dlg'));
+          case 'bosscut': return click(q('.dlg'));
           default: return 'unknown:' + scr;
         }
       }, scr);

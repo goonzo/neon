@@ -606,7 +606,7 @@
     // ---------- main loop ----------
     async function loop() {
       // boss / elite intro lines
-      for (const e of E.alive(C, 'E')) if (e.def.intro) C.ev.push({ k: 'say', uid: e.uid, s: e.def.intro, snap: E.snap(C) });
+      for (const e of E.alive(C, 'E')) if (e.def.intro && !(extra.cut && e.def.boss)) C.ev.push({ k: 'say', uid: e.uid, s: e.def.intro, snap: E.snap(C) });
       applySnap(snap0); // start from the pre-battle state so opening shields/statuses animate in
       renderChrome();
       await flush();
